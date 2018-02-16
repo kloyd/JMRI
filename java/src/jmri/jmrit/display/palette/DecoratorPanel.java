@@ -2,7 +2,7 @@ package jmri.jmrit.display.palette;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,8 +10,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
 import java.util.Hashtable;
 import java.util.Iterator;
+import javax.annotation.Nonnull;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -36,26 +38,25 @@ import jmri.jmrit.display.PositionableLabel;
 import jmri.jmrit.display.PositionablePopupUtil;
 import jmri.jmrit.display.SensorIcon;
 import jmri.jmrit.display.palette.TextItemPanel.DragDecoratorLabel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.swing.DrawSquares;
+import jmri.util.swing.ImagePanel;
 
 /**
- * Panel for positionables with text and/or colored margins and borders
+ * Panel for positionables with text and/or colored margins and borders.
+ * @see ItemPanel palette class diagram
  * 
  * @author PeteCressman Copyright (C) 2009, 2015
  */
 public class DecoratorPanel extends JPanel implements ChangeListener, ItemListener {
 
-    private static final long serialVersionUID = -5434701410549611848L;
-
     static final String[] JUSTIFICATION = {Bundle.getMessage("left"),
         Bundle.getMessage("center"),
         Bundle.getMessage("right")};
 
-    static final String[] STYLES = {Bundle.getMessage("plain"),
-        Bundle.getMessage("bold"),
-        Bundle.getMessage("italic"),
-        Bundle.getMessage("bold/italic")};
+    static final String[] STYLES = {Bundle.getMessage("Plain"),
+        Bundle.getMessage("Bold"),
+        Bundle.getMessage("Italic"),
+        Bundle.getMessage("Bold/italic")};
 
     static final String[] FONTSIZE = {"6", "8", "10", "11", "12", "14", "16",
         "20", "24", "28", "32", "36"};
@@ -97,12 +98,20 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
     AJSpinner _heightSpin;
 
     JColorChooser _chooser;
-    JPanel _previewPanel;
+    ImagePanel _previewPanel;
     JPanel _samplePanel;
     private PositionablePopupUtil _util;
     private Hashtable<String, PositionableLabel> _sample = null;
     private int _selectedButton;
     ButtonGroup _buttonGroup = new ButtonGroup();
+
+    protected DrawSquares _squaresPanel; // checkered background
+    static Color _grayColor = new Color(235, 235, 235);
+    static Color _darkGrayColor = new Color(150, 150, 150);
+    private Color[] colorChoice = new Color[] {Color.white, _grayColor, _darkGrayColor}; // panel bg color picked up directly
+    protected Color _currentBackground;
+    protected BufferedImage[] _backgrounds; // array of Image backgrounds
+    private int previewBgSet = 0; // setting for preview background color, starts as 0 = use Panel bg
 
     Editor _editor;
     java.awt.Window _dialog;
@@ -111,25 +120,31 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         _editor = editor;
         _dialog = dialog;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        Color bkgrnd = _editor.getTargetPanel().getBackground();
-        _chooser = new JColorChooser(bkgrnd);
-        _sample = new Hashtable<String, PositionableLabel>();
+        _currentBackground = _editor.getTargetPanel().getBackground(); // start using Panel background color
+        _chooser = new JColorChooser(_currentBackground);
+        _sample = new Hashtable<>();
 
-        _previewPanel = new JPanel();
+        _previewPanel = new ImagePanel();
         _previewPanel.setLayout(new BorderLayout());
-        _previewPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black, 1),"Preview"));
-        _previewPanel.add(Box.createVerticalStrut(STRUT), BorderLayout.NORTH);
-        _previewPanel.add(Box.createVerticalStrut(STRUT), BorderLayout.SOUTH);
-        _previewPanel.setBackground(bkgrnd);
-         
+        _previewPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black, 1),
+                Bundle.getMessage("PreviewBorderTitle")));
+        _previewPanel.add(Box.createVerticalStrut(STRUT), BorderLayout.PAGE_START);
+        _previewPanel.add(Box.createVerticalStrut(STRUT), BorderLayout.PAGE_END);
+
+        // create array of backgrounds, _currentBackground already set and used
+        _backgrounds = new BufferedImage[5];
+        _backgrounds[0] = DrawSquares.getImage(500, 400, 10, _currentBackground, _currentBackground);
+        for (int i = 1; i <= 3; i++) {
+            _backgrounds[i] = DrawSquares.getImage(500, 400, 10, colorChoice[i - 1], colorChoice[i - 1]); // choice 0 is not in colorChoice[]
+        }
+        _backgrounds[4] = DrawSquares.getImage(500, 400, 10, Color.white, _grayColor);
+
         _samplePanel = new JPanel();
-//      _samplePanel.setLayout(new BoxLayout(_samplePanel, BoxLayout.X_AXIS));
         _samplePanel.add(Box.createHorizontalStrut(STRUT));
-        _samplePanel.setBackground(bkgrnd);
+        _samplePanel.setOpaque(false);
     }
 
     static class AJComboBox extends JComboBox<String> {
-        private static final long serialVersionUID = -6157176023804592198L;
         int _which;
 
         AJComboBox(String[] items, int which) {
@@ -148,8 +163,6 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
     }
 
     static class AJSpinner extends JSpinner {
-
-        private static final long serialVersionUID = 7526728664296406003L;
         int _which;
 
         AJSpinner(SpinnerModel model, int which) {
@@ -159,7 +172,6 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
     }
 
     static class AJRadioButton extends JRadioButton {
-        private static final long serialVersionUID = -8349059653187941804L;
         int which;
 
         AJRadioButton(String text, int w) {
@@ -177,10 +189,10 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         return panel;
     }
 
+    /* Called by Palette's TextItemPanel i.e. make a new panel item to drag */
     protected void initDecoratorPanel(DragDecoratorLabel sample) {
         sample.setDisplayLevel(Editor.LABELS);
         sample.setBackground(_editor.getTargetPanel().getBackground());
-        _previewPanel.add(sample);
         _util = sample.getPopupUtility();
         _sample.put("Text", sample);
         this.add(makeTextPanel("Text", sample, TEXT_FONT, true));
@@ -190,14 +202,14 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         _chooser.getSelectionModel().addChangeListener(this);
         _chooser.setPreviewPanel(new JPanel());
         this.add(_chooser);
-        _previewPanel.add(_samplePanel, java.awt.BorderLayout.CENTER);
+        _previewPanel.add(_samplePanel, BorderLayout.CENTER);
         this.add(_previewPanel);
         updateSamples();
     }
-    
+
+    /* Called by Editor's TextAttrDialog - i.e. update a panel item from menu */
     public void initDecoratorPanel(Positionable pos) {
-        Positionable item = pos.deepClone();		// copy of PositionableLabel being edited
-        String text = Bundle.getMessage("sample");
+        Positionable item = pos.deepClone(); // copy of PositionableLabel being edited
         _util = item.getPopupUtility();
 
         if (pos instanceof SensorIcon && !((SensorIcon)pos).isIcon()) {
@@ -210,7 +222,7 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                     sample.setBackground(color);
                     sample.setOpaque(true);
                 }
-                doPopupUtility("Active", ACTIVE_FONT, sample, _util, true);
+                doPopupUtility("Active", ACTIVE_FONT, sample, true); // NOI18N
 
                 sample = new PositionableLabel(si.getInactiveText(), _editor);
                 sample.setForeground(si.getTextInActive());
@@ -219,7 +231,7 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                     sample.setBackground(color);
                     sample.setOpaque(true);
                 }
-                doPopupUtility("InActive", INACTIVE_FONT, sample, _util, true);
+                doPopupUtility("InActive", INACTIVE_FONT, sample, true); // NOI18N
 
                 sample = new PositionableLabel(si.getUnknownText(), _editor);
                 sample.setForeground(si.getTextUnknown());
@@ -228,7 +240,7 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                     sample.setBackground(color);
                     sample.setOpaque(true);
                 }
-                doPopupUtility("Unknown", UNKOWN_FONT, sample, _util, true);
+                doPopupUtility("Unknown", UNKOWN_FONT, sample, true); // NOI18N
 
                 sample = new PositionableLabel(si.getInconsistentText(), _editor);
                 sample.setForeground(si.getTextInconsistent());
@@ -237,10 +249,10 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                     sample.setBackground(color);
                     sample.setOpaque(true);
                 }
-                doPopupUtility("Inconsistent", INCONSISTENT_FONT, sample, _util, true);
+                doPopupUtility("Inconsistent", INCONSISTENT_FONT, sample, true); // NOI18N
             }
         } else { // not a SensorIcon
-            PositionableLabel sample = new PositionableLabel(text, _editor);
+            PositionableLabel sample = new PositionableLabel("", _editor);
             sample.setForeground(pos.getForeground());
             sample.setBackground(pos.getBackground());
             sample.setOpaque(_util.hasBackground());
@@ -267,32 +279,31 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
             } else {
                 addtextField = true;                
             }
-            doPopupUtility("Text", TEXT_FONT, sample, _util, addtextField);
+            doPopupUtility("Text", TEXT_FONT, sample, addtextField);
         }
         makeFontPanels();
-        item.setVisible(false);		// otherwise leaves traces for PositionableJPanels
 
         _chooser.getSelectionModel().addChangeListener(this);
         _chooser.setPreviewPanel(new JPanel());
         this.add(_chooser);
-        _previewPanel.add(_samplePanel, java.awt.BorderLayout.CENTER);
+        _previewPanel.add(_samplePanel, BorderLayout.CENTER);
         this.add(_previewPanel);
         updateSamples();
     }
     
     private void doPopupUtility(String type, int which, 
-            PositionableLabel sample, PositionablePopupUtil ut, boolean editText) {
+            PositionableLabel sample, boolean editText) {
         PositionablePopupUtil util = sample.getPopupUtility();
-        util.setJustification(ut.getJustification());
-        util.setHorizontalAlignment(ut.getJustification());
-        util.setFixedWidth(ut.getFixedWidth());
-        util.setFixedHeight(ut.getFixedHeight());
-        util.setMargin(ut.getMargin());
-        util.setBorderSize(ut.getBorderSize());
-        util.setBorderColor(ut.getBorderColor());
-        util.setFont(util.getFont().deriveFont(ut.getFontStyle()));
-        util.setFontSize(ut.getFontSize());
-        util.setOrientation(ut.getOrientation());
+        util.setJustification(_util.getJustification());
+        util.setHorizontalAlignment(_util.getJustification());
+        util.setFixedWidth(_util.getFixedWidth());
+        util.setFixedHeight(_util.getFixedHeight());
+        util.setMargin(_util.getMargin());
+        util.setBorderSize(_util.getBorderSize());
+        util.setBorderColor(_util.getBorderColor());
+        util.setFont(util.getFont().deriveFont(_util.getFontStyle()));
+        util.setFontSize(_util.getFontSize());
+        util.setOrientation(_util.getOrientation());
         sample.updateSize();
        
         _sample.put(type, sample);
@@ -304,7 +315,7 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
     protected void makeFontPanels() {
         JPanel fontPanel = new JPanel();
         _fontSizeBox = new AJComboBox(FONTSIZE, SIZE);
-        fontPanel.add(makeBoxPanel("fontSize", _fontSizeBox));
+        fontPanel.add(makeBoxPanel("FontSize", _fontSizeBox)); // NOI18N
         int row = 4;
         for (int i = 0; i < FONTSIZE.length; i++) {
             if (_util.getFontSize() == Integer.parseInt(FONTSIZE[i])) {
@@ -315,11 +326,11 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         _fontSizeBox.setSelectedIndex(row);
 
         _fontStyleBox = new AJComboBox(STYLES, STYLE);
-        fontPanel.add(makeBoxPanel("fontStyle", _fontStyleBox));
+        fontPanel.add(makeBoxPanel("FontStyle", _fontStyleBox)); // NOI18N
         _fontStyleBox.setSelectedIndex(_util.getFont().getStyle());
 
         _fontJustBox = new AJComboBox(JUSTIFICATION, JUST);
-        fontPanel.add(makeBoxPanel("justification", _fontJustBox));
+        fontPanel.add(makeBoxPanel("Justification", _fontJustBox)); // NOI18N
         switch (_util.getJustification()) {
             case PositionablePopupUtil.LEFT:
                 row = 0;
@@ -356,9 +367,23 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         this.add(colorPanel);
     }
 
+    String bundleCaption = null;
+
     private JPanel makeTextPanel(String caption, JLabel sample, int state, boolean addTextField) {
         JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder(Bundle.getMessage(caption)));
+        // use NamedBeanBundle property for basic beans like "Turnout" I18N
+        if ("Active".equals(caption)) {
+            bundleCaption = "SensorStateActive";
+        } else if ("InActive".equals(caption)) {
+            bundleCaption = "SensorStateInactive";
+        } else if ("Unknown".equals(caption)) {
+            bundleCaption = "BeanStateUnknown";
+        } else if ("Inconsistent".equals(caption)) {
+            bundleCaption = "BeanStateInconsistent";
+        } else {
+            bundleCaption = caption;
+        }
+        panel.setBorder(BorderFactory.createTitledBorder(Bundle.getMessage(bundleCaption)));
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         JPanel p = new JPanel();
         if (addTextField) {
@@ -371,15 +396,19 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                     return this;
                 }
 
+                @Override
                 public void keyTyped(KeyEvent E) {
                 }
 
+                @Override
                 public void keyPressed(KeyEvent E) {
                 }
 
+                @Override
                 public void keyReleased(KeyEvent E) {
                     JTextField tmp = (JTextField) E.getSource();
                     sample.setText(tmp.getText());
+                    updateSamples();
                 }
             }.init(sample));
             p.add(textField);            
@@ -387,14 +416,15 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         panel.add(p);
 
         p = new JPanel();
-        p.add(makeButton(new AJRadioButton(Bundle.getMessage("fontColor"), state)));
-        p.add(makeButton(new AJRadioButton(Bundle.getMessage("backColor"), state + 10)));
+        p.add(makeButton(new AJRadioButton(Bundle.getMessage("FontColor"), state)));
+        p.add(makeButton(new AJRadioButton(Bundle.getMessage("FontBackgroundColor"), state + 10)));
         AJRadioButton button = new AJRadioButton(Bundle.getMessage("transparentBack"), state + 20);
         _buttonGroup.add(button);
         p.add(button);
         button.addActionListener(new ActionListener() {
             AJRadioButton button;
 
+            @Override
             public void actionPerformed(ActionEvent a) {
                 if (button.isSelected()) {
                     switch (button.which) {
@@ -413,6 +443,9 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                         case INCONSISTENT_TRANSPARENT_COLOR:
                             _sample.get("Inconsistent").setOpaque(false);
                             break;
+                        default:
+                            log.warn("Unexpected button.which {} in actionPerformed", button.which);
+                            break;
                     }
                     updateSamples();
                 }
@@ -423,8 +456,10 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                 return this;
             }
         }.init(button));
-        panel.add(p);
+        // add a SetBackground combo
+        p.add(makeBgButtonPanel(_previewPanel, null, _backgrounds)); // no listener on this variant
 
+        panel.add(p);
         return panel;
     }
 
@@ -432,6 +467,7 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         button.addActionListener(new ActionListener() {
             AJRadioButton button;
 
+            @Override
             public void actionPerformed(ActionEvent a) {
                 if (button.isSelected()) {
                     int prevButton = _selectedButton;
@@ -451,8 +487,8 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         return button;
     }
 
-    private void updateSamples() {
-        if (_previewPanel==null) {
+    protected void updateSamples() {
+        if (_previewPanel == null) {
             return;            
         }
         
@@ -474,6 +510,8 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
             sam.setFont(font);
             util.setFixedWidth(_util.getFixedWidth());
             util.setFixedHeight(_util.getFixedHeight());
+            util.setMargin(mar);
+            util.setBorderSize(bor);
             Border borderMargin;
             if (sam.isOpaque()) {
                 borderMargin = new LineBorder(sam.getBackground(), mar);
@@ -493,13 +531,59 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                     sam.setHorizontalAlignment(JLabel.CENTER);
             }
             sam.updateSize();
-            sam.setPreferredSize(new Dimension(sam.maxWidth(), sam.maxHeight()));
+            sam.setPreferredSize(sam.getSize());
+            sam.repaint();
         }
         if (_dialog!=null) {
             _dialog.pack();            
         }
     }
 
+    /**
+     * Create panel element containing [Set background:] drop down list.
+     * Special version for Decorator, no access to shared variable previewBgSet.
+     * @see jmri.jmrit.catalog.PreviewDialog#setupPanel()
+     * @see ItemPanel
+     *
+     * @param preview1 ImagePanel containing icon set
+     * @param preview2 not used, matches method in ItemPanel
+     * @param imgArray array of colored background images
+     * @return a JPanel with label and drop down
+     */
+    private JPanel makeBgButtonPanel(@Nonnull ImagePanel preview1, ImagePanel preview2, BufferedImage[] imgArray) {
+        JComboBox<String> bgColorBox = new JComboBox<>();
+        bgColorBox.addItem(Bundle.getMessage("PanelBgColor")); // PanelColor key is specific for CPE, too long for combo
+        bgColorBox.addItem(Bundle.getMessage("White"));
+        bgColorBox.addItem(Bundle.getMessage("LightGray"));
+        bgColorBox.addItem(Bundle.getMessage("DarkGray"));
+        bgColorBox.addItem(Bundle.getMessage("Checkers"));
+        bgColorBox.setSelectedIndex(previewBgSet); // starts as 0 = panel bg color, DecoratorPanel cannot read shared ItemPanel choice
+        bgColorBox.addActionListener((ActionEvent e) -> {
+            if (imgArray != null) {
+                if (previewBgSet != bgColorBox.getSelectedIndex()) {
+                    previewBgSet = bgColorBox.getSelectedIndex(); // store user choice
+                    // load background image
+                    log.debug("Palette Decorator setImage called {}", previewBgSet);
+                    preview1.setImage(imgArray[previewBgSet]);
+                }
+                // preview.setOpaque(false); // needed?
+                preview1.revalidate();        // force redraw
+            } else {
+                log.debug("imgArray is empty");
+            }
+        });
+        JPanel backgroundPanel = new JPanel();
+        backgroundPanel.setLayout(new BoxLayout(backgroundPanel, BoxLayout.Y_AXIS));
+        JPanel pp = new JPanel();
+        pp.setLayout(new FlowLayout(FlowLayout.CENTER));
+        pp.add(new JLabel(Bundle.getMessage("setBackground")));
+        pp.add(bgColorBox);
+        backgroundPanel.add(pp);
+        backgroundPanel.setMaximumSize(backgroundPanel.getPreferredSize());
+        return backgroundPanel;
+    }
+
+    @Override
     public void stateChanged(ChangeEvent e) {
         Object obj = e.getSource();
         if (obj instanceof AJSpinner) {
@@ -517,6 +601,9 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                 case FHEIGHT:
                     _util.setFixedHeight(num);
                     break;
+                default:
+                    log.warn("Unexpected _which {}  in stateChanged", ((AJSpinner) obj)._which);
+                    break;
             }
         } else {
             changeColor();
@@ -528,7 +615,7 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
         return _util;
     }
 
-    public void getText(Positionable pos) {
+    public void setAttributes(Positionable pos) {
         if (pos instanceof SensorIcon  && !((SensorIcon)pos).isIcon()) {
             SensorIcon icon = (SensorIcon) pos;
             PositionableLabel sample = _sample.get("Active");
@@ -624,10 +711,13 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
             case BORDER_COLOR:
                 _util.setBorderColor(_chooser.getColor());
                 break;
+            default:
+                log.warn("Unexpected _selectedButton {}  in changeColor", _selectedButton);
+                break;
         }
-        
     }
 
+    @Override
     public void itemStateChanged(ItemEvent e) {
         Object obj = e.getSource();
         if (obj instanceof AJComboBox) {
@@ -651,6 +741,9 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                         case 3:
                             style = (Font.BOLD | Font.ITALIC);
                             break;
+                        default:
+                            log.warn("Unexpected index {}  in itemStateChanged", ((AJComboBox) obj).getSelectedIndex());
+                            break;
                     }
                     _util.setFontStyle(style);
                     break;
@@ -666,13 +759,21 @@ public class DecoratorPanel extends JPanel implements ChangeListener, ItemListen
                         case 2:
                             just = PositionablePopupUtil.RIGHT;
                             break;
+                        default:
+                            log.warn("Unexpected index {}  in itemStateChanged", ((AJComboBox) obj).getSelectedIndex());
+                            break;
                     }
                     _util.setJustification(just);
                     break;
-            }
+                default:
+                    log.warn("Unexpected _which {}  in itemStateChanged", ((AJComboBox) obj)._which);
+                    break;
+                }
             updateSamples();
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(DecoratorPanel.class.getName());
+    // initialize logging
+    private final static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DecoratorPanel.class);
+
 }

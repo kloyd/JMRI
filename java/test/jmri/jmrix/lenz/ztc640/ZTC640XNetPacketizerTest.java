@@ -1,48 +1,34 @@
 package jmri.jmrix.lenz.ztc640;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.jmrix.lenz.XNetPortControllerScaffold;
+import org.junit.Before;
+import org.junit.Assert;
+
 
 /**
  * <p>
  * Title: ZTC640XNetPacketizerTest </p>
  * <p>
- * Description: </p>
- * <p>
- * Copyright: Copyright (c) 2009</p>
  *
- * @author Paul Bender
- * @version $Revision$
+ * @author Paul Bender Copyright (C) 2009
  */
-public class ZTC640XNetPacketizerTest extends TestCase {
-
-    public void testCtor() {
-        ZTC640XNetPacketizer f = new ZTC640XNetPacketizer(new jmri.jmrix.lenz.LenzCommandStation());
-        Assert.assertNotNull(f);
-    }
-
-    // from here down is testing infrastructure
-    public ZTC640XNetPacketizerTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", ZTC640XNetPacketizerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
+public class ZTC640XNetPacketizerTest extends jmri.jmrix.lenz.XNetPacketizerTest {
 
     // The minimal setup for log4J
-    protected void setUp() {
+    @Before
+    @Override
+    public void setUp() {
         apps.tests.Log4JFixture.setUp();
+        tc = new ZTC640XNetPacketizer(new jmri.jmrix.lenz.LenzCommandStation()) {
+            @Override
+            protected void handleTimeout(jmri.jmrix.AbstractMRMessage msg, jmri.jmrix.AbstractMRListener l) {
+            }
+        };
+        try {
+           port = new XNetPortControllerScaffold();
+        } catch (Exception e) {
+           Assert.fail("Error creating test port");
+        }
     }
-
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
-    }
-
-    static Logger log = LoggerFactory.getLogger(ZTC640XNetPacketizerTest.class.getName());
 
 }

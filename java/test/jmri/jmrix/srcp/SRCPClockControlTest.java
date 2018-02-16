@@ -1,11 +1,10 @@
 package jmri.jmrix.srcp;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * SRCPClockControlTest.java
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory;
  * Description:	tests for the jmri.jmrix.srcp.SRCPClockControl class
  *
  * @author	Bob Jacobsen
- * @version $Revision$
  */
 public class SRCPClockControlTest extends TestCase {
 
@@ -35,7 +33,7 @@ public class SRCPClockControlTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", SRCPClockControlTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -47,12 +45,11 @@ public class SRCPClockControlTest extends TestCase {
     // The minimal setup for log4J
     @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
     @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-    static Logger log = LoggerFactory.getLogger(SRCPClockControlTest.class.getName());
 }

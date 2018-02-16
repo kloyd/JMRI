@@ -11,15 +11,18 @@ import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
 import java.net.URL;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import javax.swing.ImageIcon;
 import jmri.jmrit.display.PositionableLabel;
 import jmri.util.FileUtil;
+import jmri.util.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Extend an ImageIcon to remember the name from which it was created and
- * provide rotation & scaling services.
+ * provide rotation {@literal &} scaling services.
  * <p>
  * We store both a "URL" for finding the file this was made from (so we can load
  * this later), plus a shorter "name" for display.
@@ -28,15 +31,9 @@ import org.slf4j.LoggerFactory;
  *
  * @see jmri.jmrit.display.configurexml.PositionableLabelXml
  * @author Bob Jacobsen Copyright 2002, 2008
- * @author Pete Cressman Copyright: Copyright (c) 2009, 2010
- * @version $Revision$
+ * @author Pete Cressman Copyright (c) 2009, 2010
  */
 public class NamedIcon extends ImageIcon {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5274934991719576677L;
 
     /**
      * Create a NamedIcon that is a complete copy of an existing NamedIcon
@@ -53,10 +50,11 @@ public class NamedIcon extends ImageIcon {
      * NamedIcon
      *
      * @param pOld Object to copy
+     * @param comp the container the new icon is embedded in
      */
     public NamedIcon(NamedIcon pOld, Component comp) {
         this(pOld.mURL, pOld.mName);
-        setLoad(pOld._deg, pOld._scale, comp);
+        setLoad(pOld._degrees, pOld._scale, comp);
         setRotation(pOld.mRotation, comp);
     }
 
@@ -64,7 +62,7 @@ public class NamedIcon extends ImageIcon {
      * Create a named icon that includes an image to be loaded from a URL.
      * <p>
      * The default access form is "file:", so a bare pathname to an icon file
-     * will also work for the URL argument
+     * will also work for the URL argument.
      *
      * @param pUrl  URL of image file to load
      * @param pName Human-readable name for the icon
@@ -73,11 +71,11 @@ public class NamedIcon extends ImageIcon {
         super(FileUtil.findURL(pUrl));
         URL u = FileUtil.findURL(pUrl);
         if (u == null) {
-            log.warn("Could not load image from " + pUrl + " (file does not exist)");
+            log.warn("Could not load image from {} (file does not exist)", pUrl);
         }
         mDefaultImage = getImage();
         if (mDefaultImage == null) {
-            log.warn("Could not load image from " + pUrl + " (image is null)");
+            log.warn("Could not load image from {} (image is null)", pUrl);
         }
         mName = pName;
         mURL = FileUtil.getPortableFilename(pUrl);
@@ -100,63 +98,80 @@ public class NamedIcon extends ImageIcon {
     }
 
     /**
-     * Find the NamedIcon corresponding to a name. Understands the
+     * Find the NamedIcon corresponding to a file path. Understands the
      * <a href="http://jmri.org/help/en/html/doc/Technical/FileNames.shtml">standard
      * portable filename prefixes</a>.
      *
-     * @param pName The name string, possibly starting with file: or resource:
-     * @return the desired icon with this same pName as its name.
+     * @param path The path to the file, either absolute or portable
+     * @return the desired icon with this same name as its path
      */
-    static public NamedIcon getIconByName(String pName) {
-        if (pName == null || pName.length() == 0) {
+    static public NamedIcon getIconByName(String path) {
+        if (path == null || path.isEmpty()) {
             return null;
         }
-        URL u = FileUtil.findURL(pName);
-        if (u == null) {
+        if (FileUtil.findURL(path) == null) {
             return null;
         }
-        return new NamedIcon(pName, pName);
+        return new NamedIcon(path, path);
     }
 
     /**
-     * Return the human-readable name of this icon
+     * Return the human-readable name of this icon.
+     *
+     * @return the name or null if not set
      */
+    @CheckForNull
     public String getName() {
         return mName;
     }
 
     /**
-     * Actually it is mName that is the URL that loads the icon!
+     * Set the human-readable name for this icon.
+     *
+     * @param name the new name, can be null
      */
-    public void setName(String name) {
+    public void setName(@Nullable String name) {
         mName = name;
     }
 
     /**
-     * Return the URL of this icon
+     * Get the URL of this icon.
+     *
+     * @return the path to this icon in JMRI portable format or null if not set
      */
+    @CheckForNull
     public String getURL() {
         return mURL;
     }
 
     /**
-     * Set URL of original icon image
+     * Set URL of original icon image. Setting this after initial construction
+     * does not change the icon.
+     *
+     * @param url the URL associated with this icon
      */
-    public void setURL(String url) {
+    public void setURL(@Nullable String url) {
         mURL = url;
     }
 
     /**
-     * Return the 0-3 number of 90-degree rotations needed to properly display
-     * this icon
+     * Get the number of 90-degree rotations needed to properly display this
+     * icon.
+     *
+     * @return 0 (no rotation), 1 (rotated 90 degrees), 2 (180 degrees), or 3
+     *         (270 degrees)
      */
     public int getRotation() {
         return mRotation;
     }
 
     /**
-     * Set the 0-3 number of 90-degree rotations needed to properly display this
-     * icon
+     * Set the number of 90-degree rotations needed to properly display this
+     * icon.
+     *
+     * @param pRotation 0 (no rotation), 1 (rotated 90 degrees), 2 (180
+     *                  degrees), or 3 (270 degrees)
+     * @param comp      the component containing this icon
      */
     public void setRotation(int pRotation, Component comp) {
         // don't transform a blinking icon, it will no longer blink!
@@ -171,16 +186,18 @@ public class NamedIcon extends ImageIcon {
         }
         mRotation = pRotation;
         setImage(createRotatedImage(mDefaultImage, comp, mRotation));
-        _deg = 0;
-        int w = (int) Math.ceil(_scale * getIconWidth());
-        int h = (int) Math.ceil(_scale * getIconHeight());
-        transformImage(w, h, _transformS, comp);
+        _degrees = 0;
+        if (Math.abs(_scale - 1.0) > .00001) {
+            int w = (int) Math.ceil(_scale * getIconWidth());
+            int h = (int) Math.ceil(_scale * getIconHeight());
+            transformImage(w, h, _transformS, comp);
+        }
     }
 
     private String mName = null;
     private String mURL = null;
     private Image mDefaultImage;
-    /*    
+    /*
      public Image getOriginalImage() {
      return mDefaultImage;
      }*/
@@ -207,10 +224,7 @@ public class NamedIcon extends ImageIcon {
      * @return new Image object containing the rotated input image
      */
     public Image createRotatedImage(Image pImage, Component pComponent, int pRotation) {
-        if (log.isDebugEnabled()) {
-            log.debug("createRotatedImage: pRotation= " + pRotation
-                    + ", mRotation= " + mRotation);
-        }
+        log.debug("createRotatedImage: pRotation= {}, mRotation= {}", pRotation, mRotation);
         if (pRotation == 0) {
             return pImage;
         }
@@ -264,6 +278,9 @@ public class NamedIcon extends ImageIcon {
                 imageSource = new MemoryImageSource(h, w,
                         ColorModel.getRGBdefault(), newPixels, 0, h);
                 break;
+            default:
+                log.warn("Unhandled rotation code: {}", pRotation);
+                break;
         }
 
         Image myImage = pComponent.createImage(imageSource);
@@ -274,13 +291,13 @@ public class NamedIcon extends ImageIcon {
         }
         return myImage;
     }
-    private int _deg = 0;
+    private int _degrees = 0;
     private double _scale = 1.0;
     private AffineTransform _transformS = new AffineTransform();    // scaling
     private AffineTransform _transformF = new AffineTransform();    // Fliped or Mirrored
 
     public int getDegrees() {
-        return _deg;
+        return _degrees;
     }
 
     public double getScale() {
@@ -303,8 +320,8 @@ public class NamedIcon extends ImageIcon {
     public void transformImage(int w, int h, AffineTransform t, Component comp) {
         if (w <= 0 || h <= 0) {
             if (log.isDebugEnabled()) {
-                log.debug("transformImage bad coords "
-                        + ((jmri.jmrit.display.Positionable) comp).getNameString());
+                log.debug("transformImage bad coords {}",
+                        ((jmri.jmrit.display.Positionable) comp).getNameString());
             }
             return;
         }
@@ -316,80 +333,99 @@ public class NamedIcon extends ImageIcon {
                 RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
                 RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+//         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,   // Turned off due to poor performance, see Issue #3850 and PR #3855 for background
+//                 RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g2d.drawImage(getImage(), t, comp);
         setImage(bufIm);
         g2d.dispose();
     }
+
     /*
      void debugDraw(String op, Component c) {
      jmri.jmrit.display.Positionable pos = (jmri.jmrit.display.Positionable)c;
      java.awt.Rectangle r = c.getBounds();
      log.debug(pos.getNameString()+" "+op);
-     System.out.println("\tBounds at ("+r.x+", "+r.y+") width= "+r.width+", height= "+r.height); 
+     System.out.println("\tBounds at ("+r.x+", "+r.y+") width= "+r.width+", height= "+r.height);
      System.out.println("\tLocation at ("+c.getX()+", "+c.getY()+") width= "+
-     c.getWidth()+", height= "+c.getHeight()); 
+     c.getWidth()+", height= "+c.getHeight());
      }
      */
-
     /**
-     * Scale as a percentage
+     * Scale as a percentage.
      *
-     * public void scale(int s, Component comp) { //log.info("scale= "+s+",
+     * @param scale the scale to set the image
+     * @param comp  the containing component
+     */
+    /* public void scale(int s, Component comp) { //log.info("scale= "+s+",
      * "+getDescription()); if (s<1) { return; } scale(s/100.0, comp); }
      */
     public void scale(double scale, Component comp) {
         setImage(mDefaultImage);
-        int w = (int) Math.ceil(scale * getIconWidth());
-        int h = (int) Math.ceil(scale * getIconHeight());
-        _transformS = AffineTransform.getScaleInstance(scale, scale);
-        transformImage(w, h, _transformS, comp);
         _scale = scale;
-        if (_deg != 0) {
-            rotate(_deg, comp);
+        if (Math.abs(scale - 1.0) > .00001) {
+            _transformS = AffineTransform.getScaleInstance(scale, scale);
         }
+        rotate(_degrees, comp);
     }
 
     /**
-     * Rotate from anchor point (upper left corner) and shift into place
+     * Rotate from anchor point (upper left corner) and shift into place.
+     *
+     * @param degree the distance to rotate
+     * @param comp   containing component
      */
     public void rotate(int degree, Component comp) {
         setImage(mDefaultImage);
-        if (_scale != 1.0) {
+        if (Math.abs(_scale - 1.0) > .00001) {
             int w = (int) Math.ceil(_scale * getIconWidth());
             int h = (int) Math.ceil(_scale * getIconHeight());
             transformImage(w, h, _transformS, comp);
         }
         mRotation = 0;
-        degree = degree % 360;
-        double rad = degree * Math.PI / 180.0;
+        // this _always_ returns a value between 0 and 360...
+        // (and yes, it does work properly for negative numbers)
+        _degrees = MathUtil.wrap(degree, 0, 360);
+        if (_degrees == 0) {
+            return;
+        }
+        double rad = Math.toRadians(_degrees);
         double w = getIconWidth();
         double h = getIconHeight();
         int width = (int) Math.ceil(Math.abs(h * Math.sin(rad)) + Math.abs(w * Math.cos(rad)));
         int heigth = (int) Math.ceil(Math.abs(h * Math.cos(rad)) + Math.abs(w * Math.sin(rad)));
-        AffineTransform t = null;
-        if (0 <= degree && degree < 90 || -360 < degree && degree <= -270) {
-            t = AffineTransform.getTranslateInstance(h * Math.sin(rad), 0.0);
-        } else if (90 <= degree && degree < 180 || -270 < degree && degree <= -180) {
-            t = AffineTransform.getTranslateInstance(h * Math.sin(rad) - w * Math.cos(rad), -h * Math.cos(rad));
-        } else if (180 <= degree && degree < 270 || -180 < degree && degree <= -90) {
-            t = AffineTransform.getTranslateInstance(-w * Math.cos(rad), -w * Math.sin(rad) - h * Math.cos(rad));
-        } else /*if (270<=degree && degree<360)*/ {
-            t = AffineTransform.getTranslateInstance(0.0, -w * Math.sin(rad));
+        AffineTransform t;
+        if (false) {
+            // TODO: Test to see if the "else" case is necessary
+            t = AffineTransform.getTranslateInstance(
+                h * Math.sin(rad) - w * Math.cos(rad),
+                -w * Math.sin(rad) - h * Math.cos(rad));
+        } else {
+            if (_degrees < 90) {
+                t = AffineTransform.getTranslateInstance(h * Math.sin(rad), 0.0);
+            } else if (_degrees < 180) {
+                t = AffineTransform.getTranslateInstance(h * Math.sin(rad) - w * Math.cos(rad), -h * Math.cos(rad));
+            } else if (_degrees < 270) {
+                t = AffineTransform.getTranslateInstance(-w * Math.cos(rad), -w * Math.sin(rad) - h * Math.cos(rad));
+            } else /* if (_degrees < 360) */ {
+                t = AffineTransform.getTranslateInstance(0.0, -w * Math.sin(rad));
+            }
         }
         AffineTransform r = AffineTransform.getRotateInstance(rad);
         t.concatenate(r);
         transformImage(width, heigth, t, comp);
-        _deg = degree;
         if (comp instanceof PositionableLabel) {
-            ((PositionableLabel) comp).setDegrees(degree);
+            ((PositionableLabel) comp).setDegrees(_degrees);
         }
     }
 
     /**
-     * If necessary, reduce this image to within 'width' x 'height' dimensions.
-     * limit the reduction by 'limit'
+     * Reduce this image size to within the given dimensions, with a limit on
+     * the reduction in size.
+     *
+     * @param width new width
+     * @param height new height
+     * @param limit limit on the reduction in size
+     * @return the scale by which this image was resized
      */
     public double reduceTo(int width, int height, double limit) {
         int w = getIconWidth();
@@ -405,6 +441,9 @@ public class NamedIcon extends ImageIcon {
             if (limit > 0.0) {
                 scale = Math.max(scale, limit);  // but not too small
             }
+//            java.awt.Image im = getImage();
+//            im.getScaledInstance((int)Math.ceil(scale * w), (int)Math.ceil(scale * h), java.awt.Image.SCALE_DEFAULT);
+//            setImage(im);
             AffineTransform t = AffineTransform.getScaleInstance(scale, scale);
             transformImage((int) Math.ceil(scale * w), (int) Math.ceil(scale * h), t, null);
         }
@@ -419,7 +458,7 @@ public class NamedIcon extends ImageIcon {
         if (flip == NOFLIP) {
             setImage(mDefaultImage);
             _transformF = new AffineTransform();
-            _deg = 0;
+            _degrees = 0;
             int w = (int) Math.ceil(_scale * getIconWidth());
             int h = (int) Math.ceil(_scale * getIconHeight());
             transformImage(w, h, _transformF, comp);
@@ -438,6 +477,6 @@ public class NamedIcon extends ImageIcon {
         transformImage(w, h, _transformF, null);
     }
 
-    static Logger log = LoggerFactory.getLogger(NamedIcon.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(NamedIcon.class);
 
 }

@@ -1,8 +1,6 @@
-// NcePacketGenPanel.java
 package jmri.jmrix.nce.packetgen;
 
 import java.awt.Dimension;
-import java.util.ResourceBundle;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import jmri.jmrix.nce.NceMessage;
@@ -10,27 +8,16 @@ import jmri.jmrix.nce.NceReply;
 import jmri.jmrix.nce.NceSystemConnectionMemo;
 import jmri.jmrix.nce.NceTrafficController;
 import jmri.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Frame for user input of Nce messages
  *
- * @author	Ken Cameron	Copyright (C) 2010 derived from:
- * @author	Bob Jacobsen Copyright (C) 2001
+ * @author Ken Cameron Copyright (C) 2010 derived from:
+ * @author Bob Jacobsen Copyright (C) 2001
  * @author Dan Boudreau Copyright (C) 2007
- * @version $Revision$
  */
 public class NcePacketGenPanel extends jmri.jmrix.nce.swing.NcePanel implements jmri.jmrix.nce.NceListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4820259525840330859L;
-
-    ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.nce.packetgen.NcePacketGenBundle");
-
-    // member declarations
     javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
     javax.swing.JButton sendButton = new javax.swing.JButton();
     javax.swing.JTextField packetTextField = new javax.swing.JTextField(20);
@@ -43,20 +30,28 @@ public class NcePacketGenPanel extends jmri.jmrix.nce.swing.NcePanel implements 
         super();
     }
 
-    public void initContext(Object context) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initContext(Object context) {
         if (context instanceof NceSystemConnectionMemo) {
-            try {
-                initComponents((NceSystemConnectionMemo) context);
-            } catch (Exception e) {
-                //log.error("BoosterProg initContext failed");
-            }
+            initComponents((NceSystemConnectionMemo) context);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getHelpTarget() {
         return "package.jmri.jmrix.nce.packetgen.NcePacketGenFrame";
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getTitle() {
         StringBuilder x = new StringBuilder();
         if (memo != null) {
@@ -65,11 +60,15 @@ public class NcePacketGenPanel extends jmri.jmrix.nce.swing.NcePanel implements 
             x.append("NCE_");
         }
         x.append(": ");
-        x.append(rb.getString("Title"));
+        x.append(Bundle.getMessage("Title"));
         return x.toString();
     }
 
-    public void initComponents(NceSystemConnectionMemo m) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents(NceSystemConnectionMemo m) {
         this.memo = m;
         this.tc = m.getNceTrafficController();
 
@@ -104,6 +103,7 @@ public class NcePacketGenPanel extends jmri.jmrix.nce.swing.NcePanel implements 
         add(replyLenTextField);
 
         sendButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 sendButtonActionPerformed(e);
             }
@@ -143,9 +143,17 @@ public class NcePacketGenPanel extends jmri.jmrix.nce.swing.NcePanel implements 
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void message(NceMessage m) {
     }  // ignore replies
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void reply(NceReply r) {
     } // ignore replies
 
@@ -219,11 +227,6 @@ public class NcePacketGenPanel extends jmri.jmrix.nce.swing.NcePanel implements 
      */
     static public class Default extends jmri.jmrix.nce.swing.NceNamedPaneAction {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 1797965223160428671L;
-
         public Default() {
             super("Open NCE Send Binary Command",
                     new jmri.util.swing.sdi.JmriJFrameInterface(),
@@ -231,6 +234,4 @@ public class NcePacketGenPanel extends jmri.jmrix.nce.swing.NcePanel implements 
                     jmri.InstanceManager.getDefault(NceSystemConnectionMemo.class));
         }
     }
-
-    static Logger log = LoggerFactory.getLogger(NcePacketGenPanel.class.getName());
 }

@@ -12,18 +12,21 @@ import org.slf4j.LoggerFactory;
  * method here.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2006
- * @version $Revision$
+ * @deprecated As of 4.3.5, see jmri.jmrix.internal.configurexml classes
  */
+@Deprecated
 public class InternalTurnoutManagerXml extends jmri.managers.configurexml.AbstractTurnoutManagerConfigXML {
 
     public InternalTurnoutManagerXml() {
         super();
     }
 
+    @Override
     public void setStoreElementClass(Element turnouts) {
         turnouts.setAttribute("class", this.getClass().getName());
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -34,6 +37,6 @@ public class InternalTurnoutManagerXml extends jmri.managers.configurexml.Abstra
         return loadTurnouts(shared, perNode);
     }
 
-    static Logger log = LoggerFactory.getLogger(InternalTurnoutManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(InternalTurnoutManagerXml.class);
 
 }

@@ -1,4 +1,3 @@
-// OsIndicatorPanel.java
 package jmri.jmrit.ussctc;
 
 import java.awt.event.ActionEvent;
@@ -15,15 +14,10 @@ import org.slf4j.LoggerFactory;
  * User interface frame for creating and editing "OS Indicator" logic on USS CTC
  * machines.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2007
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2007
  */
 public class OsIndicatorPanel extends BasePanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5657380344257474438L;
     JTextField outputName;
     JTextField sensorName;
     JTextField lockName;
@@ -76,6 +70,7 @@ public class OsIndicatorPanel extends BasePanel {
 
         viewButton = new JButton(rb.getString("ButtonView"));
         viewButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 viewPressed();
             }
@@ -83,6 +78,7 @@ public class OsIndicatorPanel extends BasePanel {
         p2xs.add(viewButton);
         addButton = new JButton(rb.getString("ButtonAddUpdate"));
         addButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addPressed();
             }
@@ -119,6 +115,6 @@ public class OsIndicatorPanel extends BasePanel {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(OsIndicatorPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(OsIndicatorPanel.class);
 
 }

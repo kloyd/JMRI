@@ -17,8 +17,7 @@ package jmri.jmrit.beantable.oblock;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  *
- * @author	Pete Cressman (C) 2010
- * @version $Revision$
+ * @author Pete Cressman (C) 2010
  */
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -29,7 +28,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
 import jmri.InstanceManager;
-import jmri.jmrit.beantable.AbstractTableAction;
 import jmri.jmrit.logix.OBlock;
 import jmri.jmrit.logix.OPath;
 import jmri.jmrit.logix.Portal;
@@ -40,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 public class BlockPathTableModel extends AbstractTableModel implements PropertyChangeListener {
 
-    private static final long serialVersionUID = -2472819814795605641L;
     public static final int FROM_PORTAL_COLUMN = 0;
     public static final int NAME_COLUMN = 1;
     public static final int TO_PORTAL_COLUMN = 2;
@@ -106,10 +103,12 @@ public class BlockPathTableModel extends AbstractTableModel implements PropertyC
         }
     }
 
+    @Override
     public int getColumnCount() {
         return NUMCOLS;
     }
 
+    @Override
     public int getRowCount() {
         return _block.getPaths().size() + 1;
     }
@@ -124,13 +123,17 @@ public class BlockPathTableModel extends AbstractTableModel implements PropertyC
             case TO_PORTAL_COLUMN:
                 return Bundle.getMessage("ToPortal");
             case LENGTHCOL:
-                return AbstractTableAction.rb.getString("BlockLengthColName");
+                return Bundle.getMessage("BlockLengthColName");
             case UNITSCOL:
                 return "  ";
+            default:
+                // fall through
+                break;
         }
         return "";
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         OPath path = null;
         if (rowIndex < _block.getPaths().size()) {
@@ -191,6 +194,9 @@ public class BlockPathTableModel extends AbstractTableModel implements PropertyC
                 } else {
                     return Bundle.getMessage("ButtonClear");
                 }
+            default:
+                // fall through
+                break;
          }
         return "";
     }
@@ -257,6 +263,9 @@ public class BlockPathTableModel extends AbstractTableModel implements PropertyC
                 case DELETE_COL:
                     initTempRow();
                     fireTableRowsUpdated(row, row);
+                    break;
+                default:
+                    // fall through
                     break;
             }
             tempRow[col] = (String)value;
@@ -389,7 +398,10 @@ public class BlockPathTableModel extends AbstractTableModel implements PropertyC
                     _units.remove(row);
                     fireTableDataChanged();
                 }
-
+                break;
+            default:
+                // fall through
+                break;
         }
         if (msg != null) {
             JOptionPane.showMessageDialog(null, msg,
@@ -437,10 +449,14 @@ public class BlockPathTableModel extends AbstractTableModel implements PropertyC
                 return new JButton("TURNOUT").getPreferredSize().width;
             case DELETE_COL:
                 return new JButton("DELETE").getPreferredSize().width;
+            default:
+                // fall through
+                break;
         }
         return 5;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
         if (_block.equals(e.getSource())) {
             String property = e.getPropertyName();
@@ -453,5 +469,5 @@ public class BlockPathTableModel extends AbstractTableModel implements PropertyC
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(BlockPathTableModel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(BlockPathTableModel.class);
 }

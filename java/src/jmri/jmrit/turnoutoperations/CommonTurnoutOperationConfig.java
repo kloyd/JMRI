@@ -1,6 +1,3 @@
-/**
- *
- */
 package jmri.jmrit.turnoutoperations;
 
 import java.awt.Dimension;
@@ -10,22 +7,15 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import jmri.CommonTurnoutOperation;
 import jmri.TurnoutOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Extension of TurnoutOperationConfig to handle config for common aspects of
  * some subclasses
  *
- * @author John Harper	Copyright 2005
+ * @author John Harper Copyright 2005
  *
  */
 public class CommonTurnoutOperationConfig extends TurnoutOperationConfig {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4672869740466183146L;
     JSpinner intervalSpinner;   // actually a JSpinner
     JSpinner maxTriesSpinner;   // actually a JSpinner
     CommonTurnoutOperation myOp;
@@ -43,10 +33,10 @@ public class CommonTurnoutOperationConfig extends TurnoutOperationConfig {
         Box vbox = Box.createVerticalBox();
         Box hbox1 = Box.createHorizontalBox();
         Box hbox2 = Box.createHorizontalBox();
-        vbox.add(hbox1);
-        vbox.add(hbox2);
+        vbox.add(hbox2); //Show TimesToTry first, keeping to the order of the help text at right
+        vbox.add(hbox1); //Show Interval next
         vbox.add(Box.createVerticalGlue());
-        hbox1.add(new JLabel("Interval:     "));
+        hbox1.add(new JLabel(Bundle.getMessage("Interval")));
         hbox1.add(Box.createHorizontalGlue());
         intervalSpinner.setMinimumSize(new Dimension(100, 20));
 
@@ -56,7 +46,7 @@ public class CommonTurnoutOperationConfig extends TurnoutOperationConfig {
                         CommonTurnoutOperation.intervalStepSize)); // val, min, max, step
 
         hbox1.add(intervalSpinner);
-        hbox2.add(new JLabel("Times to try:   "));
+        hbox2.add(new JLabel(Bundle.getMessage("TimesToTry")));
         hbox2.add(Box.createHorizontalGlue());
         maxTriesSpinner.setMinimumSize(new Dimension(100, 20));
 
@@ -76,12 +66,11 @@ public class CommonTurnoutOperationConfig extends TurnoutOperationConfig {
      * called when OK button pressed in config panel, to retrieve and set new
      * values
      */
+    @Override
     public void endConfigure() {
         int newInterval = ((Integer) intervalSpinner.getValue()).intValue();
         myOp.setInterval(newInterval);
         int newMaxTries = ((Integer) maxTriesSpinner.getValue()).intValue();
         myOp.setMaxTries(newMaxTries);
     }
-
-    static Logger log = LoggerFactory.getLogger(CommonTurnoutOperationConfig.class.getName());
 }

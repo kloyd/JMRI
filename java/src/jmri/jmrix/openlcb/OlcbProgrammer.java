@@ -1,20 +1,18 @@
-/* OlcbProgrammer.java */
 package jmri.jmrix.openlcb;
 
-import java.util.List;
 import java.util.ArrayList;
-
+import java.util.List;
+import jmri.ProgListener;
 import jmri.ProgrammerException;
 import jmri.ProgrammingMode;
-import jmri.ProgListener;
 
 /**
  * Provide access to the hardware DCC decoder programming capability.
  * <P>
  * Programmers come in multiple types:
  * <UL>
- * <LI>Global, previously Service Mode, e.g. on a programming track
- * <LI>Addressed, previously Ops Mode, e.g. "programming on the main"
+ * <LI>Global, previously "Service Mode" or on a programming track
+ * <LI>Addressed, previously "Ops Mode" also known as "programming on the main"
  * </UL>
  * Different equipment may also require different programmers:
  * <ul>
@@ -27,7 +25,7 @@ import jmri.ProgListener;
  * Depending on which type you have, only certain modes can be set. Valid modes
  * are specified by the class static constants.
  * <P>
- * You get a Programmer object from a {@link jmri.ProgrammerManager}, which in turn
+ * You get a Programmer object from a {@link jmri.AddressedProgrammer}, which in turn
  * can be located from the {@link jmri.InstanceManager}.
  * <p>
  * Starting in JMRI 3.5.5, the CV addresses are Strings for generality. The
@@ -43,16 +41,11 @@ import jmri.ProgListener;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @see jmri.ProgrammerManager
- * @see jmri.Programmer
- * @author	Bob Jacobsen Copyright (C) 2015
+ * @see jmri.AddressedProgrammer
+ * @author Bob Jacobsen Copyright (C) 2015
  * @since 4.1.1
  */
 public class OlcbProgrammer extends jmri.jmrix.AbstractProgrammer implements jmri.AddressedProgrammer  {
-
-    public OlcbProgrammer() {
-        mode = OlcbProgrammerManager.OPENLCBMODE;
-    }
     
     @Override
     public List<ProgrammingMode> getSupportedModes() {
@@ -83,21 +76,16 @@ public class OlcbProgrammer extends jmri.jmrix.AbstractProgrammer implements jmr
     }
 
     @Override
-    @Deprecated
-    public void confirmCV(int CV, int val, ProgListener p) throws ProgrammerException {
-    }
-
-    @Override
     public void confirmCV(String CV, int val, ProgListener p) throws ProgrammerException {
     }
     
+    @Override
     public boolean getLongAddress() { return false;}
 
+    @Override
     public int getAddressNumber() {return 0;}
 
+    @Override
     public String getAddress() { return "";}
 
 }
-
-
-/* @(#)OlcbProgrammer.java */

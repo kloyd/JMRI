@@ -1,22 +1,21 @@
-// DecoderIndexFileTest.java
 package jmri.jmrit.decoderdefn;
 
 import java.util.List;
 import javax.swing.JComboBox;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.jdom2.DocType;
 import org.jdom2.Document;
 import org.jdom2.Element;
+import org.junit.Assert;
 
 /**
  * Tests for DecoderIndexFile class
  *
  * @author	Bob Jacobsen, Copyright (c) 2001, 2002
- * @version	$Revision$
- */
+  */
 public class DecoderIndexFileTest extends TestCase {
 
     public void testLoading() {
@@ -245,7 +244,7 @@ public class DecoderIndexFileTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", DecoderIndexFileTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -255,13 +254,15 @@ public class DecoderIndexFileTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
-    // static private Logger log = LoggerFactory.getLogger(DecoderIndexFileTest.class.getName());
+    // private final static Logger log = LoggerFactory.getLogger(DecoderIndexFileTest.class);
 }

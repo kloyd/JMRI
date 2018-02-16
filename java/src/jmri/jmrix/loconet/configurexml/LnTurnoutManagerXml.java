@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * method here.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2002
- * @version $Revision$
  */
 public class LnTurnoutManagerXml extends jmri.managers.configurexml.AbstractTurnoutManagerConfigXML {
 
@@ -19,10 +18,12 @@ public class LnTurnoutManagerXml extends jmri.managers.configurexml.AbstractTurn
         super();
     }
 
+    @Override
     public void setStoreElementClass(Element turnouts) {
-        turnouts.setAttribute("class", "jmri.jmrix.loconet.configurexml.LnTurnoutManagerXml");
+        turnouts.setAttribute("class", "jmri.jmrix.loconet.configurexml.LnTurnoutManagerXml"); // NOI18N
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -33,6 +34,6 @@ public class LnTurnoutManagerXml extends jmri.managers.configurexml.AbstractTurn
         return loadTurnouts(shared, perNode);
     }
 
-    static Logger log = LoggerFactory.getLogger(LnTurnoutManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LnTurnoutManagerXml.class);
 
 }

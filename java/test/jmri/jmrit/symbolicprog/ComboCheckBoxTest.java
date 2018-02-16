@@ -1,20 +1,19 @@
-// ComboCheckBoxTest.java
 package jmri.jmrit.symbolicprog;
 
 import java.util.HashMap;
 import javax.swing.JComboBox;
 import jmri.progdebugger.ProgDebugger;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author	Bob Jacobsen Copyright 2005
- * @version	$Revision$
- */
+  */
 public class ComboCheckBoxTest extends TestCase {
 
     ProgDebugger p = new ProgDebugger();
@@ -112,7 +111,7 @@ public class ComboCheckBoxTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", ComboCheckBoxTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -122,14 +121,16 @@ public class ComboCheckBoxTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
-    static Logger log = LoggerFactory.getLogger(ComboCheckBoxTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ComboCheckBoxTest.class);
 
 }

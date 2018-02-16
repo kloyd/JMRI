@@ -1,33 +1,30 @@
-/**
- * RpsMonAction.java
- *
- * Description:	Swing action to create and register a RpsMonFrame object
- *
- * @author	Bob Jacobsen Copyright (C) 2006
- * @version
- */
 package jmri.jmrix.rps.rpsmon;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
+/**
+ * Swing action to create and register a RpsMonFrame object
+ *
+ * @author	Bob Jacobsen Copyright (C) 2006
+ */
 public class RpsMonAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8976860321295273855L;
+    RpsSystemConnectionMemo memo = null;
 
-    public RpsMonAction(String s) {
+    public RpsMonAction(String s,RpsSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public RpsMonAction() {
-        this("RPS Monitor");
+    public RpsMonAction(RpsSystemConnectionMemo _memo) {
+        this("RPS Monitor",_memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        RpsMonFrame f = new RpsMonFrame();
+        RpsMonFrame f = new RpsMonFrame(memo);
         try {
             f.initComponents();
         } catch (Exception ex) {
@@ -37,6 +34,3 @@ public class RpsMonAction extends AbstractAction {
     }
 
 }
-
-
-/* @(#)RpsMonAction.java */

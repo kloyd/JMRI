@@ -1,4 +1,3 @@
-// SimpleServerFrame.java
 package jmri.jmris.simpleserver;
 
 import java.awt.event.ActionEvent;
@@ -6,21 +5,13 @@ import java.awt.event.ActionListener;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Frame displaying start/stop buttons for the JMRI server.
  *
- * @author	Paul Bender Copyright (C) 2009
- * @version	$Revision$
- */
+ * @author Paul Bender Copyright (C) 2009
+  */
 public class SimpleServerFrame extends jmri.util.JmriJFrame {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8501305524191992037L;
 
     public SimpleServerFrame() {
         this("Jmri Simple Server Starter");
@@ -42,6 +33,7 @@ public class SimpleServerFrame extends jmri.util.JmriJFrame {
 
         // install start button handler
         startButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 startSimpleServer();
             }
@@ -50,6 +42,7 @@ public class SimpleServerFrame extends jmri.util.JmriJFrame {
 
         // install stop button handler
         stopButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 stopSimpleServer();
             }
@@ -58,6 +51,7 @@ public class SimpleServerFrame extends jmri.util.JmriJFrame {
 
         // install close button handler
         closeButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 setVisible(false);
                 dispose();
@@ -77,6 +71,7 @@ public class SimpleServerFrame extends jmri.util.JmriJFrame {
         dispose();
     }
 
+    @Override
     public void dispose() {
         // take apart the JFrame
         super.dispose();
@@ -89,7 +84,5 @@ public class SimpleServerFrame extends jmri.util.JmriJFrame {
     public void stopSimpleServer() {
         SimpleServer.instance().stop();
     }
-
-    static Logger log = LoggerFactory.getLogger(SimpleServerFrame.class.getName());
 
 }

@@ -1,4 +1,3 @@
-// JMRIClientPacketGenFrame.java
 package jmri.jmrix.jmriclient.swing.packetgen;
 
 import java.awt.Dimension;
@@ -8,17 +7,12 @@ import jmri.jmrix.jmriclient.JMRIClientReply;
 import jmri.jmrix.jmriclient.JMRIClientTrafficController;
 
 /**
- * Description:	Frame for user input of JMRIClient messages
+ * Description: Frame for user input of JMRIClient messages
  *
- * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2008
  */
 public class PacketGenFrame extends jmri.util.JmriJFrame implements jmri.jmrix.jmriclient.JMRIClientListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5887061407912166629L;
     // member declarations
     javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
     javax.swing.JButton sendButton = new javax.swing.JButton();
@@ -28,7 +22,11 @@ public class PacketGenFrame extends jmri.util.JmriJFrame implements jmri.jmrix.j
         super();
     }
 
-    public void initComponents() throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents() {
         // the following code sets the frame's initial state
 
         jLabel1.setText("Command:");
@@ -54,6 +52,7 @@ public class PacketGenFrame extends jmri.util.JmriJFrame implements jmri.jmrix.j
         getContentPane().add(sendButton);
 
         sendButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 sendButtonActionPerformed(e);
             }
@@ -73,11 +72,21 @@ public class PacketGenFrame extends jmri.util.JmriJFrame implements jmri.jmrix.j
         tc.sendJMRIClientMessage(m, this);
     }
 
+    /**
+     * {@inheritDoc}
+     * Ignore messages.
+     */
+    @Override
     public void message(JMRIClientMessage m) {
-    }  // ignore replies
+    }
 
+    /**
+     * {@inheritDoc}
+     * Ignore replies.
+     */
+    @Override
     public void reply(JMRIClientReply r) {
-    } // ignore replies
+    }
 
     // connect to the TrafficController
     public void connect(JMRIClientTrafficController t) {

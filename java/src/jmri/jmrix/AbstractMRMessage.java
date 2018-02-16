@@ -1,17 +1,17 @@
-// AbstractMRMessage.java
 package jmri.jmrix;
 
+import java.util.Objects;
+import javax.annotation.Nonnull;
 import jmri.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Abstract base class for messages in a message/reply protocol.
- *
+ * <p>
  * Carries a sequence of characters, with accessors.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  */
 abstract public class AbstractMRMessage extends AbstractMessage {
 
@@ -19,7 +19,7 @@ abstract public class AbstractMRMessage extends AbstractMessage {
         setBinary(false);
         setNeededMode(AbstractMRTrafficController.NORMALMODE);
         setTimeout(SHORT_TIMEOUT);  // default value is the short timeout
-        setRetries(0);  // Default to no retries
+        setRetries(0); // default to no retries
     }
 
     // create a new one
@@ -27,20 +27,16 @@ abstract public class AbstractMRMessage extends AbstractMessage {
         this();
         if (i < 1) {
             log.error("invalid length in call to ctor");
+            throw new IllegalArgumentException("invalid length in call to ctor");
         }
         _nDataChars = i;
         _dataChars = new int[i];
     }
 
     // copy one
-    @SuppressWarnings("null")
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "NP_NULL_ON_SOME_PATH",
-            justification = "we want to force an exception")
-    public AbstractMRMessage(AbstractMRMessage m) {
+    public AbstractMRMessage(@Nonnull AbstractMRMessage m) {
         this();
-        if (m == null) {
-            log.error("copy ctor of null message");
-        }
+        Objects.requireNonNull(m, "copy ctor of null message");
         _nDataChars = m._nDataChars;
         _dataChars = new int[_nDataChars];
         System.arraycopy(m._dataChars, 0, _dataChars, 0, _nDataChars);
@@ -62,7 +58,11 @@ abstract public class AbstractMRMessage extends AbstractMessage {
     }
 
     public int getOpCode() {
-        return _dataChars[0];
+        try {
+            return _dataChars[0];
+        } catch(ArrayIndexOutOfBoundsException e) {
+            return 0;
+        }
     }
 
     public String getOpCodeHex() {
@@ -70,6 +70,7 @@ abstract public class AbstractMRMessage extends AbstractMessage {
     }
 
     // accessors to the bulk data
+
     // state info
     int mNeededMode;
 
@@ -83,7 +84,7 @@ abstract public class AbstractMRMessage extends AbstractMessage {
 
     /**
      * Is a reply expected to this message?
-     * <P>
+     * <p>
      * By default, a reply is expected to every message; either a reply or a
      * timeout is needed before the next message can be sent.
      * <p>
@@ -107,11 +108,11 @@ abstract public class AbstractMRMessage extends AbstractMessage {
 
     /**
      * Minimum timeout that's acceptable.
-     * <P>
+     * <p>
      * Also used as default for normal operations. Don't shorten this "to make
      * recovery faster", as sometimes <i>internal</i> delays can slow processing
      * down.
-     * <P>
+     * <p>
      * Units are milliseconds.
      */
     static protected final int SHORT_TIMEOUT = 2000;
@@ -139,6 +140,7 @@ abstract public class AbstractMRMessage extends AbstractMessage {
     }
 
     // display format
+
     // contents (private)
     public void addIntAsThree(int val, int offset) {
         String s = "" + val;
@@ -200,7 +202,6 @@ abstract public class AbstractMRMessage extends AbstractMessage {
         setElement(offset + 2, s.charAt(2));
         setElement(offset + 3, s.charAt(3));
     }
-    static Logger log = LoggerFactory.getLogger(AbstractMRMessage.class.getName());
 
     @Override
     public String toString() {
@@ -218,7 +219,6 @@ abstract public class AbstractMRMessage extends AbstractMessage {
         return s;
     }
 
+    private final static Logger log = LoggerFactory.getLogger(AbstractMRMessage.class);
+
 }
-
-
-/* @(#)AbstractMRMessage.java */

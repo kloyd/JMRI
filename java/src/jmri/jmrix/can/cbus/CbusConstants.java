@@ -1,13 +1,11 @@
-// CbusConstants.java
 package jmri.jmrix.can.cbus;
 
 /**
  * CbusConstants.java
  *
- * Description:	Constants to represent CBUS protocol
+ * Description: Constants to represent CBUS protocol
  *
- * @author	Andrew Crosland Copyright (C) 2008
- * @version $Revision$
+ * @author Andrew Crosland Copyright (C) 2008
  */
 public final class CbusConstants {
 
@@ -292,5 +290,3 @@ public final class CbusConstants {
      */
     public static final int CBUS_MAX_SLOTS = 32;
 }
-
-/* @(#)CbusConstants.java */

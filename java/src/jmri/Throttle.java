@@ -1,4 +1,3 @@
-// Thottle.java
 package jmri;
 
 import java.util.Vector;
@@ -27,8 +26,7 @@ import java.util.Vector;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2008
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2008
  */
 public interface Throttle {
 
@@ -98,14 +96,39 @@ public interface Throttle {
     public static final String F28Momentary = "F28Momentary"; // NOI18N
 
     /**
-     * Speed - expressed as a value 0.0 -> 1.0. Negative means emergency stop.
-     * This is an bound property.
+     * Speed - expressed as a value {@literal 0.0 -> 1.0.} Negative means
+     * emergency stop. This is an bound property.
      *
      * @return the speed as a percentage of maximum possible speed
      */
     public float getSpeedSetting();
 
+    /**
+     * Set the speed.
+     *
+     * @param speed a number from 0.0 to 1.0
+     */
     public void setSpeedSetting(float speed);
+
+    /**
+     * Set the speed - on systems which normally suppress the sending of a message
+     * if the new speed won't (appear to JMRI to) make any difference, the two extra
+     * options allow the calling method to insist the message is sent under some
+     * circumstances.
+     *
+     * @param speed a number from 0.0 to 1.0
+     * @param allowDuplicates if true, don't suppress messages that should have no effect
+     * @param allowDuplicatesOnStop if true, and the new speed is idle or estop, don't suppress messages
+     */
+    public void setSpeedSetting(float speed, boolean allowDuplicates, boolean allowDuplicatesOnStop);
+
+    /**
+     * Set the speed, and on systems which normally suppress the sending of a message make sure
+     * the message gets sent.
+     *
+     * @param speed a number from 0.0 to 1.0
+     */
+    public void setSpeedSettingAgain(float speed);
 
     /**
      * direction This is an bound property.
@@ -234,7 +257,7 @@ public interface Throttle {
 
     public void setF28(boolean f28);
 
-    // functions momentary status - note that we use the naming for DCC, 
+    // functions momentary status - note that we use the naming for DCC,
     // though that's not the implication;
     // see also DccThrottle interface
     public boolean getF0Momentary();
@@ -434,7 +457,7 @@ public interface Throttle {
      * After this, further usage of this Throttle object will result in a
      * JmriException.
      *
-     * @param l
+     * @param l {@link ThrottleListener} to dispose of
      */
     public void dispose(ThrottleListener l);
 
@@ -447,7 +470,7 @@ public interface Throttle {
      * <P>
      * Normally, release ends with a call to dispose.
      *
-     * @param l
+     * @param l {@link ThrottleListener} to release
      */
     public void release(ThrottleListener l);
 
@@ -462,7 +485,7 @@ public interface Throttle {
      * <P>
      * Normally, dispatch ends with a call to dispose.
      *
-     * @param l
+     * @param l {@link ThrottleListener} to dispatch
      */
     public void dispatch(ThrottleListener l);
 
@@ -470,6 +493,3 @@ public interface Throttle {
 
     public BasicRosterEntry getRosterEntry();
 }
-
-
-/* @(#)Thottle.java */

@@ -1,4 +1,3 @@
-// SerialSignalHead.java
 package jmri.jmrix.grapevine;
 
 import jmri.implementation.DefaultSignalHead;
@@ -11,25 +10,22 @@ import org.slf4j.LoggerFactory;
  * This object doesn't listen to the Grapevine serial communications. It
  * probably should, however, in case
  *
- * Description:	extend jmri.AbstractSignalHead for grapevine serial signals
+ * Description: extend jmri.AbstractSignalHead for grapevine serial signals
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2006, 2007
- * @version	$Revision$
- */
+ * @author Bob Jacobsen Copyright (C) 2003, 2006, 2007
+  */
 public class SerialSignalHead extends DefaultSignalHead {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -456123562360110180L;
+    GrapevineSystemConnectionMemo memo = null;
 
     /**
      * Create a SignalHead object, with only a system name.
      * <P>
      * 'systemName' should have been previously validated
      */
-    public SerialSignalHead(String systemName) {
+    public SerialSignalHead(String systemName,GrapevineSystemConnectionMemo _memo) {
         super(systemName);
+        memo = _memo;
         // Save system Name
         tSystemName = systemName;
         // Extract the Bit from the name
@@ -44,8 +40,9 @@ public class SerialSignalHead extends DefaultSignalHead {
      * <P>
      * 'systemName' should have been previously validated
      */
-    public SerialSignalHead(String systemName, String userName) {
+    public SerialSignalHead(String systemName, String userName,GrapevineSystemConnectionMemo _memo) {
         super(systemName, userName);
+        memo = _memo;
         // Save system Name
         tSystemName = systemName;
         // Extract the Bit from the name
@@ -58,8 +55,9 @@ public class SerialSignalHead extends DefaultSignalHead {
     /**
      * Handle a request to change state on layout
      */
+    @Override
     protected void updateOutput() {
-        SerialNode tNode = SerialAddress.getNodeFromSystemName(tSystemName);
+        SerialNode tNode = SerialAddress.getNodeFromSystemName(tSystemName,memo.getTrafficController());
         if (tNode == null) {
             // node does not exist, ignore call
             log.error("Can't find node for " + tSystemName + ", command ignored");
@@ -124,14 +122,16 @@ public class SerialSignalHead extends DefaultSignalHead {
         m.setElement(i++, tNode.getNodeAddress() | 0x80);  // address 2
         m.setElement(i++, bank << 4); // bank is most significant bits
         m.setParity(i - 4);
-        SerialTrafficController.instance().sendSerialMessage(m, null);
+        memo.getTrafficController().sendSerialMessage(m, null);
     }
 
     // flashing is done on the cards, so we don't have to
     // do it manually
+    @Override
     public void startFlash() {
     }
 
+    @Override
     public void stopFlash() {
     }
 
@@ -140,7 +140,7 @@ public class SerialSignalHead extends DefaultSignalHead {
     int output;         // output connector number, 0-23
     int bank;           // bank number, 0-3
 
-    static Logger log = LoggerFactory.getLogger(SerialSignalHead.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialSignalHead.class);
 }
 
-/* @(#)SerialSignalHead.java */
+

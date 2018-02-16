@@ -1,9 +1,6 @@
-// LoaderPane.java
 package jmri.jmrix.pricom.downloader;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.FlowLayout;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -23,19 +20,14 @@ import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import purejavacomm.*;
 
 /**
  * Pane for downloading software updates to PRICOM products
  *
  * @author	Bob Jacobsen Copyright (C) 2005
- * @version	$Revision$
  */
 public class LoaderPane extends javax.swing.JPanel {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 833932063738002557L;
 
     static ResourceBundle res = ResourceBundle.getBundle("jmri.jmrix.pricom.downloader.Loader");
 
@@ -46,7 +38,7 @@ public class LoaderPane extends javax.swing.JPanel {
     //private     boolean opened = false;
     DataInputStream serialStream = null;
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "IS2_INCONSISTENT_SYNC",
+    @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC",
             justification = "Class is no longer active, no hardware with which to test fix")
     OutputStream ostream = null;
 
@@ -79,6 +71,7 @@ public class LoaderPane extends javax.swing.JPanel {
         openPortButton.setText(res.getString("ButtonOpen"));
         openPortButton.setToolTipText(res.getString("TipOpenPort"));
         openPortButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 try {
                     openPortButtonActionPerformed(evt);
@@ -176,6 +169,7 @@ public class LoaderPane extends javax.swing.JPanel {
          * PortController via <code>connectPort</code>. Terminates with the
          * input stream breaking out of the try block.
          */
+        @Override
         public void run() {
             // have to limit verbosity!
 
@@ -196,6 +190,8 @@ public class LoaderPane extends javax.swing.JPanel {
         static final int maxMsg = 80;
         byte inBuffer[];
 
+        @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value="SR_NOT_CHECKED",
+                                            justification="this is for skip-chars while loop: no matter how many, we're skipping")
         void nibbleIncomingData() throws java.io.IOException {
             long nibbled = 0;                         // total chars chucked
             serialStream = new DataInputStream(activeSerialPort.getInputStream());
@@ -282,6 +278,7 @@ public class LoaderPane extends javax.swing.JPanel {
 
             // update progress bar via the queue to ensure synchronization
             Runnable r = new Runnable() {
+                @Override
                 public void run() {
                     updateGUI();
                 }
@@ -305,6 +302,7 @@ public class LoaderPane extends javax.swing.JPanel {
 
             // signal end to GUI via the queue to ensure synchronization
             r = new Runnable() {
+                @Override
                 public void run() {
                     enableGUI();
                 }
@@ -378,6 +376,7 @@ public class LoaderPane extends javax.swing.JPanel {
             /**
              * when invoked, format and display the message
              */
+            @Override
             public void run() {
                 traffic.setText(message);
             }
@@ -416,7 +415,7 @@ public class LoaderPane extends javax.swing.JPanel {
         // find the names of suitable ports
         while (portIDs.hasMoreElements()) {
             CommPortIdentifier id = portIDs.nextElement();
-            // filter out line printers 
+            // filter out line printers
             if (id.getPortType() != CommPortIdentifier.PORT_PARALLEL) // accumulate the names in a vector
             {
                 portNameVector.addElement(id.getName());
@@ -425,6 +424,8 @@ public class LoaderPane extends javax.swing.JPanel {
         return portNameVector;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value="SR_NOT_CHECKED",
+                                        justification="this is for skip-chars while loop: no matter how many, we're skipping")
     public String openPort(String portName, String appName) {
         // open the port, check ability to set moderators
         try {
@@ -443,7 +444,7 @@ public class LoaderPane extends javax.swing.JPanel {
                 int speed = 9600;
                 // Doc says 7 bits, but 8 seems needed
                 activeSerialPort.setSerialPortParams(speed, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-            } catch (gnu.io.UnsupportedCommOperationException e) {
+            } catch (UnsupportedCommOperationException e) {
                 log.error("Cannot set serial parameters on port " + portName + ": " + e.getMessage());
                 return "Cannot set serial parameters on port " + portName + ": " + e.getMessage();
             }
@@ -484,15 +485,14 @@ public class LoaderPane extends javax.swing.JPanel {
             }
 
             //opened = true;
-        } catch (Exception ex) {
-            log.error("Unexpected exception while opening port " + portName + " trace follows: " + ex);
-            ex.printStackTrace();
+        } catch (NoSuchPortException | UnsupportedCommOperationException | IOException | RuntimeException ex) {
+            log.error("Unexpected exception while opening port {}", portName, ex);
             return "Unexpected error while opening port " + portName + ": " + ex;
         }
         return null; // indicates OK return
     }
 
-    void handlePortBusy(gnu.io.PortInUseException p, String port) {
+    void handlePortBusy(PortInUseException p, String port) {
         log.error("Port " + p + " in use, cannot open");
     }
 
@@ -511,11 +511,7 @@ public class LoaderPane extends javax.swing.JPanel {
             fileButton.setEnabled(false);
             fileButton.setToolTipText(res.getString("TipFileDisabled"));
             fileButton.addActionListener(new AbstractAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -7851724841357411752L;
-
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     selectInputFile();
                 }
@@ -552,11 +548,7 @@ public class LoaderPane extends javax.swing.JPanel {
             loadButton.setToolTipText(res.getString("TipLoadDisabled"));
             p.add(loadButton);
             loadButton.addActionListener(new AbstractAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -576603777011196349L;
-
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     doLoad();
                 }
@@ -724,6 +716,6 @@ public class LoaderPane extends javax.swing.JPanel {
         return buffer;
     }
 
-    static Logger log = LoggerFactory.getLogger(LoaderPane.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LoaderPane.class);
 
 }

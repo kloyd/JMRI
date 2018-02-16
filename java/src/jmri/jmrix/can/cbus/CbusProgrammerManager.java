@@ -1,4 +1,3 @@
-/* CbusProgrammerManager.java */
 package jmri.jmrix.can.cbus;
 
 import jmri.AddressedProgrammer;
@@ -8,19 +7,19 @@ import jmri.managers.DefaultProgrammerManager;
 /**
  * Extend DefaultProgrammerManager to provide node variable programmer for CBUS
  *
- * @see jmri.ProgrammerManager
- * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
+ * @see jmri.managers.DefaultProgrammerManager
+ * @author Bob Jacobsen Copyright (C) 2008
  */
 public class CbusProgrammerManager extends DefaultProgrammerManager {
 
     public CbusProgrammerManager(TrafficController tc) {
-        super(null);  // no service mode programmer available
+        super();  // no service mode programmer available
         this.tc = tc;
     }
 
     TrafficController tc;
 
+    @Override
     public String getUserName() {
         return "MERG";
     }
@@ -34,18 +33,18 @@ public class CbusProgrammerManager extends DefaultProgrammerManager {
         return false;
     }
 
+    @Override
     public boolean isAddressedModePossible() {
         return true;
     }
 
+    @Override
     public AddressedProgrammer getAddressedProgrammer(boolean pLongAddress, int pAddress) {
         return new CbusProgrammer(pAddress, tc);
     }
 
+    @Override
     public AddressedProgrammer reserveAddressedProgrammer(boolean pLongAddress, int pAddress) {
         return null;
     }
 }
-
-
-/* @(#)CbusProgrammerManager.java */

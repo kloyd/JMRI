@@ -1,14 +1,9 @@
-// EasyDccListenerScaffold.java
 package jmri.jmrix.easydcc;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Stands in for the EasyDccTrafficController class
  *
  * @author	Bob Jacobsen
- * @version
  */
 class EasyDccListenerScaffold implements EasyDccListener {
 
@@ -17,17 +12,17 @@ class EasyDccListenerScaffold implements EasyDccListener {
         rcvdMsg = null;
     }
 
+    @Override
     public void message(EasyDccMessage m) {
         rcvdMsg = m;
     }
 
+    @Override
     public void reply(EasyDccReply r) {
         rcvdReply = r;
     }
 
     EasyDccReply rcvdReply;
     EasyDccMessage rcvdMsg;
-
-    static Logger log = LoggerFactory.getLogger(EasyDccListenerScaffold.class.getName());
 
 }

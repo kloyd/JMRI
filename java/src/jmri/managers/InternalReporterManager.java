@@ -1,4 +1,3 @@
-// InternalReporterManager.java
 package jmri.managers;
 
 import jmri.Reporter;
@@ -8,9 +7,10 @@ import jmri.implementation.AbstractReporter;
  * Implementation of the InternalReporterManager interface.
  *
  * @author	Bob Jacobsen Copyright (C) 2010
- * @version	$Revision$
  * @since 2.9.4
+ * @deprecated As of 4.3.5, use jmri.jmrix.internal classes
  */
+@Deprecated
 public class InternalReporterManager extends AbstractReporterManager {
 
     /**
@@ -18,17 +18,16 @@ public class InternalReporterManager extends AbstractReporterManager {
      *
      * @return new null
      */
+    @Override
     protected Reporter createNewReporter(String systemName, String userName) {
         return new AbstractReporter(systemName, userName) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -2544443870907571291L;
 
+            @Override
             public int getState() {
                 return state;
             }
 
+            @Override
             public void setState(int s) {
                 state = s;
             }
@@ -41,9 +40,14 @@ public class InternalReporterManager extends AbstractReporterManager {
         return true;
     }
 
+    @Override
+    public NameValidity validSystemNameFormat(String systemName) {
+        return NameValidity.VALID;
+    }
+
+    @Override
     public String getSystemPrefix() {
         return "I";
     }
-}
 
-/* @(#)InternalReporterManager.java */
+}

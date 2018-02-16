@@ -15,8 +15,7 @@ package jmri.jmrit.vsdecoder;
  * for more details.
  * <P>
  *
- * @author			Mark Underwood Copyright (C) 2011
- * @version			$Revision$
+ * @author   Mark Underwood Copyright (C) 2011
  */
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -111,6 +110,8 @@ public class VSDecoderManager implements PropertyChangeListener {
     public JmriJFrame provideManagerFrame() {
         if (managerFrame == null) {
             managerFrame = new VSDManagerFrame();
+        } else {
+            log.warn("Virtual Sound Decoder Manager is already running");
         }
         return (managerFrame);
     }
@@ -138,7 +139,7 @@ public class VSDecoderManager implements PropertyChangeListener {
             path = profiletable.get(profile_name);
             log.debug("Profile " + profile_name + " is in table.  Path = " + path);
             vsd = new VSDecoder(getNextVSDecoderID(), profile_name, path);
-            decodertable.put(vsd.getID(), vsd);  // poss. broken for duplicate profile names
+            decodertable.put(vsd.getId(), vsd);  // poss. broken for duplicate profile names
             decoderAddressMap.put(vsd.getAddress().toString(), vsd);
             return (vsd);
         } else {
@@ -150,7 +151,7 @@ public class VSDecoderManager implements PropertyChangeListener {
 
     public VSDecoder getVSDecoder(String profile_name, String path) {
         VSDecoder vsd = new VSDecoder(getNextVSDecoderID(), profile_name, path);
-        decodertable.put(vsd.getID(), vsd); // poss. broken for duplicate profile names
+        decodertable.put(vsd.getId(), vsd); // poss. broken for duplicate profile names
         if (vsd.getAddress() != null) {
             decoderAddressMap.put(vsd.getAddress().toString(), vsd);
         }
@@ -172,9 +173,9 @@ public class VSDecoderManager implements PropertyChangeListener {
             path = profiletable.get(profile_name);
             log.debug("Profile " + profile_name + " is in table.  Path = " + path);
             config.setVSDPath(path);
-            config.setID(getNextVSDecoderID());
+            config.setId(getNextVSDecoderID());
             VSDecoder vsd = new VSDecoder(config);
-            decodertable.put(vsd.getID(), vsd);
+            decodertable.put(vsd.getId(), vsd);
             decoderAddressMap.put(vsd.getAddress().toString(), vsd);
             //debugPrintDecoderList();
             return (vsd);
@@ -199,7 +200,7 @@ public class VSDecoderManager implements PropertyChangeListener {
      idi = ids.iterator();
      while (idi.hasNext()) {
      Map.Entry<String, VSDecoder> e = idi.next();
-     log.debug("    ID = " +  e.getKey() + " Val = " + e.getValue().getID());
+     log.debug("    ID = " +  e.getKey() + " Val = " + e.getValue().getId());
      }
      }
      */
@@ -245,7 +246,7 @@ public class VSDecoderManager implements PropertyChangeListener {
      return getVSDecoderByAddress(da);
      }
      return(null);
-	
+ 
      }
      */
     public void setDefaultVSDecoder(VSDecoder d) {
@@ -309,14 +310,14 @@ public class VSDecoderManager implements PropertyChangeListener {
             return;
         }
         if (l.equals(PhysicalLocation.Origin)) {
-            log.debug("Location : " + l.toString() + " ... ignoring.");
+            log.debug("Location : " + l + " ... ignoring.");
             // Physical location at origin means it hasn't been set.
             return;
         }
         log.debug("Decoder Address: " + a.getNumber());
         for (VSDecoder d : decodertable.values()) {
             // Get the Decoder's address protocol.  If it's a DCC_LONG or DCC_SHORT, convert to DCC
-            // since the LnReprter can't tell the difference and will always report "DCC".
+            // since the LnReporter can't tell the difference and will always report "DCC".
             if (d == null) {
                 log.debug("VSdecoder null pointer!");
                 return;
@@ -392,7 +393,7 @@ public class VSDecoderManager implements PropertyChangeListener {
     }
 
     protected void registerReporterListener(String sysName) {
-        Reporter r = jmri.InstanceManager.reporterManagerInstance().getReporter(sysName);
+        Reporter r = jmri.InstanceManager.getDefault(jmri.ReporterManager.class).getReporter(sysName);
         if (r == null) {
             return;
         }
@@ -401,8 +402,8 @@ public class VSDecoderManager implements PropertyChangeListener {
             return;
         }
         // Make sure we aren't already registered.
-        ArrayList<java.beans.PropertyChangeListener> ll = r.getPropertyChangeListeners(h.getName());
-        if (ll.isEmpty()) {
+        java.beans.PropertyChangeListener[] ll = r.getPropertyChangeListenersByReference(h.getName());
+        if (ll.length == 0) {
             r.addPropertyChangeListener(this, h.getName(), vsd_property_change_name);
         }
     }
@@ -419,8 +420,8 @@ public class VSDecoderManager implements PropertyChangeListener {
             return;
         }
         // Make sure we aren't already registered.
-        ArrayList<java.beans.PropertyChangeListener> ll = b.getPropertyChangeListeners(h.getName());
-        if (ll.isEmpty()) {
+        java.beans.PropertyChangeListener[] ll = b.getPropertyChangeListenersByReference(h.getName());
+        if (ll.length == 0) {
             b.addPropertyChangeListener(this, h.getName(), vsd_property_change_name);
             log.debug("Added listener to bean " + b.getDisplayName() + " type " + b.getClass().getName());
         }
@@ -428,11 +429,11 @@ public class VSDecoderManager implements PropertyChangeListener {
 
     protected void registerReporterListeners() {
         // Walk through the list of reporters
-        for (String sysName : jmri.InstanceManager.reporterManagerInstance().getSystemNameList()) {
+        for (String sysName : jmri.InstanceManager.getDefault(jmri.ReporterManager.class).getSystemNameList()) {
             registerReporterListener(sysName);
         }
-        for (String sysname : jmri.InstanceManager.blockManagerInstance().getSystemNameList()) {
-            registerBeanListener(jmri.InstanceManager.blockManagerInstance(), sysname);
+        for (String sysname : jmri.InstanceManager.getDefault(jmri.BlockManager.class).getSystemNameList()) {
+            registerBeanListener(jmri.InstanceManager.getDefault(jmri.BlockManager.class), sysname);
         }
     }
 
@@ -441,21 +442,21 @@ public class VSDecoderManager implements PropertyChangeListener {
     private void setupReporterManagerListener() {
         // Register ourselves as a listener for changes to the Reporter list.  For now, we won't do this. Just force a
         // save and reboot after reporters are added.  We'll fix this later.
-        //	jmri.InstanceManager.reporterManagerInstance().addPropertyChangeListener(new PropertyChangeListener() {
-        //	public void propertyChange(PropertyChangeEvent event) {
-        //		    log.debug("property change name " + event.getPropertyName() + " old " + event.getOldValue() + " new " + event.getNewValue());
-        //	    reporterManagerPropertyChange(event);
-        //	}
+        // jmri.InstanceManager.getDefault(jmri.ReporterManager.class).addPropertyChangeListener(new PropertyChangeListener() {
+        // public void propertyChange(PropertyChangeEvent event) {
+        //      log.debug("property change name " + event.getPropertyName() + " old " + event.getOldValue() + " new " + event.getNewValue());
+        //     reporterManagerPropertyChange(event);
+        // }
         //   });
-        jmri.InstanceManager.reporterManagerInstance().addPropertyChangeListener(this);
+        jmri.InstanceManager.getDefault(jmri.ReporterManager.class).addPropertyChangeListener(this);
 
         // Now, the Reporter Table might already be loaded and filled out, so we need to get all the Reporters and list them.
         // And add ourselves as a listener to them.
-        for (String sysName : jmri.InstanceManager.reporterManagerInstance().getSystemNameList()) {
+        for (String sysName : jmri.InstanceManager.getDefault(jmri.ReporterManager.class).getSystemNameList()) {
             registerReporterListener(sysName);
         }
-        for (String sysname : jmri.InstanceManager.blockManagerInstance().getSystemNameList()) {
-            registerBeanListener(jmri.InstanceManager.blockManagerInstance(), sysname);
+        for (String sysname : jmri.InstanceManager.getDefault(jmri.BlockManager.class).getSystemNameList()) {
+            registerBeanListener(jmri.InstanceManager.getDefault(jmri.BlockManager.class), sysname);
         }
     }
 
@@ -487,6 +488,7 @@ public class VSDecoderManager implements PropertyChangeListener {
          */
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         log.debug("property change type " + evt.getSource().getClass().getName()
                 + " name " + evt.getPropertyName() + " old " + evt.getOldValue()
@@ -506,13 +508,17 @@ public class VSDecoderManager implements PropertyChangeListener {
                 VSDecoder d = this.getVSDecoderByAddress(sa);
                 log.debug("Removing Decoder " + sa + " ... " + d.getAddress());
                 d.shutdown();
-                decodertable.remove(d.getID());
+                decodertable.remove(d.getId());
                 decoderAddressMap.remove(sa);
                 //debugPrintDecoderList();
             } else if (evt.getPropertyName().equals(VSDManagerFrame.PCIDMap.get(VSDManagerFrame.PropertyChangeID.CLOSE_WINDOW))) {
                 // Note this assumes there is only one VSDManagerFrame open at a time.
                 shutdownDecoders();
-                managerFrame = null;
+                if (managerFrame != null) {
+                    managerFrame.dispose();
+                    managerFrame = null;
+                }
+
             }
         } else {
             // Un-Handled source. Does nothing ... yet...
@@ -613,7 +619,7 @@ public class VSDecoderManager implements PropertyChangeListener {
 
             // Re-register for all the reporters. The registerReporterListener() will skip
             // any that we're already registered for.
-            for (String sysName : jmri.InstanceManager.reporterManagerInstance().getSystemNameList()) {
+            for (String sysName : jmri.InstanceManager.getDefault(jmri.ReporterManager.class).getSystemNameList()) {
                 registerReporterListener(sysName);
             }
 
@@ -641,8 +647,8 @@ public class VSDecoderManager implements PropertyChangeListener {
             }
         }
 
-	// debug
-	/*
+ // debug
+ /*
          for (String s : new_entries) {
          log.debug("New entry: " + s);
          }
@@ -651,6 +657,6 @@ public class VSDecoderManager implements PropertyChangeListener {
         fireMyEvent(new VSDManagerEvent(this, VSDManagerEvent.EventType.PROFILE_LIST_CHANGE, new_entries));
     }
 
-    private static final Logger log = LoggerFactory.getLogger(VSDecoderManager.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(VSDecoderManager.class);
 
 }

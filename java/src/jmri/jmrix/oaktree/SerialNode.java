@@ -1,6 +1,7 @@
-// SerialNode.java
 package jmri.jmrix.oaktree;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jmri.InstanceManager;
 import jmri.JmriException;
 import jmri.Sensor;
 import jmri.jmrix.AbstractMRListener;
@@ -21,10 +22,9 @@ import org.slf4j.LoggerFactory;
  * on the serial bus. E.g. you can manually change a state via an icon, and not
  * have it change back the next time that node is polled.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2006, 2008
+ * @author Bob Jacobsen Copyright (C) 2003, 2006, 2008
  * @author Bob Jacobsen, Dave Duchamp, multiNode extensions, 2004
- * @version	$Revision$
- */
+  */
 public class SerialNode extends AbstractNode {
 
     /**
@@ -66,13 +66,15 @@ public class SerialNode extends AbstractNode {
     protected int[] sensorLastSetting = new int[MAXSENSORS + 1];
     protected int[] sensorTempSetting = new int[MAXSENSORS + 1];
 
+    OakTreeSystemConnectionMemo _memo = null;
+
     /**
      * Assumes a node address of 0, and a node type of 0 (IO24) If this
      * constructor is used, actual node address must be set using
      * setNodeAddress, and actual node type using 'setNodeType'
      */
-    public SerialNode() {
-        this(0, IO24);
+    public SerialNode(OakTreeSystemConnectionMemo memo) {
+        this(0, IO24,memo);
     }
 
     /**
@@ -80,7 +82,8 @@ public class SerialNode extends AbstractNode {
      * address - Address of node on serial bus (0-255) type - a type constant
      * from the class
      */
-    public SerialNode(int address, int type) {
+    public SerialNode(int address, int type,OakTreeSystemConnectionMemo memo) {
+        _memo = memo;
         // set address and type and check validity
         setNodeAddress(address);
         setNodeType(type);
@@ -100,7 +103,7 @@ public class SerialNode extends AbstractNode {
         setMustSend();
         hasActiveSensors = false;
         // register this node
-        SerialTrafficController.instance().registerNode(this);
+        _memo.getTrafficController().registerNode(this);
     }
 
     /**
@@ -136,6 +139,7 @@ public class SerialNode extends AbstractNode {
      * Public method to return state of Sensors. Note: returns 'true' if at
      * least one sensor is active for this node
      */
+    @Override
     public boolean getSensorsActive() {
         return hasActiveSensors;
     }
@@ -144,6 +148,7 @@ public class SerialNode extends AbstractNode {
      * Public to reset state of needSend flag. Can only reset if there are no
      * bytes that need to be sent
      */
+    @Override
     public void resetMustSend() {
         for (int i = 0; i < outputBytes[nodeType]; i++) {
             if (outputByteChanged[i]) {
@@ -164,12 +169,12 @@ public class SerialNode extends AbstractNode {
      * Public method to set node type.
      */
     @SuppressWarnings("fallthrough")
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SF_SWITCH_FALLTHROUGH")
+    @SuppressFBWarnings(value = "SF_SWITCH_FALLTHROUGH")
     public void setNodeType(int type) {
         nodeType = type;
         switch (nodeType) {
             default:
-                log.error("Unexpected nodeType in setNodeType: " + nodeType);
+                log.error("Unexpected nodeType in setNodeType: {}", nodeType);
             // use IO-48 as default
             case IO48:
             case IO24:
@@ -181,6 +186,7 @@ public class SerialNode extends AbstractNode {
     /**
      * Check for valid node address
      */
+    @Override
     protected boolean checkNodeAddress(int address) {
         return (address >= 0) && (address < 256);
     }
@@ -190,6 +196,7 @@ public class SerialNode extends AbstractNode {
      * node. There are currently no Oak Tree boards that need an init message,
      * so this returns null.
      */
+    @Override
     public AbstractMRMessage createInitPacket() {
         return null;
     }
@@ -197,6 +204,7 @@ public class SerialNode extends AbstractNode {
     /**
      * Public Method to create an Transmit packet (SerialMessage)
      */
+    @Override
     public AbstractMRMessage createOutPacket() {
         if (log.isDebugEnabled()) {
             log.debug("createOutPacket for nodeType "
@@ -252,7 +260,7 @@ public class SerialNode extends AbstractNode {
                 int loc = i / 8;
                 int bit = i % 8;
                 boolean value = (((l.getElement(loc + 2) >> bit) & 0x01) == 1) ^ sensorArray[i].getInverted();  // byte 2 is first of data
-                // if (log.isDebugEnabled()) log.debug("markChanges loc="+loc+" bit="+bit+" is "+value);
+                log.debug("markChanges loc={} bit={} is []", loc, bit, value);
                 if (value) {
                     // bit set, considered ACTIVE
                     if (((sensorTempSetting[i] == Sensor.ACTIVE)
@@ -289,7 +297,7 @@ public class SerialNode extends AbstractNode {
     public void registerSensor(Sensor s, int i) {
         // validate the sensor ordinal
         if ((i < 0) || (i > (inputBytes[nodeType] * 8 - 1)) || (i > MAXSENSORS)) {
-            log.error("Unexpected sensor ordinal in registerSensor: " + Integer.toString(i + 1));
+            log.error("Unexpected sensor ordinal in registerSensor: {}", Integer.toString(i + 1));
             return;
         }
         hasActiveSensors = true;
@@ -300,8 +308,9 @@ public class SerialNode extends AbstractNode {
             }
         } else {
             // multiple registration of the same sensor
-            log.warn("multiple registration of same sensor: CS"
-                    + Integer.toString((getNodeAddress() * SerialSensorManager.SENSORSPERNODE) + i + 1));
+            log.warn("multiple registration of same sensor: {}S{}",
+                    InstanceManager.getDefault(OakTreeSystemConnectionMemo.class).getSystemPrefix(), // multichar prefix
+                    Integer.toString((getNodeAddress() * SerialSensorManager.SENSORSPERNODE) + i + 1));
         }
     }
 
@@ -311,6 +320,7 @@ public class SerialNode extends AbstractNode {
      *
      * @return true if initialization required
      */
+    @Override
     public boolean handleTimeout(AbstractMRMessage m, AbstractMRListener l) {
         timeout++;
         // normal to timeout in response to init, output
@@ -320,7 +330,7 @@ public class SerialNode extends AbstractNode {
 
         // see how many polls missed
         if (log.isDebugEnabled()) {
-            log.warn("Timeout to poll for addr=" + getNodeAddress() + ": consecutive timeouts: " + timeout);
+            log.warn("Timeout to poll for addr={}: consecutive timeouts: {}", getNodeAddress(), timeout);
         }
 
         if (timeout > 5) { // enough, reinit
@@ -334,14 +344,14 @@ public class SerialNode extends AbstractNode {
         }
     }
 
+    @Override
     public void resetTimeout(AbstractMRMessage m) {
         if (timeout > 0) {
-            log.debug("Reset " + timeout + " timeout count");
+            log.debug("Reset {} timeout count", timeout);
         }
         timeout = 0;
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialNode.class.getName());
-}
+    private final static Logger log = LoggerFactory.getLogger(SerialNode.class);
 
-/* @(#)SerialNode.java */
+}

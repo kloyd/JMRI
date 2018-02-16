@@ -1,4 +1,3 @@
-// ConnectionConfig.java
 package jmri.jmrix.roco.z21;
 
 import javax.swing.JPanel;
@@ -6,12 +5,11 @@ import javax.swing.JPanel;
 /**
  * Handle configuring an layout connection via a Roco z21 or Z21.
  * <P>
- * This uses the {@link z21Adapter} class to do the actual connection.
+ * This uses the {@link Z21Adapter} class to do the actual connection.
  *
  * @author	Paul Bender Copyright (C) 2011
- * @version	$Revision$
  *
- * @see z21Adapter
+ * @see Z21Adapter
  */
 public class ConnectionConfig extends jmri.jmrix.AbstractNetworkConnectionConfig {
 
@@ -31,6 +29,7 @@ public class ConnectionConfig extends jmri.jmrix.AbstractNetworkConnectionConfig
         super();
     }
 
+    @Override
     public String name() {
         return "Roco Z21";
     }
@@ -39,16 +38,18 @@ public class ConnectionConfig extends jmri.jmrix.AbstractNetworkConnectionConfig
      * Load the adapter with an appropriate object
      * <i>unless</i> it has already been set.
      */
+    @Override
     protected void setInstance() {
         if (adapter == null) {
-            adapter = new z21Adapter();
+            adapter = new Z21Adapter();
         }
     }
 
+    @Override
     public void loadDetails(JPanel details) {
         super.loadDetails(details);
         hostNameField.setText(adapter.getHostName());
-        portFieldLabel.setText("Communication Port");
+        portFieldLabel.setText(Bundle.getMessage("CommunicationPortLabel"));
         portField.setText(String.valueOf(adapter.getPort()));
         portField.setEnabled(false); // we can't change this now.
     }

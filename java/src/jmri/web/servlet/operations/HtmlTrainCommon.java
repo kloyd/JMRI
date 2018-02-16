@@ -18,8 +18,8 @@ import jmri.jmrit.operations.routes.RouteLocation;
 import jmri.jmrit.operations.setup.Setup;
 import jmri.jmrit.operations.trains.Train;
 import jmri.jmrit.operations.trains.TrainCommon;
-import jmri.jmrit.operations.trains.TrainScheduleManager;
-import org.apache.commons.lang3.StringEscapeUtils;
+import jmri.jmrit.operations.trains.timetable.TrainScheduleManager;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

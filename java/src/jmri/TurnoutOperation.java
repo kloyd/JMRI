@@ -1,13 +1,9 @@
-/**
- *
- */
 package jmri;
 
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
 import jmri.implementation.AbstractTurnout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Framework for automating reliable turnout operation. This interface allows a
@@ -85,16 +81,16 @@ import org.slf4j.LoggerFactory;
  * AbstractTurnout.getTurnoutOperator if you want to do something <i>really</i>
  * different.
  *
- * @author John Harper	Copyright 2005
+ * @author John Harper Copyright 2005
  *
  */
 public abstract class TurnoutOperation implements Comparable<Object> {
 
     String name;
     int feedbackModes = 0;
-    boolean nonce = false;		// created just for one turnout and not reusable 
+    boolean nonce = false;  // created just for one turnout and not reusable 
 
-    TurnoutOperation(String n) {
+    TurnoutOperation(@Nonnull String n) {
         name = n;
         TurnoutOperationManager.getInstance().addOperation(this);
     }
@@ -103,16 +99,16 @@ public abstract class TurnoutOperation implements Comparable<Object> {
      * factory to make a copy of an operation identical in all respects except
      * the name
      *
-     * @param n	name for new copy
+     * @param n name for new copy
      * @return TurnoutOperation of same concrete class as this
      */
-    public abstract TurnoutOperation makeCopy(String n);
+    public abstract TurnoutOperation makeCopy(@Nonnull String n);
 
     /**
      * set feedback modes - part of construction but done separately for
      * ordering problems
      *
-     * @param fm	valid feedback modes for this class
+     * @param fm valid feedback modes for this class
      */
     protected void setFeedbackModes(int fm) {
         feedbackModes = fm;
@@ -121,22 +117,40 @@ public abstract class TurnoutOperation implements Comparable<Object> {
     /**
      * get the descriptive name of the operation
      *
-     * @return	name
+     * @return name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * ordering so operations can be sorted, using their name
+     * Ordering by name so operations can be sorted on name
      *
-     * @param other	other TurnoutOperation object
+     * @param other other TurnoutOperation object
      * @return usual compareTo return values
      */
+    @Override
     public int compareTo(Object other) {
         return name.compareTo(((TurnoutOperation) other).name);
     }
 
+    /**
+     * The identity of an operation is its name
+     */
+    @Override
+    public boolean equals(Object ro) {
+        if (ro == null) return false;
+        if (ro instanceof TurnoutOperation)
+            return name.equals(((TurnoutOperation)ro).name);
+        else 
+            return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+    
     /**
      *
      * @param other another TurnoutOperation
@@ -148,11 +162,11 @@ public abstract class TurnoutOperation implements Comparable<Object> {
     /**
      * rename an operation
      *
-     * @param newName
-     * @return true iff the name was changed to the new value - otherwise name
+     * @param newName new name to use for rename attempt
+     * @return true if the name was changed to the new value - otherwise name
      *         is unchanged
      */
-    public boolean rename(String newName) {
+    public boolean rename(@Nonnull String newName) {
         boolean result = false;
         TurnoutOperationManager mgr = TurnoutOperationManager.getInstance();
         if (!isDefinitive() && mgr.getOperation(newName) == null) {
@@ -179,7 +193,7 @@ public abstract class TurnoutOperation implements Comparable<Object> {
 
     /**
      *
-     * @return	true iff this is the "defining instance" of the class, which we
+     * @return true iff this is the "defining instance" of the class, which we
      *         determine by the name of the instance being the same as the
      *         prefix of the class
      */
@@ -194,10 +208,10 @@ public abstract class TurnoutOperation implements Comparable<Object> {
      * Get an instance of the operator for this operation type, set up and
      * started to do its thing in a private thread for the specified turnout.
      *
-     * @param	t	the turnout to apply the operation to
-     * @return	the operator
+     * @param t the turnout to apply the operation to
+     * @return the operator
      */
-    public abstract TurnoutOperator getOperator(AbstractTurnout t);
+    public abstract TurnoutOperator getOperator(@Nonnull AbstractTurnout t);
 
     /**
      * delete all knowledge of this operation. Reset any turnouts using it to
@@ -208,7 +222,7 @@ public abstract class TurnoutOperation implements Comparable<Object> {
         if (!isDefinitive()) {
             TurnoutOperationManager.getInstance().removeOperation(this);
             name = "*deleted";
-            pcs.firePropertyChange("Deleted", null, null);		// this will remove all dangling references
+            pcs.firePropertyChange("Deleted", null, null);  // this will remove all dangling references
         }
     }
 
@@ -273,12 +287,10 @@ public abstract class TurnoutOperation implements Comparable<Object> {
 
     /**
      * @param mode feedback mode for a turnout
-     * @return	true iff this operation's feedback mode is one we know how to
+     * @return true iff this operation's feedback mode is one we know how to
      *         deal with
      */
     public boolean matchFeedbackMode(int mode) {
         return (mode & feedbackModes) != 0;
     }
-
-    static Logger log = LoggerFactory.getLogger(TurnoutOperation.class.getName());
 }

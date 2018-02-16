@@ -1,4 +1,3 @@
-// OutputBits.java
 package jmri.jmrix.maple;
 
 import org.slf4j.Logger;
@@ -18,12 +17,11 @@ import org.slf4j.LoggerFactory;
  * input (1-1000) and output (1001-9000), so input bits are read starting from
  * HMI address 1, and output bits are written starting at HMI address 1001.
  * <P>
- * @author	Dave Duchamp, Copyright (C) 2009
- * @version $Revision$
+ * @author Dave Duchamp, Copyright (C) 2009
  */
 public class OutputBits {
 
-    private OutputBits() {
+    public OutputBits(SerialTrafficController _tc) {
         // clear all output bits
         for (int i = 0; i < 256; i++) {
             outputArray[i] = 0;
@@ -31,7 +29,7 @@ public class OutputBits {
     }
 
     // operational variables
-//	private int mPulseWidth = 500;
+// private int mPulseWidth = 500;
     private static int mSendDelay = 200;
     private static int mNumOutputBits = 98;
     protected byte[] outputArray = new byte[256]; // current values of the output bits
@@ -44,8 +42,8 @@ public class OutputBits {
     public static int getNumOutputBits() {
         return mNumOutputBits;
     }
-//	public int getPulseWidth() {return (mPulseWidth);}
-//	public void setPulseWidth(int width) {mPulseWidth = width;}
+// public int getPulseWidth() {return (mPulseWidth);}
+// public void setPulseWidth(int width) {mPulseWidth = width;}
 
     public static void setSendDelay(int n) {
         mSendDelay = n;
@@ -149,15 +147,12 @@ public class OutputBits {
         return m;
     }
 
+    @Deprecated
     public static OutputBits instance() {
-        if (mInstance == null) {
-            mInstance = new OutputBits();
-        }
-        return mInstance;
+        return null;
     }
-    static OutputBits mInstance = null; // package access for tests
 
-    static Logger log = LoggerFactory.getLogger(OutputBits.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(OutputBits.class);
 }
 
-/* @(#)OutputBits.java */
+

@@ -1,4 +1,3 @@
-// TimeDisplay.java
 package jmri;
 
 /**
@@ -19,8 +18,7 @@ package jmri;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  *
- * @author	Bob Jacobsen Copyright (C) 2004
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2004
  */
 public interface TimeDisplay {
 
@@ -29,5 +27,3 @@ public interface TimeDisplay {
     public int getUpdateRate();
 
 }
-
-/* @(#)TimeDisplay.java */

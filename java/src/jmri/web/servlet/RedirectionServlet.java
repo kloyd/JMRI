@@ -1,54 +1,35 @@
 package jmri.web.servlet;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Redirect traffic based on the values provided in a properties list.
+ * Redirect traffic to another location.
  *
- * @author rhwood
+ * @author Randall Wood (C) 2016
  */
+@WebServlet(name = "RedirectionServlet")
 public class RedirectionServlet extends HttpServlet {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4780651112712605891L;
     private final Properties redirections = new Properties();
-    private static final Logger log = LoggerFactory.getLogger(RedirectionServlet.class);
+    // private static final Logger log = LoggerFactory.getLogger(RedirectionServlet.class);
 
     public RedirectionServlet() {
-        try {
-            InputStream in;
-            in = this.getClass().getResourceAsStream("/jmri/web/server/FilePaths.properties"); // NOI18N
-            redirections.load(in);
-            in.close();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
+        // do nothing
+    }
+
+    public RedirectionServlet(String urlPattern, String redirection) {
+        this.redirections.setProperty(urlPattern, redirection);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        boolean firstParameter = true;
-        String target = redirections.getProperty(request.getContextPath());
-        // TODO: add any additional path outside context to target
-        for (String key : request.getParameterMap().keySet()) {
-            if (firstParameter) {
-                firstParameter = false;
-                target = target + "?" + key + "=" + request.getParameter(key);
-            } else {
-                target = target + "&" + key + "=" + request.getParameter(key);
-            }
-        }
-        response.sendRedirect(target);
+        response.sendRedirect(redirections.getProperty(request.getContextPath()));
     }
 
     @Override

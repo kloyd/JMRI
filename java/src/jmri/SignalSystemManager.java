@@ -1,4 +1,3 @@
-// SignalSystemManager.java
 package jmri;
 
 /**
@@ -22,9 +21,8 @@ package jmri;
  * <P>
  *
  * @author Bob Jacobsen Copyright (C) 2009
- * @version	$Revision$
  */
-public interface SignalSystemManager extends Manager {
+public interface SignalSystemManager extends Manager<SignalSystem> {
 
     public SignalSystem getSystem(String name);
 
@@ -32,6 +30,3 @@ public interface SignalSystemManager extends Manager {
 
     public SignalSystem getByUserName(String name);
 }
-
-
-/* @(#)SignalSystemManager.java */

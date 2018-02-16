@@ -1,11 +1,10 @@
 package jmri.jmrix.jmriclient;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * JMRIClientSystemConnectionMemoTest.java
@@ -14,41 +13,61 @@ import org.slf4j.LoggerFactory;
  * jmri.jmrix.jmriclient.JMRIClientSystemConnectionMemo class
  *
  * @author	Bob Jacobsen
- * @version $Revision: 17977 $
  */
-public class JMRIClientSystemConnectionMemoTest extends TestCase {
+public class JMRIClientSystemConnectionMemoTest extends jmri.jmrix.SystemConnectionMemoTestBase {
 
-    public void testCtor() {
-        JMRIClientSystemConnectionMemo m = new JMRIClientSystemConnectionMemo();
-        Assert.assertNotNull(m);
+    private JMRIClientTrafficControlScaffold jcins;
+    private JMRIClientSystemConnectionMemo memo;
+
+    @Override
+    @Test
+    public void testProvidesConsistManager(){
+       Assert.assertFalse("Provides ConsistManager",scm.provides(jmri.ConsistManager.class));
     }
 
-    // from here down is testing infrastructure
-    public JMRIClientSystemConnectionMemoTest(String s) {
-        super(s);
+    @Test
+    public void testDefaultCtor(){
+       Assert.assertNotNull("Default Ctor",new JMRIClientSystemConnectionMemo());
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", JMRIClientSystemConnectionMemoTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    @Test
+    public void testSetTrafficController(){
+        jcins = new JMRIClientTrafficControlScaffold();
+        memo.setJMRIClientTrafficController(jcins);
+        Assert.assertEquals("memo after set",jcins,memo.getJMRIClientTrafficController());
     }
 
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(JMRIClientSystemConnectionMemoTest.class);
-        return suite;
+    @Test
+    public void testConfigureManagers(){
+        memo.configureManagers();
+        Assert.assertNotNull("Power Manager set",memo.getPowerManager());
+        Assert.assertNotNull("Turnout Manager set",memo.getTurnoutManager());
+        Assert.assertNotNull("Sensor Manager set",memo.getSensorManager());
+        Assert.assertNotNull("Light Manager set",memo.getLightManager());
+        Assert.assertNotNull("Reporter Manager set",memo.getReporterManager());
     }
+
+    @Test
+    public void testGetAndSetTransmitPrefix() {
+       Assert.assertEquals("default transmit prefix",memo.getSystemPrefix(),memo.getTransmitPrefix());
+       memo.setTransmitPrefix("F1");
+       Assert.assertEquals("Transmit Prefix","F1",memo.getTransmitPrefix());
+    }
+
 
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Override
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
+        jcins = new JMRIClientTrafficControlScaffold();
+        scm = memo = new JMRIClientSystemConnectionMemo(jcins);
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @Override
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(JMRIClientSystemConnectionMemoTest.class.getName());
 
 }

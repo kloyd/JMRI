@@ -1,23 +1,20 @@
-// ProxySensorManagerTest.java
 package jmri.managers;
 
 import java.beans.PropertyChangeListener;
 import jmri.InstanceManager;
 import jmri.Sensor;
 import jmri.SensorManager;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * Test the ProxySensorManager
  *
  * @author	Bob Jacobsen 2003, 2006, 2008, 2014
- * @version	$Revision$
- */
+  */
 public class ProxySensorManagerTest extends TestCase {
 
     public String getSystemName(int i) {
@@ -30,6 +27,7 @@ public class ProxySensorManagerTest extends TestCase {
 
     protected class Listen implements PropertyChangeListener {
 
+        @Override
         public void propertyChange(java.beans.PropertyChangeEvent e) {
             listenerResult = true;
         }
@@ -56,6 +54,24 @@ public class ProxySensorManagerTest extends TestCase {
         Assert.assertTrue("system name correct ", t == l.getBySystemName(getSystemName(getNumToTest1())));
     }
 
+    public void testNormalizeName() {
+        // create
+        String name = l.provideSensor("" + getNumToTest1()).getSystemName();
+        // check
+        Assert.assertEquals(name, l.normalizeSystemName(name));
+    }
+
+    public void testProvideFailure() {
+        boolean correct = false;
+        try {
+            l.provideSensor("");
+            Assert.fail("didn't throw");
+        } catch (IllegalArgumentException ex) {
+            correct = true;
+        }
+        Assert.assertTrue("Exception thrown properly", correct);
+
+    }
     public void testSingleObject() {
         // test that you always get the same representation
         Sensor t1 = l.newSensor(getSystemName(getNumToTest1()), "mine");
@@ -82,7 +98,7 @@ public class ProxySensorManagerTest extends TestCase {
     }
 
     public void testRename() {
-        // get 
+        // get
         Sensor t1 = l.newSensor(getSystemName(getNumToTest1()), "before");
         Assert.assertNotNull("t1 real object ", t1);
         t1.setUserName("after");
@@ -136,6 +152,7 @@ public class ProxySensorManagerTest extends TestCase {
         Assert.assertNotNull(InstanceManager.getDefault(SensorManager.class).provideSensor("IS1"));
 
         InternalSensorManager m = new InternalSensorManager() {
+            @Override
             public String getSystemPrefix() {
                 return "J";
             }
@@ -166,7 +183,7 @@ public class ProxySensorManagerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", ProxySensorManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -176,10 +193,12 @@ public class ProxySensorManagerTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
         apps.tests.Log4JFixture.setUp();
         // create and register the manager object
         l = new InternalSensorManager() {
+            @Override
             public String getSystemPrefix() {
                 return "J";
             }
@@ -189,9 +208,7 @@ public class ProxySensorManagerTest extends TestCase {
 
     @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(ProxySensorManagerTest.class.getName());
 
 }

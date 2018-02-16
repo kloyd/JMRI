@@ -1,12 +1,12 @@
-// SpecificReplyTest.java
 package jmri.jmrix.powerline.cm11;
 
 import jmri.jmrix.powerline.SerialSystemConnectionMemo;
 import jmri.jmrix.powerline.SerialTrafficController;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the cm11.SpecficReply class.
@@ -14,8 +14,7 @@ import junit.framework.TestSuite;
  * @author	Bob Jacobsen Copyright 2003, 2007, 2008, 2010 Converted to multiple
  * connection
  * @author kcameron Copyright (C) 2011
- * @version	$Revision$
- */
+  */
 public class SpecificReplyTest extends TestCase {
 
     SerialTrafficController t = null;
@@ -45,13 +44,24 @@ public class SpecificReplyTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {SpecificReplyTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
     public static Test suite() {
         TestSuite suite = new TestSuite(SpecificReplyTest.class);
         return suite;
+    }
+
+    @Override
+    protected void setUp() {
+        JUnitUtil.setUp();
+
+    }
+
+    @Override
+    protected void tearDown() {
+        JUnitUtil.tearDown();
     }
 
 }

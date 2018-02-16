@@ -1,4 +1,3 @@
-// WebServerAction.java
 package jmri.web.server;
 
 import java.awt.event.ActionEvent;
@@ -9,16 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Action to start a web server
+ * Action to start a web server. Doesn't show a panel.
  *
  * @author	Randall Wood Copyright (C) 2012
- * @version $Revision$
  */
 public class WebServerAction extends JmriAbstractAction {
 
-    private static final long serialVersionUID = 6023025995086573898L;
     private static ServerThread serverThread = null;
-    static Logger log = LoggerFactory.getLogger(WebServerAction.class);
+    private final static Logger log = LoggerFactory.getLogger(WebServerAction.class);
 
     public WebServerAction(String s, WindowInterface wi) {
         super(s, wi);
@@ -34,19 +31,29 @@ public class WebServerAction extends JmriAbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-        if (serverThread == null) {
-            serverThread = new ServerThread();
-            serverThread.start();
-        } else {
-            log.info("Web Server already running");
+        synchronized (this) {
+            if (serverThread == null) {
+                serverThread = new ServerThread();
+                serverThread.setName("WebServerAction action");
+                serverThread.start();
+            } else {
+                log.info("Web Server already running");
+            }
         }
     }
 
-    static class ServerThread extends Thread {
+    @Override
+    public jmri.util.swing.JmriPanel makePanel() { return null; } // not used by this classes actionPerformed, as it doesn't show anything
+    
+    private static class ServerThread extends Thread {
 
         @Override
         public void run() {
-            WebServerManager.getWebServer().start();
+            try {
+                WebServer.getDefault().start();
+            } catch (Exception ex) {
+                log.error("Unable to start web server.", ex);
+            }
         }
     }
 }

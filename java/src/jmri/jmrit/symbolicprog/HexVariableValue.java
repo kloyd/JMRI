@@ -1,18 +1,14 @@
-// HexVariableValue.java
 package jmri.jmrit.symbolicprog;
 
 import java.util.HashMap;
 import javax.swing.JLabel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * LIke DecVariableValue, except that the string representation is in
  * hexadecimal
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2014
- * @author	Dave Heap Copyright (C) 2015
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2014
+ * @author Dave Heap Copyright (C) 2015
  */
 public class HexVariableValue extends DecVariableValue {
 
@@ -32,8 +28,5 @@ public class HexVariableValue extends DecVariableValue {
     String valueToText(int v) {
         return (Integer.toHexString(v));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(HexVariableValue.class.getName());
 
 }

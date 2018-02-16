@@ -1,7 +1,10 @@
-// SerialLight.java
 package jmri.jmrix.cmri.serial;
 
 import jmri.implementation.AbstractLight;
+import jmri.jmrix.cmri.CMRISystemConnectionMemo;
+import javax.annotation.Nonnull;
+import javax.annotation.CheckReturnValue;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,22 +16,19 @@ import org.slf4j.LoggerFactory;
  * Based in part on SerialTurnout.java
  *
  * @author Dave Duchamp Copyright (C) 2004
- * @version $Revision$
  */
 public class SerialLight extends AbstractLight {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2525373718284737564L;
+    CMRISystemConnectionMemo _memo = null;
 
     /**
      * Create a Light object, with only system name.
      * <P>
      * 'systemName' was previously validated in SerialLightManager
      */
-    public SerialLight(String systemName) {
+    public SerialLight(String systemName,CMRISystemConnectionMemo memo) {
         super(systemName);
+        _memo = memo;
         // Initialize the Light
         initializeLight(systemName);
     }
@@ -38,8 +38,9 @@ public class SerialLight extends AbstractLight {
      * <P>
      * 'systemName' was previously validated in SerialLightManager
      */
-    public SerialLight(String systemName, String userName) {
+    public SerialLight(String systemName, String userName,CMRISystemConnectionMemo memo) {
         super(systemName, userName);
+        _memo = memo;
         initializeLight(systemName);
     }
 
@@ -50,7 +51,7 @@ public class SerialLight extends AbstractLight {
      */
     private void initializeLight(String systemName) {
         // Extract the Bit from the name
-        mBit = SerialAddress.getBitFromSystemName(systemName);
+        mBit = _memo.getBitFromSystemName(systemName);
         // Set initial state
         setState(OFF);
     }
@@ -66,8 +67,9 @@ public class SerialLight extends AbstractLight {
      * SerialNode), a Transmit packet will be sent before this Node is next
      * polled.
      */
+    @Override
     protected void doNewState(int oldState, int newState) {
-        SerialNode mNode = (SerialNode) SerialAddress.getNodeFromSystemName(getSystemName());
+        SerialNode mNode = (SerialNode) _memo.getNodeFromSystemName(getSystemName(),_memo.getTrafficController());
         if (mNode != null) {
             if (newState == ON) {
                 mNode.setOutputBit(mBit, false);
@@ -79,7 +81,15 @@ public class SerialLight extends AbstractLight {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialLight.class.getName());
-}
+    /**
+     * {@inheritDoc} 
+     * 
+     * Sorts by node number and then by bit
+     */
+    @CheckReturnValue
+    public int compareSystemNameSuffix(@Nonnull String suffix1, @Nonnull String suffix2, @Nonnull jmri.NamedBean n) {
+        return CMRISystemConnectionMemo.compareSystemNameSuffix(suffix1, suffix2);
+    }
 
-/* @(#)SerialLight.java */
+    private final static Logger log = LoggerFactory.getLogger(SerialLight.class);
+}

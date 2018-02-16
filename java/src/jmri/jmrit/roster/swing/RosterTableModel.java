@@ -1,8 +1,10 @@
-// RosterTableModel.java
 package jmri.jmrit.roster.swing;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Date;
+import javax.annotation.Nullable;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableModel;
@@ -10,6 +12,7 @@ import javax.swing.table.TableColumn;
 import jmri.jmrit.roster.Roster;
 import jmri.jmrit.roster.RosterEntry;
 import jmri.jmrit.roster.RosterIconFactory;
+import jmri.jmrit.roster.rostergroup.RosterGroup;
 import jmri.jmrit.roster.rostergroup.RosterGroupSelector;
 import jmri.util.swing.XTableColumnModel;
 import org.slf4j.Logger;
@@ -25,15 +28,10 @@ import org.slf4j.LoggerFactory;
  * fields. But it's a start....
  *
  * @author Bob Jacobsen Copyright (C) 2009, 2010
- * @version $Revision$
  * @since 2.7.5
  */
 public class RosterTableModel extends DefaultTableModel implements PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 994579600898713052L;
     public static final int IDCOL = 0;
     static final int ADDRESSCOL = 1;
     static final int ICONCOL = 2;
@@ -45,7 +43,7 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
     static final int OWNERCOL = 8;
     static final int DATEUPDATECOL = 9;
     public static final int PROTOCOL = 10;
-    int NUMCOL = PROTOCOL + 1;
+    private int NUMCOL = PROTOCOL + 1;
     private String rosterGroup = null;
     boolean editable = false;
 
@@ -55,7 +53,20 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
 
     public RosterTableModel(boolean editable) {
         this.editable = editable;
-        Roster.instance().addPropertyChangeListener(this);
+        Roster.getDefault().addPropertyChangeListener(this);
+    }
+
+    /**
+     * Create a table model for a Roster group.
+     *
+     * @param group the roster group to show; if null, behaves the same as
+     *              {@link #RosterTableModel()}
+     */
+    public RosterTableModel(@Nullable RosterGroup group) {
+        this(false);
+        if (group != null) {
+            this.setRosterGroup(group.getName());
+        }
     }
 
     @Override
@@ -67,15 +78,15 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
         } else if (e.getPropertyName().equals(Roster.SAVED)) {
             //TODO This really needs to do something like find the index of the roster entry here
             if (e.getSource() instanceof RosterEntry) {
-                int row = Roster.instance().getGroupIndex(rosterGroup, (RosterEntry) e.getSource());
+                int row = Roster.getDefault().getGroupIndex(rosterGroup, (RosterEntry) e.getSource());
                 fireTableRowsUpdated(row, row);
             } else {
                 fireTableDataChanged();
             }
-        } else if (e.getPropertyName().equals(RosterGroupSelector.selectedRosterGroupProperty)) {
+        } else if (e.getPropertyName().equals(RosterGroupSelector.SELECTED_ROSTER_GROUP)) {
             setRosterGroup((e.getNewValue() != null) ? e.getNewValue().toString() : null);
         } else if (e.getPropertyName().startsWith("attribute") && e.getSource() instanceof RosterEntry) { // NOI18N
-            int row = Roster.instance().getGroupIndex(rosterGroup, (RosterEntry) e.getSource());
+            int row = Roster.getDefault().getGroupIndex(rosterGroup, (RosterEntry) e.getSource());
             fireTableRowsUpdated(row, row);
         } else if (e.getPropertyName().equals(Roster.ROSTER_GROUP_ADDED) && e.getNewValue().equals(rosterGroup)) {
             fireTableDataChanged();
@@ -84,7 +95,7 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
 
     @Override
     public int getRowCount() {
-        return Roster.instance().numGroupEntries(rosterGroup);
+        return Roster.getDefault().numGroupEntries(rosterGroup);
     }
 
     @Override
@@ -143,17 +154,26 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
 
     @Override
     public Class<?> getColumnClass(int col) {
-        if (col == ADDRESSCOL) {
-            return Integer.class;
+        switch (col) {
+            case ADDRESSCOL:
+                return Integer.class;
+            case ICONCOL:
+                return ImageIcon.class;
+            case DATEUPDATECOL:
+                return Date.class;
+            default:
+                return String.class;
         }
-        if (col == ICONCOL) {
-            return ImageIcon.class;
-        }
-        return String.class;
     }
 
     /**
-     * Editable state must be set in ctor.
+     * {@inheritDoc}
+     * <p>
+     * Note that the table can be set to be non-editable when constructed, in
+     * which case this always returns false.
+     *
+     * @return true if cell is editable in roster entry model and table allows
+     *         editing
      */
     @Override
     public boolean isCellEditable(int row, int col) {
@@ -173,7 +193,7 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
             return false;
         }
         if (editable) {
-            RosterEntry re = Roster.instance().getGroupEntry(rosterGroup, row);
+            RosterEntry re = Roster.getDefault().getGroupEntry(rosterGroup, row);
             if (re != null) {
                 return (!re.isOpen());
             }
@@ -191,12 +211,15 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
     }
 
     /**
-     * Provides the empty String if attribute doesn't exist.
+     * {@inheritDoc}
+     *
+     * Provides an empty string for a column if the model returns null for that
+     * value.
      */
     @Override
     public Object getValueAt(int row, int col) {
         // get roster entry for row
-        RosterEntry re = Roster.instance().getGroupEntry(rosterGroup, row);
+        RosterEntry re = Roster.getDefault().getGroupEntry(rosterGroup, row);
         if (re == null) {
             log.debug("roster entry is null!");
             return null;
@@ -205,7 +228,7 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
             case IDCOL:
                 return re.getId();
             case ADDRESSCOL:
-                return Integer.valueOf(re.getDccLocoAddress().getNumber());
+                return re.getDccLocoAddress().getNumber();
             case DECODERCOL:
                 return re.getDecoderModel();
             case MODELCOL:
@@ -221,7 +244,8 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
             case OWNERCOL:
                 return re.getOwner();
             case DATEUPDATECOL:
-                return re.getDateUpdated();
+                // will not display last update if not parsable as date
+                return re.getDateModified();
             case PROTOCOL:
                 return re.getProtocolAsString();
             default:
@@ -237,7 +261,7 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
     @Override
     public void setValueAt(Object value, int row, int col) {
         // get roster entry for row
-        RosterEntry re = Roster.instance().getGroupEntry(rosterGroup, row);
+        RosterEntry re = Roster.getDefault().getGroupEntry(rosterGroup, row);
         if (re == null) {
             log.warn("roster entry is null!");
             return;
@@ -289,7 +313,7 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
                 if (re.getAttribute(attributeName) != null && re.getAttribute(attributeName).equals(valueToSet)) {
                     return;
                 }
-                if ((valueToSet == null) || valueToSet.equals("")) {
+                if ((valueToSet == null) || valueToSet.isEmpty()) {
                     re.deleteAttribute(attributeName);
                 } else {
                     re.putAttribute(attributeName, valueToSet);
@@ -310,20 +334,20 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
             } else if (getColumnClass(column).equals(Integer.class)) {
                 retval = Math.max(retval, new JLabel(getValueAt(row, column).toString()).getPreferredSize().width);
             } else if (getColumnClass(column).equals(ImageIcon.class)) {
-                retval = Math.max(retval, new JLabel((ImageIcon) getValueAt(row, column)).getPreferredSize().width);
+                retval = Math.max(retval, new JLabel((Icon) getValueAt(row, column)).getPreferredSize().width);
             }
         }
         return retval + 5;
     }
 
     public final void setRosterGroup(String rosterGroup) {
-        for (RosterEntry re : Roster.instance().getEntriesInGroup(rosterGroup)) {
+        Roster.getDefault().getEntriesInGroup(this.rosterGroup).forEach((re) -> {
             re.removePropertyChangeListener(this);
-        }
+        });
         this.rosterGroup = rosterGroup;
-        for (RosterEntry re : Roster.instance().getEntriesInGroup(rosterGroup)) {
+        Roster.getDefault().getEntriesInGroup(rosterGroup).forEach((re) -> {
             re.addPropertyChangeListener(this);
-        }
+        });
         fireTableDataChanged();
     }
 
@@ -334,5 +358,5 @@ public class RosterTableModel extends DefaultTableModel implements PropertyChang
     // drop listeners
     public void dispose() {
     }
-    static final Logger log = LoggerFactory.getLogger(RosterTableModel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RosterTableModel.class);
 }

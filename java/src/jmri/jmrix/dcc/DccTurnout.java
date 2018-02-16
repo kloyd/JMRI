@@ -1,4 +1,3 @@
-// DccTurnout.java
 package jmri.jmrix.dcc;
 
 import jmri.CommandStation;
@@ -16,17 +15,11 @@ import org.slf4j.LoggerFactory;
  * be the only object that is sending messages for this turnout; more than one
  * Turnout object pointing to a single device is not allowed.
  *
- * Description:	extend jmri.AbstractTurnout for DCC-only layouts
+ * Description: extend jmri.AbstractTurnout for DCC-only layouts
  *
- * @author	Bob Jacobsen Copyright (C) 2014
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2014
  */
 public class DccTurnout extends AbstractTurnout {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2120643169908605976L;
 
     /**
      * DCC turnouts use the NMRA number (0-511) as their numerical
@@ -49,11 +42,12 @@ public class DccTurnout extends AbstractTurnout {
     }
 
     // Handle a request to change state by sending a formatted DCC packet
+    @Override
     protected void forwardCommandChangeToLayout(int s) {
         // sort out states
-        if ((s & Turnout.CLOSED) > 0) {
+        if ((s & Turnout.CLOSED) != 0) {
             // first look for the double case, which we can't handle
-            if ((s & Turnout.THROWN) > 0) {
+            if ((s & Turnout.THROWN) != 0) {
                 // this is the disaster case!
                 log.error("Cannot command both CLOSED and THROWN " + s);
                 return;
@@ -67,6 +61,7 @@ public class DccTurnout extends AbstractTurnout {
         }
     }
 
+    @Override
     protected void turnoutPushbuttonLockout(boolean _pushButtonLockout) {
         if (log.isDebugEnabled()) {
             log.debug("Send command to " + (_pushButtonLockout ? "Lock" : "Unlock") + " Pushbutton BT" + _number);
@@ -90,9 +85,7 @@ public class DccTurnout extends AbstractTurnout {
 
     }
 
-    static Logger log = LoggerFactory.getLogger(DccTurnout.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DccTurnout.class);
 
 }
 
-
-/* @(#)DccTurnout.java */

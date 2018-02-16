@@ -1,22 +1,21 @@
-// XBeeAdapter.java
 package jmri.jmrix.ieee802154.xbee;
 
-import com.rapplogic.xbee.XBeeConnection;
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.SerialPortEventListener;
+import com.digi.xbee.api.connection.IConnectionInterface;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import purejavacomm.*;
 
 /**
  * Provide access to IEEE802.15.4 devices via a serial comm port.
  *
  * @author Paul Bender Copyright (C) 2013
- * @version	$Revision$
  */
-public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriverAdapter implements jmri.jmrix.SerialPortAdapter, XBeeConnection, SerialPortEventListener {
+public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriverAdapter implements jmri.jmrix.SerialPortAdapter, IConnectionInterface, SerialPortEventListener {
+
+    private boolean iConnectionOpened = false;
 
     public XBeeAdapter() {
         super(new XBeeConnectionMemo());
@@ -35,7 +34,7 @@ public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriver
             // try to set it for serial
             try {
                 setSerialPort();
-            } catch (gnu.io.UnsupportedCommOperationException e) {
+            } catch (UnsupportedCommOperationException e) {
                 log.error("Cannot set serial parameters on port " + portName + ": " + e.getMessage());
                 return "Cannot set serial parameters on port " + portName + ": " + e.getMessage();
             }
@@ -44,12 +43,7 @@ public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriver
             serialStream = activeSerialPort.getInputStream();
 
             // purge contents, if any
-            int count = serialStream.available();
-            log.debug("input stream shows " + count + " bytes available");
-            while (count > 0) {
-                serialStream.skip(count);
-                count = serialStream.available();
-            }
+            purgeStream(serialStream);
 
             // report status?
             if (log.isInfoEnabled()) {
@@ -66,21 +60,29 @@ public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriver
             }
             if (log.isDebugEnabled()) {
                 // report additional status
-                log.debug(" port flow control shows "
-                        + (activeSerialPort.getFlowControlMode() == SerialPort.FLOWCONTROL_RTSCTS_OUT ? "hardware flow control" : "no flow control"));
+                log.debug(" port flow control shows " // NOI18N
+                        + (activeSerialPort.getFlowControlMode() == SerialPort.FLOWCONTROL_RTSCTS_OUT ? "hardware flow control" : "no flow control")); // NOI18N
+
+                // log events
+                setPortEventLogging(activeSerialPort);
             }
+
             opened = true;
-        } catch (gnu.io.NoSuchPortException p) {
+        } catch (NoSuchPortException p) {
             return handlePortNotFound(p, portName, log);
-        } catch (Exception ex) {
-            log.error("Unexpected exception while opening port " + portName + " trace follows: " + ex);
-            ex.printStackTrace();
+        } catch (IOException ex) {
+            log.error("Unexpected exception while opening port {}", portName, ex);
             return "Unexpected error while opening port " + portName + ": " + ex;
         }
 
         return null; // normal operation
     }
 
+    /**
+     *
+     */
+    @SuppressFBWarnings(value = {"NO_NOTIFY_NOT_NOTIFYALL","NN_NAKED_NOTIFY"}, justification="The notify call is notifying the receive thread that data is available.  There is only one receive thead, so no reason to call notifyAll.")
+    @Override
     public void serialEvent(SerialPortEvent e) {
         int type = e.getEventType();
         try {
@@ -90,7 +92,7 @@ public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriver
                         log.debug("SerialEvent: DATA_AVAILABLE is " + e.getNewValue());
                     }
                     synchronized (this) {
-                        this.notify();
+                        this.notifyAll();
                     }
                 } else {
                     log.warn("SerialEvent: DATA_AVAILABLE but no data available.");
@@ -139,11 +141,13 @@ public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriver
         }
     }
 
+
     /**
      * Local method to do specific port configuration
      */
     @Override
-    protected void setSerialPort() throws gnu.io.UnsupportedCommOperationException {
+    protected void setSerialPort() throws UnsupportedCommOperationException {
+        log.debug("setSerialPort() called.");
         // find the baud rate value, configure comm options
         int baud = validSpeedValues[0];  // default, but also defaulted in the initial value of selectedSpeed
         for (int i = 0; i < validSpeeds.length; i++) {
@@ -157,37 +161,25 @@ public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriver
 
         // find and configure flow control
         int flow = SerialPort.FLOWCONTROL_NONE; // default
-        activeSerialPort.setFlowControlMode(flow);
+        configureLeadsAndFlowControl(activeSerialPort, flow);
+
 
         if (log.isDebugEnabled()) {
-            try {
-                activeSerialPort.notifyOnFramingError(true);
-            } catch (Exception e) {
-                log.debug("Could not notifyOnFramingError: " + e);
-            }
-            try {
-                activeSerialPort.notifyOnBreakInterrupt(true);
-            } catch (Exception e) {
-                log.debug("Could not notifyOnBreakInterrupt: " + e);
-            }
-            try {
-                activeSerialPort.notifyOnParityError(true);
-            } catch (Exception e) {
-                log.debug("Could not notifyOnParityError: " + e);
-            }
-            try {
-                activeSerialPort.notifyOnOverrunError(true);
-            } catch (Exception e) {
-                log.debug("Could not notifyOnOverrunError: " + e);
-            }
+            activeSerialPort.notifyOnFramingError(true);
+            activeSerialPort.notifyOnBreakInterrupt(true);
+            activeSerialPort.notifyOnParityError(true);
+            activeSerialPort.notifyOnOverrunError(true);
         }
+
+        activeSerialPort.enableReceiveTimeout(10);
 
         // The following are required for the XBee API's input thread.
         activeSerialPort.notifyOnDataAvailable(true);
+
         // arrange to notify later
         try {
             activeSerialPort.addEventListener(this);
-        } catch (java.lang.Exception e) {
+        } catch (java.util.TooManyListenersException e) {
             log.error("Exception adding listener " + e);
         }
     }
@@ -203,41 +195,78 @@ public class XBeeAdapter extends jmri.jmrix.ieee802154.serialdriver.SerialDriver
         // connect to the traffic controller
         this.getSystemConnectionMemo().setTrafficController(tc);
         tc.setAdapterMemo(this.getSystemConnectionMemo());
-        //tc.setXBee(xbee);
-        this.getSystemConnectionMemo().configureManagers();
         tc.connectPort(this);
+        this.getSystemConnectionMemo().configureManagers();
         // Configure the form of serial address validation for this connection
 //        adaptermemo.setSerialAddress(new jmri.jmrix.ieee802154.SerialAddress(adaptermemo));
-        // declare up
-        jmri.jmrix.ieee802154.ActiveFlag.setActive();
     }
 
-    /**
-     * Get an array of valid baud rates. This is currently just a message saying
-     * its fixed
-     */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP") // OK to expose array instead of copy until Java 1.6
     @Override
     public String[] validBaudRates() {
-        return validSpeeds;
+        return Arrays.copyOf(validSpeeds, validSpeeds.length);
     }
 
     @Override
     public XBeeConnectionMemo getSystemConnectionMemo() {
-        return (XBeeConnectionMemo) super.getSystemConnectionMemo();
+        jmri.jmrix.ieee802154.IEEE802154SystemConnectionMemo m = super.getSystemConnectionMemo();
+        if (m instanceof XBeeConnectionMemo ) {
+           return (XBeeConnectionMemo) m;
+        } else {
+           throw new java.lang.IllegalArgumentException("System Connection Memo associated with this connection is not the right type.");
+        }
     }
 
-    protected String[] validSpeeds = new String[]{"1,200 baud", "2,400 baud",
+    private String[] validSpeeds = new String[]{"1,200 baud", "2,400 baud",
         "4,800 baud", "9,600 baud", "19,200 baud", "38,400 baud",
         "57,600 baud", "115,200 baud"};
-    protected int[] validSpeedValues = new int[]{1200, 2400, 4800, 9600, 19200,
+    private int[] validSpeedValues = new int[]{1200, 2400, 4800, 9600, 19200,
         38400, 57600, 115200};
 
-    // methods for XBeeConnection
+    // methods for IConnectionInterface
+    @Override
     public void close() {
         activeSerialPort.close();
+        iConnectionOpened = false;
     }
 
-    static Logger log = LoggerFactory.getLogger(XBeeAdapter.class.getName());
+    @Override
+    public int readData(byte[] b) throws java.io.IOException {
+       log.debug("read data called with {}", b);
+       return serialStream.read(b);
+    }
+
+    @Override
+    public int readData(byte[] b,int off, int len) throws java.io.IOException {
+       log.debug("read data called with {} {} {}", b, off, len);
+       return serialStream.read(b,off,len);
+    }
+
+    @Override
+    public void writeData(byte[] b) throws java.io.IOException {
+       log.debug("write data called with {}", b);
+       getOutputStream().write(b);
+    }
+
+    @Override
+    public void writeData(byte[] b,int off, int len) throws java.io.IOException {
+       log.debug("write data called with {} {} {}", b, off, len);
+       getOutputStream().write(b,off,len);
+    }
+
+    @Override
+    public boolean isOpen(){
+       log.debug("isOpen called");
+       return ( iConnectionOpened );
+    }
+
+    @Override
+    public void open(){
+       log.debug("open called");
+       iConnectionOpened = true;
+       // don't do anything here.  We handle the details of open through the
+       // openPort call, which is called from the JMRI infrastructure.
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(XBeeAdapter.class);
 
 }

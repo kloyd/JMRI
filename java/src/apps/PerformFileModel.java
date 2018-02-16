@@ -1,43 +1,41 @@
-// PerformFileModel.java
 package apps;
 
-import java.util.ArrayList;
-import java.util.List;
+import apps.startup.AbstractStartupModel;
+import java.io.File;
+import jmri.ConfigureManager;
+import jmri.InstanceManager;
+import jmri.JmriException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A PerformFileModel object loads an xml file when the program is started.
  * <P>
- * @author	Bob Jacobsen Copyright 2003
- * @version $Revision$
- * @see PerformFilePanel
+ * @author Bob Jacobsen Copyright 2003
+ * @author Randall Wood (c) 2016
+ * @see apps.startup.PerformFileModelFactory
  */
-public class PerformFileModel implements StartupModel {
+public class PerformFileModel extends AbstractStartupModel {
 
-    public PerformFileModel() {
-        fileName = null;
-    }
+    private final static Logger log = LoggerFactory.getLogger(PerformFileModel.class);
 
-    String fileName;
-
-    @Override
-    public String getName() {
-        return this.getFileName();
-    }
-    
     public String getFileName() {
-        return fileName;
+        return this.getName();
     }
 
     public void setFileName(String n) {
-        fileName = n;
+        this.setName(n);
     }
 
-    static public void rememberObject(PerformFileModel m) {
-        l.add(m);
-    }
+    @Override
+    public void performAction() throws JmriException {
+        log.info("Loading file {}", this.getFileName());
 
-    static public List<PerformFileModel> rememberedObjects() {
-        return l;
+        // load the file
+        File file = new File(this.getFileName());
+        ConfigureManager cm = InstanceManager.getNullableDefault(ConfigureManager.class);
+        if (cm != null) {
+            cm.load(file);
+        }
     }
-    static List<PerformFileModel> l = new ArrayList<PerformFileModel>();
 }

@@ -1,4 +1,3 @@
-// RosterMenu.java
 package jmri.jmrit.roster.swing;
 
 import java.awt.Component;
@@ -20,18 +19,12 @@ import org.slf4j.LoggerFactory;
  * Provides a context-specific menu for handling the Roster.
  * <P>
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002, 2008
+ * @author Bob Jacobsen Copyright (C) 2001, 2002, 2008
  * @author Dennis Miller Copyright (C) 2005
- * @version	$Revision$
  * @see jmri.jmrit.roster.RosterEntry
  * @see jmri.jmrit.roster.Roster
  */
 public class RosterMenu extends JMenu {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -1386179387265677639L;
 
     /**
      * Ctor argument defining that the menu object will be used as part of the
@@ -176,6 +169,6 @@ public class RosterMenu extends JMenu {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(RosterMenu.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RosterMenu.class);
 
 }

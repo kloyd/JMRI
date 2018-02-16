@@ -1,33 +1,25 @@
-// SerialSensor.java
 package jmri.jmrix.secsi;
 
 import jmri.implementation.AbstractSensor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Extend jmri.AbstractSensor for serial systems
  * <P>
  * @author	Bob Jacobsen Copyright (C) 2003, 2006, 2007, 2008
- * @version $Revision$
  */
 public class SerialSensor extends AbstractSensor {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5465958868822894698L;
-
-    public SerialSensor(String systemName) {
+    public SerialSensor(String systemName,SecsiSystemConnectionMemo _memo) {
         super(systemName);
         _knownState = UNKNOWN;
     }
 
-    public SerialSensor(String systemName, String userName) {
+    public SerialSensor(String systemName, String userName,SecsiSystemConnectionMemo _memo) {
         super(systemName, userName);
         _knownState = UNKNOWN;
     }
 
+    @Override
     public void dispose() {
     }
 
@@ -38,11 +30,8 @@ public class SerialSensor extends AbstractSensor {
      * Eventually, we may want to have this move the related AIU to the top of
      * the polling queue.
      */
+    @Override
     public void requestUpdateFromLayout() {
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialSensor.class.getName());
-
 }
-
-/* @(#)SerialSensor.java */

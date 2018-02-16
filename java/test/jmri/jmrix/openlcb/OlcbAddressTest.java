@@ -1,19 +1,16 @@
-// OlcbAddressTest.java
 package jmri.jmrix.openlcb;
 
 import jmri.jmrix.can.CanMessage;
 import jmri.jmrix.can.CanReply;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tests for the jmri.jmrix.openlcb.OlcbAddress class.
  *
  * @author	Bob Jacobsen Copyright 2008, 2010
- * @version $Revision$
  */
 public class OlcbAddressTest extends TestCase {
 
@@ -80,12 +77,30 @@ public class OlcbAddressTest extends TestCase {
         assertTrue(new OlcbAddress("1.34.5.0.9A.B.E.0").match(c));
     }
 
+    public void testEventAccess() {
+        assertEquals(new OlcbAddress("x0102030405060708"), new OlcbAddress(new org.openlcb.EventID("1.2.3.4.5.6.7.8")) );
+    }
+    
     public void testEqualsOK() {
         assertTrue((new OlcbAddress("1.34.5.0.9A.B.E.0")).equals(new OlcbAddress("x013405009A0B0E00")));
         assertTrue((new OlcbAddress("x013405009A0B0E00")).equals(new OlcbAddress("1.34.5.0.9A.B.E.0")));
         assertTrue((new OlcbAddress("x013405009A0B0E00")).equals(new OlcbAddress("X013405009A0B0E00")));
     }
 
+    public void testCompare() {
+        assertEquals(0, (new OlcbAddress("1.34.5.0.9A.B.E.0")).compare(new OlcbAddress("x013405009A0B0E00")));
+        assertEquals(0, (new OlcbAddress("x013405009A0B0E00")).compare(new OlcbAddress("1.34.5.0.9A.B.E.0")));
+        assertEquals(0, (new OlcbAddress("x013405009A0B0E00")).compare(new OlcbAddress("X013405009A0B0E00")));
+        
+        assertEquals(-1, (new OlcbAddress("x013405009A0B0E00")).compare(new OlcbAddress("X013405009A0B0E01")));
+        assertEquals(+1, (new OlcbAddress("x013405009A0B0E01")).compare(new OlcbAddress("X013405009A0B0E00")));
+
+        assertEquals(-1, (new OlcbAddress("x013405009A0B0E")).compare(new OlcbAddress("X013405009A0B0E00")));
+        assertEquals(+1, (new OlcbAddress("x013405009A0B0E00")).compare(new OlcbAddress("X013405009A0B0E")));
+
+        // not testing the cases for non-match addresses
+    }
+    
     public void testSplitCheckOK() {
         assertTrue(new OlcbAddress("x123456789ABCDEF0").checkSplit());
         assertTrue(new OlcbAddress("12.34.56.78.9A.BC.DE.F0").checkSplit());
@@ -147,7 +162,7 @@ public class OlcbAddressTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {OlcbAddressTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -156,15 +171,15 @@ public class OlcbAddressTest extends TestCase {
         return suite;
     }
 
-    static Logger log = LoggerFactory.getLogger(OlcbAddressTest.class.getName());
-
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

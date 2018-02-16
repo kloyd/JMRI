@@ -1,4 +1,3 @@
-// MrcNamedPaneAction.java
 package jmri.jmrix.zimo.swing;
 
 import javax.swing.Icon;
@@ -14,17 +13,16 @@ import org.slf4j.LoggerFactory;
  * @author	Bob Jacobsen Copyright (C) 2010 Copied from nce.swing
  * @author Ken Cameron 2014
  * @author Kevin Dickerson 2014
- * @version	$Revision: 22942 $
  */
 public class Mx1NamedPaneAction extends jmri.util.swing.JmriNamedPaneAction {
 
     /**
+     * Create a Mx1NamedPane associated with the given window.
      *
-     */
-    private static final long serialVersionUID = -7955184289782860199L;
-
-    /**
-     * Enhanced constructor for placing the pane in various GUIs
+     * @param s         the name of the panel
+     * @param wi        the window to associate the pane with
+     * @param paneClass the class to use for the panel
+     * @param memo      the MX1 connection
      */
     public Mx1NamedPaneAction(String s, WindowInterface wi, String paneClass, Mx1SystemConnectionMemo memo) {
         super(s, wi, paneClass);
@@ -38,6 +36,7 @@ public class Mx1NamedPaneAction extends jmri.util.swing.JmriNamedPaneAction {
 
     Mx1SystemConnectionMemo memo;
 
+    @Override
     public JmriPanel makePanel() {
         JmriPanel p = super.makePanel();
         if (p == null) {
@@ -48,14 +47,11 @@ public class Mx1NamedPaneAction extends jmri.util.swing.JmriNamedPaneAction {
             ((Mx1PanelInterface) p).initComponents(memo);
             return p;
         } catch (Exception ex) {
-            log.warn("could not init pane class: " + paneClass + " due to:" + ex); //IN18N
-            ex.printStackTrace();
+            log.warn("could not init pane class: {} due to {}", paneClass, ex, ex);
         }
 
         return p;
     }
 
-    static Logger log = LoggerFactory.getLogger(Mx1NamedPaneAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Mx1NamedPaneAction.class);
 }
-
-/* @(#)Mx1NamedPaneAction.java */

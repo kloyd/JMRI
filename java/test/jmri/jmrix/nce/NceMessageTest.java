@@ -1,27 +1,27 @@
-// NceMessageTest.java
 package jmri.jmrix.nce;
 
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the NceMessage class
  *
  * @author	Bob Jacobsen Copyright 2002-2004
- * @version	$Revision$
- */
+  */
 public class NceMessageTest extends TestCase {
 
     // ensure that the static useBinary value is left OK
     int saveCommandOptions;
     NceTrafficController tc = new NceTrafficController();
 
+    @Override
     public void setUp() {
         saveCommandOptions = tc.getCommandOptions();
     }
 
+    @Override
     public void tearDown() {
         tc.commandOptionSet = false;	// kill warning message
         tc.setCommandOptions(saveCommandOptions);
@@ -143,7 +143,7 @@ public class NceMessageTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {NceMessageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

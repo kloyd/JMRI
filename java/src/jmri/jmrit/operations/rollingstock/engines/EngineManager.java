@@ -1,4 +1,3 @@
-// EngineManager.java
 package jmri.jmrit.operations.rollingstock.engines;
 
 import java.util.ArrayList;
@@ -6,6 +5,9 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.JComboBox;
+import jmri.InstanceManager;
+import jmri.InstanceManagerAutoDefault;
+import jmri.InstanceManagerAutoInitialize;
 import jmri.jmrit.operations.rollingstock.RollingStock;
 import jmri.jmrit.operations.rollingstock.RollingStockManager;
 import jmri.jmrit.operations.setup.Control;
@@ -20,11 +22,10 @@ import org.slf4j.LoggerFactory;
  * Manages the engines.
  *
  * @author Daniel Boudreau Copyright (C) 2008
- * @version	$Revision$
  */
-public class EngineManager extends RollingStockManager {
+public class EngineManager extends RollingStockManager<Engine> implements InstanceManagerAutoDefault, InstanceManagerAutoInitialize {
 
-    protected Hashtable<String, Consist> _consistHashTable = new Hashtable<String, Consist>();   	// stores Consists by number
+    protected Hashtable<String, Consist> _consistHashTable = new Hashtable<>(); // stores Consists by number
 
     public static final String CONSISTLISTLENGTH_CHANGED_PROPERTY = "ConsistListLength"; // NOI18N
 
@@ -32,34 +33,26 @@ public class EngineManager extends RollingStockManager {
     }
 
     /**
-     * record the single instance *
+     * Get the default instance of this class.
+     *
+     * @return the default instance of this class
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
      */
-    private static EngineManager _instance = null;
-
+    @Deprecated
     public static synchronized EngineManager instance() {
-        if (_instance == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("EngineManager creating instance");
-            }
-            // create and load
-            _instance = new EngineManager();
-            OperationsSetupXml.instance();					// load setup
-            // create manager to load engines and their attributes
-            EngineManagerXml.instance();
-        }
-        if (Control.showInstance) {
-            log.debug("EngineManager returns instance {}", _instance);
-        }
-        return _instance;
+        return InstanceManager.getDefault(EngineManager.class);
     }
 
     /**
      * @return requested Engine object or null if none exists
      */
+    @Override
     public Engine getById(String id) {
-        return (Engine) super.getById(id);
+        return super.getById(id);
     }
 
+    @Override
     public Engine getByRoadAndNumber(String engineRoad, String engineNumber) {
         String engineId = Engine.createId(engineRoad, engineNumber);
         return getById(engineId);
@@ -69,8 +62,9 @@ public class EngineManager extends RollingStockManager {
      * Finds an existing engine or creates a new engine if needed requires
      * engine's road and number
      *
-     * @param engineRoad
-     * @param engineNumber
+     * @param engineRoad   The engine's road initials
+     * @param engineNumber The engine's road number
+     *
      * @return new engine or existing engine
      */
     public Engine newEngine(String engineRoad, String engineNumber) {
@@ -94,7 +88,8 @@ public class EngineManager extends RollingStockManager {
             consist = new Consist(name);
             Integer oldSize = Integer.valueOf(_consistHashTable.size());
             _consistHashTable.put(name, consist);
-            setDirtyAndFirePropertyChange(CONSISTLISTLENGTH_CHANGED_PROPERTY, oldSize, Integer.valueOf(_consistHashTable.size()));
+            setDirtyAndFirePropertyChange(CONSISTLISTLENGTH_CHANGED_PROPERTY, oldSize,
+                    Integer.valueOf(_consistHashTable.size()));
         }
         return consist;
     }
@@ -105,7 +100,8 @@ public class EngineManager extends RollingStockManager {
             consist.dispose();
             Integer oldSize = Integer.valueOf(_consistHashTable.size());
             _consistHashTable.remove(name);
-            setDirtyAndFirePropertyChange(CONSISTLISTLENGTH_CHANGED_PROPERTY, oldSize, Integer.valueOf(_consistHashTable.size()));
+            setDirtyAndFirePropertyChange(CONSISTLISTLENGTH_CHANGED_PROPERTY, oldSize,
+                    Integer.valueOf(_consistHashTable.size()));
         }
     }
 
@@ -118,7 +114,7 @@ public class EngineManager extends RollingStockManager {
         if (oldConsist != null) {
             Consist newConsist = newConsist(newName);
             // keep the lead engine
-            Engine leadEngine = (Engine) oldConsist.getLead();
+            Engine leadEngine = oldConsist.getLead();
             leadEngine.setConsist(newConsist);
             for (Engine engine : oldConsist.getEngines()) {
                 engine.setConsist(newConsist);
@@ -178,7 +174,7 @@ public class EngineManager extends RollingStockManager {
      *
      * @return list of engines ordered by engine model
      */
-    public List<RollingStock> getByModelList() {
+    public List<Engine> getByModelList() {
         return getByList(getByRoadNameList(), BY_MODEL);
     }
 
@@ -187,11 +183,11 @@ public class EngineManager extends RollingStockManager {
      *
      * @return list of engines ordered by engine consist
      */
-    public List<RollingStock> getByConsistList() {
+    public List<Engine> getByConsistList() {
         return getByList(getByRoadNameList(), BY_CONSIST);
     }
-    
-    public List<RollingStock> getByHpList() {
+
+    public List<Engine> getByHpList() {
         return getByList(getByModelList(), BY_HP);
     }
 
@@ -199,28 +195,28 @@ public class EngineManager extends RollingStockManager {
     private static final int BY_MODEL = 4;
     private static final int BY_CONSIST = 5;
     private static final int BY_HP = 13;
-    
+
     // add engine options to sort comparator
     @Override
-    protected java.util.Comparator<RollingStock> getComparator(int attribute) {
+    protected java.util.Comparator<Engine> getComparator(int attribute) {
         switch (attribute) {
             case BY_MODEL:
-                return (e1,e2) -> (((Engine) e1).getModel().compareToIgnoreCase(((Engine) e2).getModel()));
+                return (e1, e2) -> (e1.getModel().compareToIgnoreCase(e2.getModel()));
             case BY_CONSIST:
-                return (e1,e2) -> (((Engine) e1).getConsistName().compareToIgnoreCase(((Engine) e2).getConsistName()));
+                return (e1, e2) -> (e1.getConsistName().compareToIgnoreCase(e2.getConsistName()));
             case BY_HP:
-                return (e1,e2) -> (((Engine) e1).getHpInteger() - ((Engine) e2).getHpInteger());
+                return (e1, e2) -> (e1.getHpInteger() - e2.getHpInteger());
             default:
                 return super.getComparator(attribute);
         }
     }
 
-
     /**
      * return a list available engines (no assigned train) engines are ordered
      * least recently moved to most recently moved.
      *
-     * @param train
+     * @param train The Train requesting this list.
+     *
      * @return Ordered list of engines not assigned to a train
      */
     public List<Engine> getAvailableTrainList(Train train) {
@@ -239,21 +235,18 @@ public class EngineManager extends RollingStockManager {
     /**
      * Returns a list of locos sorted by blocking number for a train. This
      * returns a list of consisted locos in the order that they were entered in.
+     *
+     * @param train The Train requesting this list.
+     * @return A list of sorted locos.
      */
     public List<Engine> getByTrainBlockingList(Train train) {
-        return castListToEngine(getByList(super.getByTrainList(train), BY_BLOCKING));
-    }
-
-    private List<Engine> castListToEngine(List<RollingStock> list) {
-        List<Engine> out = new ArrayList<Engine>();
-        for (RollingStock rs : list) {
-            out.add((Engine) rs);
-        }
-        return out;
+        return getByList(super.getByTrainList(train), BY_BLOCKING);
     }
 
     /**
      * Get a list of engine road names.
+     *
+     * @param model The string model name, can be NONE.
      *
      * @return List of engine road names.
      */
@@ -262,15 +255,14 @@ public class EngineManager extends RollingStockManager {
         Enumeration<String> en = _hashTable.keys();
         while (en.hasMoreElements()) {
             Engine engine = getById(en.nextElement());
-            if ((engine.getModel().equals(model) || model.equals(NONE))
-                    && !names.contains(engine.getRoadName())) {
+            if ((engine.getModel().equals(model) || model.equals(NONE)) && !names.contains(engine.getRoadName())) {
                 names.add(engine.getRoadName());
             }
         }
         java.util.Collections.sort(names);
         return names;
     }
-    
+
     @Override
     public void dispose() {
         for (String consistName : getConsistNameList()) {
@@ -284,9 +276,7 @@ public class EngineManager extends RollingStockManager {
         if (root.getChild(Xml.NEW_CONSISTS) != null) {
             @SuppressWarnings("unchecked")
             List<Element> consists = root.getChild(Xml.NEW_CONSISTS).getChildren(Xml.CONSIST);
-            if (log.isDebugEnabled()) {
-                log.debug("Engine manager sees {} consists", consists.size());
-            }
+            log.debug("Engine manager sees {} consists", consists.size());
             Attribute a;
             for (Element consist : consists) {
                 if ((a = consist.getAttribute(Xml.NAME)) != null) {
@@ -298,9 +288,7 @@ public class EngineManager extends RollingStockManager {
             String names = root.getChildText(Xml.CONSISTS);
             if (!names.equals(NONE)) {
                 String[] consistNames = names.split("%%"); // NOI18N
-                if (log.isDebugEnabled()) {
-                    log.debug("consists: {}", names);
-                }
+                log.debug("consists: {}", names);
                 for (String name : consistNames) {
                     newConsist(name);
                 }
@@ -310,9 +298,7 @@ public class EngineManager extends RollingStockManager {
         if (root.getChild(Xml.ENGINES) != null) {
             @SuppressWarnings("unchecked")
             List<Element> engines = root.getChild(Xml.ENGINES).getChildren(Xml.ENGINE);
-            if (log.isDebugEnabled()) {
-                log.debug("readFile sees {} engines", engines.size());
-            }
+            log.debug("readFile sees {} engines", engines.size());
             for (Element e : engines) {
                 register(new Engine(e));
             }
@@ -323,9 +309,11 @@ public class EngineManager extends RollingStockManager {
      * Create an XML element to represent this Entry. This member has to remain
      * synchronized with the detailed DTD in operations-engines.dtd.
      *
+     * @param root The common Element for operations-engines.dtd.
+     *
      */
     public void store(Element root) {
-//    	root.addContent(new Element(Xml.OPTIONS));	// nothing to store under options
+        //     root.addContent(new Element(Xml.OPTIONS)); // nothing to store under options
 
         Element values;
         List<String> names = getConsistNameList();
@@ -350,14 +338,23 @@ public class EngineManager extends RollingStockManager {
         for (RollingStock rs : getByRoadNameList()) {
             Engine eng = (Engine) rs;
             values.addContent(eng.store());
+
         }
     }
 
     protected void setDirtyAndFirePropertyChange(String p, Object old, Object n) {
         // Set dirty
-        EngineManagerXml.instance().setDirty(true);
+        InstanceManager.getDefault(EngineManagerXml.class
+        ).setDirty(true);
         super.firePropertyChange(p, old, n);
     }
 
-    static Logger log = LoggerFactory.getLogger(EngineManager.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(EngineManager.class);
+
+    @Override
+    public void initialize() {
+        InstanceManager.getDefault(OperationsSetupXml.class); // load setup
+        // create manager to load engines and their attributes
+        InstanceManager.getDefault(EngineManagerXml.class);
+    }
 }

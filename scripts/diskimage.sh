@@ -6,6 +6,11 @@
 #   The contents of the image are the same either way, and the tools are similar in capability, so we do it this way
 #   for consistency of the final product.
 #
+# arguments are:
+#    Release version string e.g. "4.5.5", "${release.version-string}" in Ant
+#    Output DMG file pathname e.g. dist/release/JMRI.4.5.5.dmg, "${dist.release}/JMRI.${release.version-string}.dmg" in Ant
+#    Input OS X build directory e.g. dist/MacOSX, "${dist.macosx}" in Ant
+#
 # Copyright 2007,2011 Bob Jacobsen, david d zuhn
 #
 
@@ -58,7 +63,7 @@ then
     hdiutil attach "$IMAGEFILE" -mountpoint "$tmpdir" -nobrowse
     trap '[ "$EJECTED" = 0 ] && hdiutil eject "$IMAGEFILE"' 0
 else
-    dd if=/dev/zero of="$IMAGEFILE" bs=1m count=${imagesize}
+    dd if=/dev/zero of="$IMAGEFILE" bs=1M count=${imagesize}
     mkfs.hfsplus -v "JMRI ${REL_VER}" "${IMAGEFILE}"
     sudo mount -t hfsplus -o loop,rw,uid=$UID "$IMAGEFILE" $tmpdir
     trap '[ "$EJECTED" = 0 ] && sudo umount "$tmpdir"' 0
@@ -99,9 +104,8 @@ then
   rm -f "$OUTPUT"
   hdiutil convert "$IMAGEFILE" -format UDZO -imagekey zlib-level=9 -o "$OUTPUT"
 else
-  # we don't know how to do this on linux right now...
-  # so we just create the output file directly from the input file
-  mv "$IMAGEFILE" "$OUTPUT"
+  # this relies on the 'dmg' tool from https://github.com/erwint/libdmg-hfsplus
+  dmg dmg "$IMAGEFILE" "$OUTPUT"
 fi
 
 # clean up

@@ -1,4 +1,3 @@
-// ConnectionConfig.java
 package jmri.jmrix.can.adapters;
 
 import java.awt.event.ActionEvent;
@@ -6,6 +5,8 @@ import java.awt.event.ActionListener;
 import java.util.ResourceBundle;
 import javax.swing.JComboBox;
 import jmri.jmrix.can.ConfigurationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract base for of objects to handle configuring a layout connection via
@@ -13,10 +14,12 @@ import jmri.jmrix.can.ConfigurationManager;
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2003, 2012
  * @author Andrew Crosland 2008
- * @version	$Revision: 19909 $
+ * 
  */
 abstract public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig {
 
+    private final static Logger log = LoggerFactory.getLogger(ConnectionConfig.class);
+    
     /**
      * Ctor for an object being created during load process; Swing init is
      * deferred.
@@ -46,6 +49,7 @@ abstract public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnecti
         updateUserNameField();
 
         ((JComboBox<Option>) options.get("Protocol").getComponent()).addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateUserNameField();
             }
@@ -74,6 +78,7 @@ abstract public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnecti
         }
     }
 
+    @Override
     abstract public String name();
 
     @Override
@@ -81,5 +86,6 @@ abstract public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnecti
         return ResourceBundle.getBundle("jmri.jmrix.can.CanActionListBundle");
     }
 
+    @Override
     abstract protected void setInstance(); // necessary to get right type
 }

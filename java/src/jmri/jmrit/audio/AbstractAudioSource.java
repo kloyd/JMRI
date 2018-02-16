@@ -1,4 +1,3 @@
-// AbstractAudioSource.java
 package jmri.jmrit.audio;
 
 import java.util.LinkedList;
@@ -16,29 +15,23 @@ import org.slf4j.LoggerFactory;
  * Base implementation of the AudioSource class.
  * <P>
  * Specific implementations will extend this base class.
- * <P>
- *
+ * <BR>
  * <hr>
  * This file is part of JMRI.
  * <P>
  * JMRI is free software; you can redistribute it and/or modify it under the
  * terms of version 2 of the GNU General Public License as published by the Free
  * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
+ * </P><P>
  * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
+ * </P>
  *
  * @author Matthew Harris copyright (c) 2009
- * @version $Revision$
  */
 public abstract class AbstractAudioSource extends AbstractAudio implements AudioSource {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -984900360787361666L;
     private Vector3f position = new Vector3f(0.0f, 0.0f, 0.0f);
     private Vector3f currentPosition = new Vector3f(0.0f, 0.0f, 0.0f);
     private Vector3f velocity = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -63,11 +56,12 @@ public abstract class AbstractAudioSource extends AbstractAudio implements Audio
     private boolean bound = false;
     private boolean positionRelative = false;
     private boolean queued = false;
+    private long offset = 0;
     private AudioBuffer buffer;
 //    private AudioSourceDelayThread asdt = null;
     private LinkedList<AudioBuffer> pendingBufferQueue = new LinkedList<>();
 
-    private static final AudioFactory activeAudioFactory = InstanceManager.audioManagerInstance().getActiveAudioFactory();
+    private static final AudioFactory activeAudioFactory = InstanceManager.getDefault(jmri.AudioManager.class).getActiveAudioFactory();
 
     private static float metersPerUnit = activeAudioFactory.getActiveAudioListener().getMetersPerUnit();
 
@@ -88,6 +82,10 @@ public abstract class AbstractAudioSource extends AbstractAudio implements Audio
      */
     public AbstractAudioSource(String systemName, String userName) {
         super(systemName, userName);
+    }
+
+    public boolean isAudioAlive() {
+        return ((AudioThread) activeAudioFactory.getCommandThread()).alive();
     }
 
     @Override
@@ -170,9 +168,9 @@ public abstract class AbstractAudioSource extends AbstractAudio implements Audio
     @Override
     public void setAssignedBuffer(String bufferSystemName) {
         if (!queued) {
-            AudioManager am = InstanceManager.audioManagerInstance();
+            AudioManager am = InstanceManager.getDefault(jmri.AudioManager.class);
             Audio a = am.getBySystemName(bufferSystemName);
-            if (a.getSubType() == Audio.BUFFER) {
+            if (a != null && a.getSubType() == Audio.BUFFER) {
                 setAssignedBuffer((AudioBuffer) a);
             } else {
                 log.warn("Attempt to assign incorrect object type to buffer - AudioBuffer expected.");
@@ -344,6 +342,25 @@ public abstract class AbstractAudioSource extends AbstractAudio implements Audio
     @Override
     public float getReferenceDistance() {
         return this.referenceDistance;
+    }
+
+    @Override
+    public void setOffset(long offset) {
+        if (offset < 0) {
+            offset = 0;
+        }
+        if (offset > this.buffer.getLength()) {
+            offset = this.buffer.getLength();
+        }
+        this.offset = offset;
+        if (log.isDebugEnabled()) {
+            log.debug("Set byte offset of Source " + this.getSystemName() + "to " + offset);
+        }
+    }
+
+    @Override
+    public long getOffset() {
+        return this.offset;
     }
 
     @Override
@@ -836,7 +853,7 @@ public abstract class AbstractAudioSource extends AbstractAudio implements Audio
                                 : "(min=" + this.getMinLoops() + " max=" + this.getMaxLoops() + ")"));
     }
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractAudioSource.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AbstractAudioSource.class);
 
     /**
      * An internal class used to create a new thread to monitor and maintain
@@ -855,7 +872,7 @@ public abstract class AbstractAudioSource extends AbstractAudio implements Audio
         /**
          * Internal variable to hold the fade direction
          */
-        private int fadeDirection;
+        private final int fadeDirection;
 
         /**
          * Constructor that takes handle to looping AudioSource to monitor
@@ -1050,5 +1067,3 @@ public abstract class AbstractAudioSource extends AbstractAudio implements Audio
 //        }
 //    }
 }
-
-/* $(#)AbstractAudioSource.java */

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
  
-    <system systemId="http://jmri.sourceforge.net/xml/DTD/layout-config.dtd"
+    <system systemId="http://jmri.org/xml/DTD/layout-config.dtd"
             uri="DTD/layout-config.dtd"/>
     <system systemId="http://jmri.org/xml/schema/JMRIschema.xsd"
             uri="schema/JMRIschema.xsd"/>
@@ -27,6 +27,8 @@
             uri="schema/guinode.xsd"/>
     <system systemId="http://jmri.org/xml/schema/layout-2-9-6.xsd"
             uri="schema/layout-2-9-6.xsd"/>
+    <system systemId="http://jmri.org/xml/schema/layout.xsd"
+            uri="schema/layout.xsd"/>
     <system systemId="http://jmri.org/xml/schema/locomotive-config.xsd"
             uri="schema/locomotive-config.xsd"/>
     <system systemId="http://jmri.org/xml/schema/programmer.xsd"

@@ -1,26 +1,20 @@
 package jmri.jmrit.withrottle;
 
-/**
- * WiThrottle GUI
- *
- * @author Brett Hoffman Copyright (C) 2009
- * @version $Revision$
- *
- */
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import javax.swing.Icon;
+import jmri.InstanceManager;
+import jmri.ThrottleManager;
 import jmri.util.swing.JmriAbstractAction;
 import jmri.util.swing.WindowInterface;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Start, and create if needed, the WiThrottle server.
+ *
+ * @author Brett Hoffman Copyright (C) 2009
+ *
+ */
 public class WiThrottleCreationAction extends JmriAbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 6107790829195111275L;
 
     public WiThrottleCreationAction(String s, WindowInterface wi) {
         super(s, wi);
@@ -30,8 +24,6 @@ public class WiThrottleCreationAction extends JmriAbstractAction {
         super(s, i, wi);
     }
 
-    static UserInterface UI;
-
     /**
      * Create a new network server.
      *
@@ -39,8 +31,8 @@ public class WiThrottleCreationAction extends JmriAbstractAction {
      */
     public WiThrottleCreationAction(String name) {
         super(name);
-        if (jmri.InstanceManager.throttleManagerInstance() == null) {
-            setEnabled(false);
+        if (InstanceManager.getNullableDefault(ThrottleManager.class) == null) {
+            super.setEnabled(false);
         }
     }
 
@@ -48,7 +40,7 @@ public class WiThrottleCreationAction extends JmriAbstractAction {
      * Create a new network server.
      */
     public WiThrottleCreationAction() {
-        this("Start WiThrottle");
+        this(Bundle.getMessage("MenuStartWiThrottleServer"));
     }
 
     /**
@@ -56,26 +48,24 @@ public class WiThrottleCreationAction extends JmriAbstractAction {
      *
      * @param e The event causing the action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
-        GraphicsEnvironment.getLocalGraphicsEnvironment();
-        // create GUI, unless running in headless mode
+        DeviceManager manager = InstanceManager.getOptionalDefault(DeviceManager.class).orElseGet(() -> {
+            return InstanceManager.setDefault(DeviceManager.class, new FacelessServer());
+        });
+        // ensure the GUI is visible if we are not in headless mode.
         if (!GraphicsEnvironment.isHeadless()) {
-            //start the normal GUI interface and server
-            if (UI == null) {    //  Only allow one to be created
-                UI = new UserInterface();
-            } else {
-                //Jeffrey Machacek added to re-show UI after first closing.
-                UI.setVisible(true);
-            }
-        } else {
-            new FacelessServer(); // start server thread with no UI
+           UserInterface ui = InstanceManager.getOptionalDefault(UserInterface.class).orElseGet(() -> {
+            return InstanceManager.setDefault(UserInterface.class, new UserInterface());
+           });
+           ui.setVisible(true);
         }
     }
 
     // never invoked, because we overrode actionPerformed above
+    @Override
     public jmri.util.swing.JmriPanel makePanel() {
         throw new IllegalArgumentException("Should not be invoked");
     }
-    static Logger log = LoggerFactory.getLogger(WiThrottleCreationAction.class.getName());
 
 }

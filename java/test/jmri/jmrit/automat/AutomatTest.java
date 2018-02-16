@@ -1,19 +1,16 @@
-// AutomatTest.java
 package jmri.jmrit.automat;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * Tests for classes in the jmri.jmrit.automat package
  *
  * @author	Bob Jacobsen Copyright 2008
- * @version	$Revision$
- */
+  */
 public class AutomatTest extends TestCase {
 
     boolean initDone;
@@ -28,10 +25,12 @@ public class AutomatTest extends TestCase {
         initDone = false;
         handleDone = false;
         AbstractAutomaton a = new AbstractAutomaton() {
+            @Override
             public void init() {
                 initDone = true;
             }
 
+            @Override
             public boolean handle() {
                 handleDone = true;
                 return false;
@@ -43,11 +42,10 @@ public class AutomatTest extends TestCase {
         // now run it
         a.start();
 
-        // wait so thread can exec
-        jmri.util.JUnitUtil.releaseThread(this);
+        // wait for thread to exec, failing if not
+        jmri.util.JUnitUtil.waitFor(()->{return initDone;},"initDone after run");
 
         // and check
-        Assert.assertTrue("initDone after run", initDone);
         Assert.assertTrue("handleDone after run", handleDone);
     }
 
@@ -55,10 +53,12 @@ public class AutomatTest extends TestCase {
         initDone = false;
         handleDone = false;
         AbstractAutomaton a = new AbstractAutomaton() {
+            @Override
             public void init() {
                 initDone = true;
             }
 
+            @Override
             public boolean handle() {
                 handleDone = true;
                 return false;
@@ -70,13 +70,10 @@ public class AutomatTest extends TestCase {
         // now run it
         a.start();
 
-        // wait so thread can exec
-        synchronized (this) {
-            wait(100);
-        }
+        // wait for thread to exec, failing if not
+        jmri.util.JUnitUtil.waitFor(()->{return initDone;},"initDone after run");
 
         // and check
-        Assert.assertTrue("initDone after run", initDone);
         Assert.assertTrue("handleDone after run", handleDone);
 
         // restart
@@ -88,13 +85,10 @@ public class AutomatTest extends TestCase {
         // now run it again
         a.start();
 
-        // wait so thread can exec
-        synchronized (this) {
-            wait(100);
-        }
+        // wait for thread to exec, failing if not
+        jmri.util.JUnitUtil.waitFor(()->{return initDone;},"initDone after 2nd run");
 
         // and check
-        Assert.assertTrue("initDone after 2nd run", initDone);
         Assert.assertTrue("handleDone after 2nd run", handleDone);
     }
 
@@ -106,25 +100,23 @@ public class AutomatTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", AutomatTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
     public static Test suite() {
-        TestSuite suite = new TestSuite(AutomatTest.class);
-        // suite.addTest(RouteTableActionTest.suite());
-        return suite;
+        return new TestSuite(AutomatTest.class);
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(AutomatTest.class.getName());
 
 }

@@ -1,12 +1,12 @@
-// NceConsistEngines.java
 package jmri.jmrit.operations.rollingstock.engines;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import jmri.jmrit.operations.rollingstock.RollingStock;
+import jmri.InstanceManager;
 import jmri.jmrix.nce.NceBinaryCommand;
 import jmri.jmrix.nce.NceMessage;
 import jmri.jmrix.nce.NceReply;
@@ -40,13 +40,12 @@ import org.slf4j.LoggerFactory;
  * (con 127 mid loco4) :0000
  *
  * @author Dan Boudreau Copyright (C) 2008, 2015
- * @version $Revision$
  */
 public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListener {
 
     private boolean syncOK = true; // used to flag status messages
-    EngineManager engineManager = EngineManager.instance();
-    List<RollingStock> engineList;
+    EngineManager engineManager = InstanceManager.getDefault(EngineManager.class);
+    List<Engine> engineList;
     List<String> consists;
 
     javax.swing.JLabel textConsist = new javax.swing.JLabel();
@@ -76,6 +75,7 @@ public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListe
         this.tc = tc;
     }
 
+    @Override
     // we use a thread so the status frame will work!
     public void run() {
         if (tc == null) {
@@ -124,7 +124,7 @@ public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListe
         if (syncOK) {
             // now check each engine in the operations to see if there are any matches
             engineList = engineManager.getByNumberList();
-            consists = new ArrayList<String>();
+            consists = new ArrayList<>();
 
             // look for lead engines
             for (int consistNum = 1; consistNum < 128; consistNum++) {
@@ -133,8 +133,7 @@ public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListe
                 if (engNum != 0) {
                     log.debug("NCE consist {} has lead engine {}", consistNum, engNum);
                     boolean engMatch = false;
-                    for (RollingStock rs : engineList) {
-                        Engine engine = (Engine) rs;
+                    for (Engine engine : engineList) {
                         if (engine.getNumber().equals(Integer.toString(engNum))) {
                             log.debug("found lead engine match {}", engine.getNumber());
                             Consist engConsist = engineManager.newConsist(NCE + consistNum);
@@ -173,10 +172,9 @@ public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListe
         for (int consistNum = 1; consistNum < 128; consistNum++) {
             int engNum = getEngineNumberFromArray(consistNum, offset, step);
             if (engNum != 0) {
-                log.debug("NCE consist " + consistNum + " has engine " + engNum);
+                log.debug("NCE consist {} has engine {}", consistNum, engNum);
                 boolean engMatch = false;
-                for (RollingStock rs : engineList) {
-                    Engine engine = (Engine) rs;
+                for (Engine engine : engineList) {
                     if (engine.getNumber().equals(Integer.toString(engNum))) {
                         log.debug("found engine match {}", engine.getNumber());
                         engMatch = true;
@@ -227,16 +225,14 @@ public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListe
         readWait();
     }
 
-    // wait up to 10 sec per read
-    private boolean readWait() {
+    // wait up to 10 seconds per read
+    private synchronized boolean readWait() {
         int waitcount = 10;
         while (waiting > 0) {
-            synchronized (this) {
-                try {
-                    wait(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt(); // retain if needed later
-                }
+            try {
+                wait(1000); // 10 x 1000mSec = 10 seconds.
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // retain if needed later
             }
             if (waitcount-- < 0) {
                 log.error("read timeout");
@@ -259,10 +255,12 @@ public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListe
         return m;
     }
 
+    @Override
     public void message(NceMessage m) {
     } // ignore replies
 
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "NN_NAKED_NOTIFY")
+    @Override
+    @SuppressFBWarnings(value = {"NN_NAKED_NOTIFY", "NO_NOTIFY_NOT_NOTIFYALL"}, justification = "Only want to notify this thread" )
     public void reply(NceReply r) {
 
         if (waiting <= 0) {
@@ -286,5 +284,5 @@ public class NceConsistEngines extends Thread implements jmri.jmrix.nce.NceListe
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(NceConsistEngines.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(NceConsistEngines.class);
 }

@@ -1,54 +1,62 @@
-// PackageTest.java
 package jmri.jmrix.nce;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+        NceTurnoutTest.class,
+        NceTurnoutManagerTest.class,
+        NceSensorManagerTest.class,
+        jmri.jmrix.nce.NceAIUTest.class,
+        jmri.jmrix.nce.NceProgrammerTest.class,
+        jmri.jmrix.nce.NceProgrammerManagerTest.class,
+        NceTrafficControllerTest.class,
+        NceSystemConnectionMemoTest.class,
+        jmri.jmrix.nce.NceMessageTest.class,
+        jmri.jmrix.nce.NceReplyTest.class,
+        NcePowerManagerTest.class,
+        BundleTest.class,
+        jmri.jmrix.nce.clockmon.PackageTest.class,
+        NceConsistTest.class,
+        jmri.jmrix.nce.networkdriver.PackageTest.class,
+        jmri.jmrix.nce.usbdriver.PackageTest.class,
+        jmri.jmrix.nce.serialdriver.PackageTest.class,
+        jmri.jmrix.nce.simulator.PackageTest.class,
+        jmri.jmrix.nce.configurexml.PackageTest.class,
+        jmri.jmrix.nce.boosterprog.PackageTest.class,
+        jmri.jmrix.nce.cab.PackageTest.class,
+        jmri.jmrix.nce.macro.PackageTest.class,
+        jmri.jmrix.nce.usbinterface.PackageTest.class,
+        jmri.jmrix.nce.ncemon.PackageTest.class,
+        jmri.jmrix.nce.packetgen.PackageTest.class,
+        NceNetworkPortControllerTest.class,
+        NcePortControllerTest.class,
+        jmri.jmrix.nce.swing.PackageTest.class,
+        jmri.jmrix.nce.consist.PackageTest.class,
+        NceBinaryCommandTest.class,
+        NceCmdStationMemoryTest.class,
+        NceConnectionTypeListTest.class,
+        NceMessageCheckTest.class,
+        NceUSBTest.class,
+        NceAIUCheckerTest.class,
+        NceClockControlTest.class,
+        NceConnectionStatusTest.class,
+        NceConsistManagerTest.class,
+        NceLightManagerTest.class,
+        NceLightTest.class,
+        NceMenuTest.class,
+        NceOpsModeProgrammerTest.class,
+        NceSensorTest.class,
+        NceThrottleManagerTest.class,
+        NceThrottleTest.class,
+        NceTurnoutMonitorTest.class,
+})
 
 /**
  * tests for the jmri.jmrix.nce package
  *
  * @author	Bob Jacobsen
- * @version $Revision$
  */
-public class PackageTest extends TestCase {
-
-    // from here down is testing infrastructure
-    public PackageTest(String s) {
-        super(s);
-    }
-
-    // a dummy test to avoid JUnit warning
-    public void testDemo() {
-        assertTrue(true);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {PackageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        apps.tests.AllTest.initLogging();
-        TestSuite suite = new TestSuite("jmri.jmrix.nce.PackageTest");
-        suite.addTest(jmri.jmrix.nce.NceTurnoutTest.suite());
-        suite.addTest(jmri.jmrix.nce.NceTurnoutManagerTest.suite());
-        suite.addTest(jmri.jmrix.nce.NceSensorManagerTest.suite());
-        suite.addTest(jmri.jmrix.nce.NceAIUTest.suite());
-        suite.addTest(jmri.jmrix.nce.NceProgrammerTest.suite());
-        suite.addTest(jmri.jmrix.nce.NceTrafficControllerTest.suite());
-        suite.addTest(jmri.jmrix.nce.NceMessageTest.suite());
-        suite.addTest(jmri.jmrix.nce.NceReplyTest.suite());
-        suite.addTest(jmri.jmrix.nce.NcePowerManagerTest.suite());
-
-        if (!System.getProperty("jmri.headlesstest", "false").equals("true")) {
-            suite.addTest(jmri.jmrix.nce.ncemon.NceMonPanelTest.suite());
-            suite.addTest(jmri.jmrix.nce.packetgen.NcePacketGenPanelTest.suite());
-        }
-
-        return suite;
-    }
-
+public class PackageTest  {
 }

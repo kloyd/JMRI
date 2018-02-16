@@ -3,8 +3,6 @@ package jmri.jmrix.dccpp.network.configurexml;
 import jmri.jmrix.configurexml.AbstractNetworkConnectionConfigXml;
 import jmri.jmrix.dccpp.network.ConnectionConfig;
 import jmri.jmrix.dccpp.network.DCCppEthernetAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistence of layout connections by persisting the DCC++ Server
@@ -20,7 +18,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Paul Bender Copyright (C) 2011
  * @author Mark Underwood Copyright (C) 2015
- * @version $Revision$
  */
 public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
 
@@ -44,8 +41,5 @@ public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

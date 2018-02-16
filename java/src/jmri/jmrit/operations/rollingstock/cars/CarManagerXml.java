@@ -1,11 +1,13 @@
-// CarManagerXml.java
 package jmri.jmrit.operations.rollingstock.cars;
 
 import java.io.File;
+import jmri.InstanceManager;
+import jmri.InstanceManagerAutoDefault;
+import jmri.InstanceManagerAutoInitialize;
 import jmri.jmrit.operations.OperationsXml;
 import jmri.jmrit.operations.locations.LocationManagerXml;
 import jmri.jmrit.operations.rollingstock.RollingStockLogger;
-import jmri.jmrit.operations.setup.Control;
+import jmri.jmrit.operations.setup.OperationsSetupXml;
 import jmri.jmrit.operations.setup.Setup;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -18,37 +20,27 @@ import org.slf4j.LoggerFactory;
  * car types, car colors, car lengths, car owners, and car kernels.
  *
  * @author Daniel Boudreau Copyright (C) 2008
- * @version	$Revision$
  */
-public class CarManagerXml extends OperationsXml {
+public class CarManagerXml extends OperationsXml implements InstanceManagerAutoDefault, InstanceManagerAutoInitialize {
 
     public CarManagerXml() {
     }
 
     /**
-     * record the single instance *
+     * Get the default instance of this class.
+     *
+     * @return the default instance of this class
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
      */
-    private static CarManagerXml _instance = null;
-
+    @Deprecated
     public static synchronized CarManagerXml instance() {
-        if (_instance == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("CarManagerXml creating instance");
-            }
-            // create and load
-            _instance = new CarManagerXml();
-            _instance.load();
-        }
-        if (Control.showInstance) {
-            log.debug("CarManagerXml returns instance {}", _instance);
-        }
-        return _instance;
+        return InstanceManager.getDefault(CarManagerXml.class);
     }
 
+    @Override
     public void writeFile(String name) throws java.io.FileNotFoundException, java.io.IOException {
-        if (log.isDebugEnabled()) {
-            log.debug("writeFile {}", name);
-        }
+        log.debug("writeFile {}", name);
         // This is taken in large part from "Java and XML" page 368
         File file = findFile(name);
         if (file == null) {
@@ -61,18 +53,18 @@ public class CarManagerXml extends OperationsXml {
         // add XSLT processing instruction
         java.util.Map<String, String> m = new java.util.HashMap<String, String>();
         m.put("type", "text/xsl"); // NOI18N
-        m.put("href", xsltLocation + "operations-cars.xsl");	// NOI18N
+        m.put("href", xsltLocation + "operations-cars.xsl"); // NOI18N
         ProcessingInstruction p = new ProcessingInstruction("xml-stylesheet", m); // NOI18N
         doc.addContent(0, p);
 
         // note all comments line feeds have been changed to processor directives
-        CarRoads.instance().store(root);
-        CarTypes.instance().store(root);
-        CarColors.instance().store(root);
-        CarLengths.instance().store(root);
-        CarOwners.instance().store(root);
-        CarLoads.instance().store(root);
-        CarManager.instance().store(root);
+        InstanceManager.getDefault(CarRoads.class).store(root);
+        InstanceManager.getDefault(CarTypes.class).store(root);
+        InstanceManager.getDefault(CarColors.class).store(root);
+        InstanceManager.getDefault(CarLengths.class).store(root);
+        InstanceManager.getDefault(CarOwners.class).store(root);
+        InstanceManager.getDefault(CarLoads.class).store(root);
+        InstanceManager.getDefault(CarManager.class).store(root);
 
         writeXML(file, doc);
 
@@ -98,36 +90,43 @@ public class CarManagerXml extends OperationsXml {
             return;
         }
 
-        CarRoads.instance().load(root);
-        CarTypes.instance().load(root);
-        CarColors.instance().load(root);
-        CarLengths.instance().load(root);
-        CarOwners.instance().load(root);
-        CarLoads.instance().load(root);
-        CarManager.instance().load(root);
+        InstanceManager.getDefault(CarRoads.class).load(root);
+        InstanceManager.getDefault(CarTypes.class).load(root);
+        InstanceManager.getDefault(CarColors.class).load(root);
+        InstanceManager.getDefault(CarLengths.class).load(root);
+        InstanceManager.getDefault(CarOwners.class).load(root);
+        InstanceManager.getDefault(CarLoads.class).load(root);
+        InstanceManager.getDefault(CarManager.class).load(root);
 
         log.debug("Cars have been loaded!");
-        RollingStockLogger.instance().enableCarLogging(Setup.isCarLoggerEnabled());
+        InstanceManager.getDefault(RollingStockLogger.class).enableCarLogging(Setup.isCarLoggerEnabled());
         // clear dirty bit
         setDirty(false);
         // clear location dirty flag, locations get modified during the loading of cars and locos
-        LocationManagerXml.instance().setDirty(false);
+        InstanceManager.getDefault(LocationManagerXml.class).setDirty(false);
     }
 
+    @Override
     public void setOperationsFileName(String name) {
         operationsFileName = name;
     }
 
+    @Override
     public String getOperationsFileName() {
         return operationsFileName;
     }
+
     private String operationsFileName = "OperationsCarRoster.xml"; // NOI18N
 
-    public void dispose(){
-        _instance = null;
+    public void dispose() {
     }
 
+    private final static Logger log = LoggerFactory.getLogger(CarManagerXml.class);
 
-    static Logger log = LoggerFactory.getLogger(CarManagerXml.class.getName());
-
+    @Override
+    public void initialize() {
+        InstanceManager.getDefault(OperationsSetupXml.class); // load setup
+        InstanceManager.getDefault(LocationManagerXml.class); // load locations
+        CarManagerXml.this.load();
+    }
 }

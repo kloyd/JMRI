@@ -1,4 +1,3 @@
-// AudioTableFrame.java
 package jmri.jmrit.beantable;
 
 import javax.swing.Box;
@@ -20,17 +19,11 @@ import javax.swing.JMenuBar;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  *
- * @author	Bob Jacobsen Copyright (C) 2003
+ * @author Bob Jacobsen Copyright (C) 2003
  * @author Matthew Harris copyright (c) 2009
- * @version $Revision$
  */
 public class AudioTableFrame extends BeanTableFrame {
 
-    //static final ResourceBundle rba = ResourceBundle.getBundle("jmri.jmrit.audio.swing.AudioTableBundle");
-    /**
-     *
-     */
-    private static final long serialVersionUID = -92682823885444455L;
     AudioTablePanel audioPanel;
 
     public AudioTableFrame(AudioTablePanel panel,
@@ -45,7 +38,7 @@ public class AudioTableFrame extends BeanTableFrame {
 
         // add save menu item
         JMenuBar menuBar = new JMenuBar();
-        JMenu fileMenu = new JMenu(rbapps.getString("MenuFile"));
+        JMenu fileMenu = new JMenu(Bundle.getMessage("MenuFile"));
         menuBar.add(fileMenu);
         fileMenu.add(new jmri.configurexml.SaveMenu());
 
@@ -57,7 +50,7 @@ public class AudioTableFrame extends BeanTableFrame {
         // install items in GUI
         getContentPane().add(audioPanel);
         bottomBox = Box.createHorizontalBox();
-        bottomBox.add(Box.createHorizontalGlue());	// stays at end of box
+        bottomBox.add(Box.createHorizontalGlue()); // stays at end of box
         bottomBoxIndex = 0;
 
         getContentPane().add(bottomBox);
@@ -76,5 +69,3 @@ public class AudioTableFrame extends BeanTableFrame {
     }
 
 }
-
-/* @(#)AudioTableFrame.java */

@@ -1,4 +1,3 @@
-// LnCommandStationType.java
 package jmri.jmrix.loconet;
 
 import jmri.ThrottleManager;
@@ -27,14 +26,15 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2014
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2014
  */
-@net.jcip.annotations.Immutable
+@javax.annotation.concurrent.Immutable
 public enum LnCommandStationType {
 
     //  enum value                 name                         canRead progEndOp   ThrottleManager      SlotManager
     COMMAND_STATION_DCS100("DCS100 (Chief)", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
+    COMMAND_STATION_DCS240("DCS240 (Advanced Command Station)", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
+    COMMAND_STATION_DCS210("DCS210 (Evolution Command Station)", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
     COMMAND_STATION_DCS200("DCS200", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
     COMMAND_STATION_DCS050("DCS50 (Zephyr)", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
     COMMAND_STATION_DCS051("DCS51 (Zephyr Xtra)", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
@@ -46,7 +46,7 @@ public enum LnCommandStationType {
 
     COMMAND_STATION_PR3_ALONE("PR3 standalone programmer", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
     COMMAND_STATION_PR2_ALONE("PR2 standalone programmer", true, false, "LnThrottleManager", "SlotManager"), // NOI18N
-    COMMAND_STATION_STANDALONE("Stand-alone LocoNet", false, false, "LnThrottleManager", "SlotManager");  // NOI18N  
+    COMMAND_STATION_STANDALONE("Stand-alone LocoNet", false, false, "LnThrottleManager", "SlotManager");  // NOI18N
 
     // Note that the convention is that the first word (space-separated token) of the name is the
     // name of a configuration file for loconet.cmdstnconfig
@@ -58,11 +58,11 @@ public enum LnCommandStationType {
         this.slotManagerClassName = slotManagerClassName;
     }
 
-    String name;
-    boolean canRead;
-    boolean progEndOp;
-    String throttleClassName;
-    String slotManagerClassName;
+    final String name;
+    final boolean canRead;
+    final boolean progEndOp;
+    final String throttleClassName;
+    final String slotManagerClassName;
 
     public String getName() {
         return name;
@@ -75,6 +75,7 @@ public enum LnCommandStationType {
         return canRead;
     }
 
+    @Override
     public String toString() {
         return name;
     }
@@ -92,7 +93,7 @@ public enum LnCommandStationType {
                 return p;
             }
         }
-        throw new java.lang.IllegalArgumentException("argument value [" + name + "] not valid");
+        throw new java.lang.IllegalArgumentException("argument value [" + name + "] not valid"); // NOI18N
     }
 
     /**
@@ -101,11 +102,11 @@ public enum LnCommandStationType {
     public ThrottleManager getThrottleManager(LocoNetSystemConnectionMemo memo) {
         try {
             // uses reflection
-            String className = "jmri.jmrix.loconet." + throttleClassName;
-            log.debug("attempting to create {}", className);
+            String className = "jmri.jmrix.loconet." + throttleClassName; // NOI18N
+            log.debug("attempting to create {}", className); // NOI18N
             Class<?> c = Class.forName(className);
             java.lang.reflect.Constructor<?>[] allConstructors = c.getDeclaredConstructors();
-            for (java.lang.reflect.Constructor ctor : allConstructors) {
+            for (java.lang.reflect.Constructor<?> ctor : allConstructors) {
                 Class<?>[] pType = ctor.getParameterTypes();
                 if (pType.length == 1 && pType[0].equals(LocoNetSystemConnectionMemo.class)) {
                     // this is the right ctor
@@ -131,11 +132,11 @@ public enum LnCommandStationType {
     public SlotManager getSlotManager(LnTrafficController tc) {
         try {
             // uses reflection
-            String className = "jmri.jmrix.loconet." + slotManagerClassName;
+            String className = "jmri.jmrix.loconet." + slotManagerClassName; // NOI18N
             log.debug("attempting to create {}", className);
             Class<?> c = Class.forName(className);
             java.lang.reflect.Constructor<?>[] allConstructors = c.getDeclaredConstructors();
-            for (java.lang.reflect.Constructor ctor : allConstructors) {
+            for (java.lang.reflect.Constructor<?> ctor : allConstructors) {
                 Class<?>[] pType = ctor.getParameterTypes();
                 if (pType.length == 1 && pType[0].equals(LnTrafficController.class)) {
                     // this is the right ctor
@@ -155,8 +156,5 @@ public enum LnCommandStationType {
         return null;
     }
 
-    static Logger log = LoggerFactory.getLogger(LnCommandStationType.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LnCommandStationType.class);
 }
-
-
-/* @(#)LnCommandStationType.java */

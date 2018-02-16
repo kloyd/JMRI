@@ -37,17 +37,16 @@ import java.awt.datatransfer.DataFlavor;
  *
  * <p>
  * <em>This code is licensed for public use under the Common Public License
- * version 0.5.</em><br/>
+ * version 0.5.</em><br>
  * The Common Public License, developed by IBM and modeled after their
  * industry-friendly IBM Public License, differs from other common open source
- * licenses in several important ways:
+ * licenses in several important ways:</p>
  * <ul>
  * <li>You may include this software with other software that uses a different
  * (even non-open source) license.</li>
  * <li>You may use this software to make for-profit software.</li>
  * <li>Your patent rights, should you generate patents, are protected.</li>
  * </ul>
- * </p>
  * <p>
  * <em>Copyright 2001 Robert Harder</em></p>
  *
@@ -150,6 +149,7 @@ public class TransferableObject implements java.awt.datatransfer.Transferable {
      * @return An array of supported data flavors
      * @since 1.1
      */
+    @Override
     public java.awt.datatransfer.DataFlavor[] getTransferDataFlavors() {
         if (customFlavor != null) {
             return new java.awt.datatransfer.DataFlavor[]{customFlavor,
@@ -174,6 +174,7 @@ public class TransferableObject implements java.awt.datatransfer.Transferable {
      * @return The dropped data
      * @since 1.1
      */
+    @Override
     public Object getTransferData(java.awt.datatransfer.DataFlavor flavor)
             throws java.awt.datatransfer.UnsupportedFlavorException, java.io.IOException {
         // Native object
@@ -198,6 +199,7 @@ public class TransferableObject implements java.awt.datatransfer.Transferable {
      * @return Whether or not the flavor is supported
      * @since 1.1
      */
+    @Override
     public boolean isDataFlavorSupported(java.awt.datatransfer.DataFlavor flavor) {
         // Native object
         if (flavor.equals(DATA_FLAVOR)) {

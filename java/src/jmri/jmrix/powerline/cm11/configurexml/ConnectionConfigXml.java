@@ -3,8 +3,6 @@ package jmri.jmrix.powerline.cm11.configurexml;
 import jmri.jmrix.configurexml.AbstractSerialConnectionConfigXml;
 import jmri.jmrix.powerline.cm11.ConnectionConfig;
 import jmri.jmrix.powerline.cm11.SpecificDriverAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistence of layout connections by persisting the
@@ -17,7 +15,6 @@ import org.slf4j.LoggerFactory;
  * attribute in the XML.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003, 2006, 2007, 2008
- * @version $Revision$
  */
 public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
 
@@ -25,10 +22,12 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
         super();
     }
 
+    @Override
     protected void getInstance() {
         adapter = new SpecificDriverAdapter();
     }
 
+    @Override
     protected void getInstance(Object object) {
         adapter = ((ConnectionConfig) object).getAdapter();
     }
@@ -37,8 +36,5 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

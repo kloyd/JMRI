@@ -22,10 +22,10 @@ import java.util.Iterator;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -37,13 +37,14 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JTextField;
+import jmri.ConfigureManager;
 import jmri.InstanceManager;
 import jmri.configurexml.ConfigXmlManager;
 import jmri.configurexml.XmlAdapter;
 import jmri.jmrit.catalog.ImageIndexEditor;
 import jmri.jmrit.display.Editor;
+import jmri.jmrit.display.PanelMenu;
 import jmri.jmrit.display.Positionable;
 import jmri.jmrit.display.PositionablePopupUtil;
 import jmri.jmrit.display.ToolTip;
@@ -90,27 +91,23 @@ import org.slf4j.LoggerFactory;
  */
 public class PanelEditor extends Editor implements ItemListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3568655156437993712L;
-    JTextField nextX = new JTextField(Bundle.getMessage("DefaultX"), 4);
-    JTextField nextY = new JTextField(Bundle.getMessage("DefaultY"), 4);
+    private JTextField nextX = new JTextField("0", 4);
+    private JTextField nextY = new JTextField("0", 4);
 
-    JCheckBox editableBox = new JCheckBox(Bundle.getMessage("CheckBoxEditable"));
-    JCheckBox positionableBox = new JCheckBox(Bundle.getMessage("CheckBoxPositionable"));
-    JCheckBox controllingBox = new JCheckBox(Bundle.getMessage("CheckBoxControlling"));
-    //JCheckBox showCoordinatesBox = new JCheckBox(Bundle.getMessage("CheckBoxShowCoordinates"));
-    JCheckBox showTooltipBox = new JCheckBox(Bundle.getMessage("CheckBoxShowTooltips"));
-    JCheckBox hiddenBox = new JCheckBox(Bundle.getMessage("CheckBoxHidden"));
-    JCheckBox menuBox = new JCheckBox(Bundle.getMessage("CheckBoxMenuBar"));
-    JLabel scrollableLabel = new JLabel(Bundle.getMessage("ComboBoxScrollable"));
-    JComboBox<String> scrollableComboBox = new JComboBox<String>();
+    private JCheckBox editableBox = new JCheckBox(Bundle.getMessage("CheckBoxEditable"));
+    private JCheckBox positionableBox = new JCheckBox(Bundle.getMessage("CheckBoxPositionable"));
+    private JCheckBox controllingBox = new JCheckBox(Bundle.getMessage("CheckBoxControlling"));
+    //private JCheckBox showCoordinatesBox = new JCheckBox(Bundle.getMessage("CheckBoxShowCoordinates"));
+    private JCheckBox showTooltipBox = new JCheckBox(Bundle.getMessage("CheckBoxShowTooltips"));
+    private JCheckBox hiddenBox = new JCheckBox(Bundle.getMessage("CheckBoxHidden"));
+    private JCheckBox menuBox = new JCheckBox(Bundle.getMessage("CheckBoxMenuBar"));
+    private JLabel scrollableLabel = new JLabel(Bundle.getMessage("ComboBoxScrollable"));
+    private JComboBox<String> scrollableComboBox = new JComboBox<String>();
 
-    JButton labelAdd = new JButton(Bundle.getMessage("ButtonAddText"));
-    JTextField nextLabel = new JTextField(10);
+    private JButton labelAdd = new JButton(Bundle.getMessage("ButtonAddText"));
+    private JTextField nextLabel = new JTextField(10);
 
-    JComboBox<ComboBoxItem> _addIconBox;
+    private JComboBox<ComboBoxItem> _addIconBox;
 
     public PanelEditor() {
     }
@@ -135,6 +132,7 @@ public class PanelEditor extends Editor implements ItemListener {
             }
         };
         Thread thr = new Thread(r);
+        thr.setName("PanelEditor init");
         thr.start();
         java.awt.Container contentPane = this.getContentPane();
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
@@ -167,25 +165,19 @@ public class PanelEditor extends Editor implements ItemListener {
         storeIndexItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                jmri.jmrit.catalog.ImageIndexEditor.storeImageIndex();
+                InstanceManager.getDefault(ImageIndexEditor.class).storeImageIndex();
             }
         });
         JMenuItem editItem = new JMenuItem(Bundle.getMessage("editIndexMenu"));
         editItem.addActionListener(new ActionListener() {
-            PanelEditor panelEd;
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                ImageIndexEditor ii = ImageIndexEditor.instance(panelEd);
+                ImageIndexEditor ii = InstanceManager.getDefault(ImageIndexEditor.class);
                 ii.pack();
                 ii.setVisible(true);
             }
 
-            ActionListener init(PanelEditor pe) {
-                panelEd = pe;
-                return this;
-            }
-        }.init(this));
+        });
         fileMenu.add(editItem);
 
         editItem = new JMenuItem(Bundle.getMessage("CPEView"));
@@ -216,7 +208,7 @@ public class PanelEditor extends Editor implements ItemListener {
         {
             JPanel namep = new JPanel();
             namep.setLayout(new FlowLayout());
-            JButton b = new JButton("Set panel name");
+            JButton b = new JButton(Bundle.getMessage("ButtonSetName"));
             b.addActionListener(new ActionListener() {
                 PanelEditor editor;
 
@@ -227,7 +219,7 @@ public class PanelEditor extends Editor implements ItemListener {
                     if (newName == null) {
                         return;  // cancelled
                     }
-                    if (jmri.jmrit.display.PanelMenu.instance().isPanelNameUsed(newName)) {
+                    if (InstanceManager.getDefault(PanelMenu.class).isPanelNameUsed(newName)) {
                         JOptionPane.showMessageDialog(null, Bundle.getMessage("CanNotRename"), Bundle.getMessage("PanelExist"),
                                 JOptionPane.ERROR_MESSAGE);
                         return;
@@ -236,7 +228,7 @@ public class PanelEditor extends Editor implements ItemListener {
                         ((JFrame) getTargetPanel().getTopLevelAncestor()).setTitle(newName);
                     }
                     editor.setTitle();
-                    jmri.jmrit.display.PanelMenu.instance().renameEditorPanel(editor);
+                    InstanceManager.getDefault(PanelMenu.class).renameEditorPanel(editor);
                 }
 
                 ActionListener init(PanelEditor e) {
@@ -290,7 +282,7 @@ public class PanelEditor extends Editor implements ItemListener {
         _addIconBox.addItem(new ComboBoxItem("RightTurnout"));
         _addIconBox.addItem(new ComboBoxItem("LeftTurnout"));
         _addIconBox.addItem(new ComboBoxItem("SlipTOEditor"));
-        _addIconBox.addItem(new ComboBoxItem("Sensor"));
+        _addIconBox.addItem(new ComboBoxItem("Sensor")); // NOI18N
         _addIconBox.addItem(new ComboBoxItem("SignalHead"));
         _addIconBox.addItem(new ComboBoxItem("SignalMast"));
         _addIconBox.addItem(new ComboBoxItem("Memory"));
@@ -361,10 +353,10 @@ public class PanelEditor extends Editor implements ItemListener {
             showTooltipBox.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    setAllShowTooltip(showTooltipBox.isSelected());
+                    setAllShowToolTip(showTooltipBox.isSelected());
                 }
             });
-            showTooltipBox.setSelected(showTooltip());
+            showTooltipBox.setSelected(showToolTip());
 
             contentPane.add(menuBox);
             menuBox.addActionListener(new ActionListener() {
@@ -396,7 +388,10 @@ public class PanelEditor extends Editor implements ItemListener {
         }
 
         // register the resulting panel for later configuration
-        InstanceManager.configureManagerInstance().registerUser(this);
+        ConfigureManager cm = InstanceManager.getNullableDefault(jmri.ConfigureManager.class);
+        if (cm != null) {
+            cm.registerUser(this);
+        }
 
         // when this window closes, set contents of target uneditable
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -405,7 +400,6 @@ public class PanelEditor extends Editor implements ItemListener {
 
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                jmri.jmrit.catalog.ImageIndexEditor.checkImageIndex();
                 Iterator<JFrameItem> iter = iconAdderFrames.values().iterator();
                 while (iter.hasNext()) {
                     JFrameItem frame = iter.next();
@@ -459,32 +453,46 @@ public class PanelEditor extends Editor implements ItemListener {
         positionableBox.setSelected(allPositionable());
         controllingBox.setSelected(allControlling());
         //showCoordinatesBox.setSelected(showCoordinates());
-        showTooltipBox.setSelected(showTooltip());
+        showTooltipBox.setSelected(showToolTip());
         hiddenBox.setSelected(showHidden());
         menuBox.setSelected(getTargetFrame().getJMenuBar().isVisible());
     }
 
     static class ComboBoxItem {
 
-        String name;
+        private String name;
+        private String bundleName;
 
-        ComboBoxItem(String n) {
+        protected ComboBoxItem(String n) {
             name = n;
         }
 
-        String getName() {
+        protected String getName() {
             return name;
         }
 
         @Override
         public String toString() {
-            return Bundle.getMessage(name);
+            // I18N split Bundle name
+            // use NamedBeanBundle property for basic beans like "Turnout" I18N
+            if ("Sensor".equals(name)) {
+                bundleName = "BeanNameSensor";
+            } else if ("SignalHead".equals(name)) {
+                bundleName = "BeanNameSignalHead";
+            } else if ("SignalMast".equals(name)) {
+                bundleName = "BeanNameSignalMast";
+            } else if ("Memory".equals(name)) {
+                bundleName = "BeanNameMemory";
+            } else if ("Reporter".equals(name)) {
+                bundleName = "BeanNameReporter";
+            } else if ("Light".equals(name)) {
+                bundleName = "BeanNameLight";
+            } else {
+                bundleName = name;
+            }
+            return Bundle.getMessage(bundleName); // use NamedBeanBundle property for basic beans like "Turnout" I18N
         }
     }
-
-    int locationX = 0;
-    int locationY = 0;
-    static final int DELTA = 20;
 
     /*
      *  itemListener for JComboBox
@@ -538,11 +546,6 @@ public class PanelEditor extends Editor implements ItemListener {
         JMenu editMenu = new JMenu(Bundle.getMessage("MenuEdit"));
         menuBar.add(editMenu);
         editMenu.add(new AbstractAction(Bundle.getMessage("OpenEditor")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -7003482354206142094L;
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(true);
@@ -550,11 +553,6 @@ public class PanelEditor extends Editor implements ItemListener {
         });
         editMenu.addSeparator();
         editMenu.add(new AbstractAction(Bundle.getMessage("DeletePanel")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -3302292525750164017L;
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (deletePanel()) {
@@ -567,33 +565,18 @@ public class PanelEditor extends Editor implements ItemListener {
         JMenu markerMenu = new JMenu(Bundle.getMessage("MenuMarker"));
         menuBar.add(markerMenu);
         markerMenu.add(new AbstractAction(Bundle.getMessage("AddLoco")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 3904117730465002247L;
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 locoMarkerFromInput();
             }
         });
         markerMenu.add(new AbstractAction(Bundle.getMessage("AddLocoRoster")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 9124717518244688272L;
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 locoMarkerFromRoster();
             }
         });
         markerMenu.add(new AbstractAction(Bundle.getMessage("RemoveMarkers")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 3102044914128656099L;
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 removeMarkers();
@@ -607,7 +590,6 @@ public class PanelEditor extends Editor implements ItemListener {
 
         targetFrame.addHelpMenu("package.jmri.jmrit.display.PanelTarget", true);
         return targetFrame;
-
     }
 
     /**
@@ -670,9 +652,9 @@ public class PanelEditor extends Editor implements ItemListener {
 
             // Positionable items with defaults or using overrides
             boolean popupSet = false;
-            popupSet = p.setRotateOrthogonalMenu(popup);
-            popupSet = p.setRotateMenu(popup);
-            popupSet = p.setScaleMenu(popup);
+            popupSet |= p.setRotateOrthogonalMenu(popup);
+            popupSet |= p.setRotateMenu(popup);
+            popupSet |= p.setScaleMenu(popup);
             if (popupSet) {
                 popup.addSeparator();
                 popupSet = false;
@@ -719,7 +701,7 @@ public class PanelEditor extends Editor implements ItemListener {
     /**
      * ***************************************************
      */
-    boolean delayedPopupTrigger;
+    private boolean delayedPopupTrigger;
 
     @Override
     public void mousePressed(MouseEvent event) {
@@ -917,7 +899,7 @@ public class PanelEditor extends Editor implements ItemListener {
 
     @Override
     public void mouseMoved(MouseEvent event) {
-        //if (_debug) log.debug("mouseMoved at ("+event.getX()+","+event.getY()+")"); 
+        //if (_debug) log.debug("mouseMoved at ("+event.getX()+","+event.getY()+")");
         if (_dragging || event.isPopupTrigger()) {
             return;
         }
@@ -938,7 +920,7 @@ public class PanelEditor extends Editor implements ItemListener {
             _highlightcomponent = null;
             _targetPanel.repaint();
         }
-        if (selection != null && selection.getDisplayLevel() > BKG && selection.showTooltip()) {
+        if (selection != null && selection.getDisplayLevel() > BKG && selection.showToolTip()) {
             showToolTip(selection, event);
             //selection.highlightlabel(true);
             _targetPanel.repaint();
@@ -1044,7 +1026,7 @@ public class PanelEditor extends Editor implements ItemListener {
 
     protected void showMultiSelectPopUp(final MouseEvent event, Positionable p) {
         JPopupMenu popup = new JPopupMenu();
-        JMenuItem copy = new JMenuItem("Copy"); // changed "edit" to "copy"
+        JMenuItem copy = new JMenuItem(Bundle.getMessage("ButtonCopy")); // changed "edit" to "copy"
         if (p.isPositionable()) {
             setShowAlignmentMenu(p, popup);
         }
@@ -1074,7 +1056,8 @@ public class PanelEditor extends Editor implements ItemListener {
         if (!isEditable()) {
             return;
         }
-        JMenu _add = new JMenu("Add Item"/*Bundle.getMessage("FontBackgroundColor")*/);
+        JMenu _add = new JMenu("Add Item"); // NOI18N
+        // for the following list, I18N picked up later on
         addItemPopUp(new ComboBoxItem("RightTurnout"), _add);
         addItemPopUp(new ComboBoxItem("LeftTurnout"), _add);
         addItemPopUp(new ComboBoxItem("SlipTOEditor"), _add);
@@ -1197,8 +1180,10 @@ public class PanelEditor extends Editor implements ItemListener {
                     adapter = (XmlAdapter) Class.forName(className).newInstance();
                     Element el = adapter.store(copied);
                     adapter.load(el, this);
-                } catch (Exception ex) {
-                    log.debug(ex.getLocalizedMessage(), ex);
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                    | jmri.configurexml.JmriConfigureXmlException
+                    | RuntimeException ex) {
+                        log.debug(ex.getLocalizedMessage(), ex);
                 }
                 /*We remove the original item from the list, so we end up with
                  just the new items selected and allow the items to be moved around */
@@ -1217,10 +1202,6 @@ public class PanelEditor extends Editor implements ItemListener {
     @Override
     public void setRemoveMenu(Positionable p, JPopupMenu popup) {
         popup.add(new AbstractAction(Bundle.getMessage("Remove")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -7169869783719845309L;
             Positionable comp;
 
             @Override
@@ -1257,7 +1238,7 @@ public class PanelEditor extends Editor implements ItemListener {
     }
 
     // This adds a single CheckBox in the PopupMenu to set or clear all the selected
-    // items "Lock Position" or Positionable setting, when clicked, all the items in 
+    // items "Lock Position" or Positionable setting, when clicked, all the items in
     // the selection will be changed accordingly.
     private void setMultiItemsPositionableMenu(JPopupMenu popup) {
         // This would do great with a "greyed" CheckBox if the multiple items have different states.
@@ -1308,82 +1289,21 @@ public class PanelEditor extends Editor implements ItemListener {
     }
 
     public void setBackgroundMenu(JPopupMenu popup) {
-        JMenu edit = new JMenu(Bundle.getMessage("FontBackgroundColor"));
-        makeColorMenu(edit);
+        JMenuItem edit = new JMenuItem(Bundle.getMessage("FontBackgroundColor"));
+        edit.addActionListener((ActionEvent event) -> {
+            Color desiredColor = JColorChooser.showDialog(this,
+                                 Bundle.getMessage("FontBackgroundColor"),
+                                 getBackgroundColor());
+            if (desiredColor!=null ) {
+               setBackgroundColor(desiredColor);
+           }
+        });
         popup.add(edit);
-
-    }
-
-    protected void makeColorMenu(JMenu colorMenu) {
-        ButtonGroup buttonGrp = new ButtonGroup();
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Black"), Color.black);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("DarkGray"), Color.darkGray);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Gray"), Color.gray);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("LightGray"), Color.lightGray);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("White"), Color.white);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Red"), Color.red);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Orange"), Color.orange);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Yellow"), Color.yellow);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Green"), Color.green);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Blue"), Color.blue);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Magenta"), Color.magenta);
-        addColorMenuEntry(colorMenu, buttonGrp, Bundle.getMessage("Clear"), null);
-    }
-
-    protected void addColorMenuEntry(JMenu menu, ButtonGroup colorButtonGroup,
-            final String name, Color color) {
-        ActionListener a = new ActionListener() {
-            //final String desiredName = name;
-            Color desiredColor;
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (desiredColor != null) {
-                    setBackgroundColor(desiredColor);
-                } else {
-                    clearBackgroundColor();
-                }
-            }
-
-            ActionListener init(Color c) {
-                desiredColor = c;
-                return this;
-            }
-        }.init(color);
-        JRadioButtonMenuItem r = new JRadioButtonMenuItem(name);
-        r.addActionListener(a);
-
-        if (color == null) {
-            color = defaultBackgroundColor;
-        }
-        setColorButton(getBackgroundColor(), color, r);
-        colorButtonGroup.add(r);
-        menu.add(r);
-    }
-
-    protected void setColorButton(Color color, Color buttonColor, JRadioButtonMenuItem r) {
-        if (log.isDebugEnabled()) {
-            log.debug("setColorButton: color=" + color + " (RGB= " + (color == null ? "" : color.getRGB())
-                    + ") buttonColor= " + buttonColor + " (RGB= " + (buttonColor == null ? "" : buttonColor.getRGB()) + ")");
-        }
-        if (buttonColor != null) {
-            if (color != null && buttonColor.getRGB() == color.getRGB()) {
-                r.setSelected(true);
-            } else {
-                r.setSelected(false);
-            }
-        } else {
-            if (color == null) {
-                r.setSelected(true);
-            } else {
-                r.setSelected(false);
-            }
-        }
     }
 
     /**
      * ***************************************************
      */
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(PanelEditor.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PanelEditor.class);
 }

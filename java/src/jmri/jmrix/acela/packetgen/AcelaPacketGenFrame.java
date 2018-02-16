@@ -1,62 +1,67 @@
-// AcelaPacketGenFrame.java
 package jmri.jmrix.acela.packetgen;
 
 import java.awt.Dimension;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import jmri.jmrix.acela.AcelaMessage;
 import jmri.jmrix.acela.AcelaReply;
-import jmri.jmrix.acela.AcelaTrafficController;
 
 /**
  *
- * Description:	Frame for user input of Acela messages
+ * Description: Frame for user input of Acela messages
  *
  * @author Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
- *
- * @author	Bob Coleman, Copyright (C) 2007, 2008 Based on CMRI serial example,
+ * @author Bob Coleman, Copyright (C) 2007, 2008 Based on CMRI serial example,
  * modified to establish Acela support.
  */
 public class AcelaPacketGenFrame extends jmri.util.JmriJFrame implements jmri.jmrix.acela.AcelaListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1748920880800009266L;
     // member declarations
-    javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
-    javax.swing.JButton sendButton = new javax.swing.JButton();
-    javax.swing.JTextField packetTextField = new javax.swing.JTextField(12);
+    JLabel jLabel1 = new JLabel();
+    JButton sendButton = new JButton();
+    JTextField packetTextField = new JTextField(12);
 
-    public AcelaPacketGenFrame() {
+    private jmri.jmrix.acela.AcelaSystemConnectionMemo _memo = null;
+
+    public AcelaPacketGenFrame(jmri.jmrix.acela.AcelaSystemConnectionMemo memo) {
+        _memo = memo;
     }
 
-    public void initComponents() throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents() {
         // the following code sets the frame's initial state
 
-        jLabel1.setText("Command:");
+        jLabel1.setText(Bundle.getMessage("CommandLabel"));
         jLabel1.setVisible(true);
 
-        sendButton.setText("Send");
+        sendButton.setText(Bundle.getMessage("ButtonSend"));
         sendButton.setVisible(true);
-        sendButton.setToolTipText("Send packet");
+        sendButton.setToolTipText(Bundle.getMessage("MenuItemSendCommand"));
 
         packetTextField.setText("");
-        packetTextField.setToolTipText("Enter command as HEX string (i.e. 0d 00 6F 15) with spaces");
+        packetTextField.setToolTipText(Bundle.getMessage("EnterHexBytesToolTip"));
         packetTextField.setMaximumSize(
                 new Dimension(packetTextField.getMaximumSize().width,
                         packetTextField.getPreferredSize().height));
 
-        setTitle("Send Acela command");
+        setTitle(Bundle.getMessage("AcelaSendCommandTitle"));
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
         getContentPane().add(jLabel1);
         getContentPane().add(packetTextField);
         getContentPane().add(sendButton);
 
-        sendButton.addActionListener(
-                new java.awt.event.ActionListener() {
+        sendButton.addActionListener(new java.awt.event.ActionListener() {
 
+            /**
+             * {@inheritDoc}
+             */
+            @Override
                     public void actionPerformed(java.awt.event.ActionEvent e) {
                         sendButtonActionPerformed(e);
                     }
@@ -122,15 +127,22 @@ public class AcelaPacketGenFrame extends jmri.util.JmriJFrame implements jmri.jm
                 texti = texti + 1;  // Skip space -- need more error checking here
             }
 
-            AcelaTrafficController.instance().sendAcelaMessage(m, this);
+            _memo.getTrafficController().sendAcelaMessage(m, this);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void message(AcelaMessage m) {
     }  // ignore replies
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void reply(AcelaReply r) {
     } // ignore replies
-}
 
-/* @(#)AcelaPacketGenFrame.java */
+}

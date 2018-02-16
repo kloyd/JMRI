@@ -1,4 +1,3 @@
-// CheckForUpdateAction.java
 package apps;
 
 import java.awt.Desktop;
@@ -12,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
+import javax.annotation.Nonnull;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -28,23 +28,17 @@ import org.slf4j.LoggerFactory;
  * Swing action to check for more recent JMRI version. Checks a jmri.org URL for
  * information.
  *
- * @author	Bob Jacobsen Copyright (C) 2007, 2014
+ * @author Bob Jacobsen Copyright (C) 2007, 2014
  * @author Matt Harris Copyright (C) 2008
  *
- * @version $Revision$
  */
 public class CheckForUpdateAction extends jmri.util.swing.JmriAbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6718445705950604552L;
-
-    public CheckForUpdateAction(String s, WindowInterface wi) {
+    public CheckForUpdateAction(@Nonnull String s, @Nonnull WindowInterface wi) {
         super(s, wi);
     }
 
-    public CheckForUpdateAction(String s, Icon i, WindowInterface wi) {
+    public CheckForUpdateAction(@Nonnull String s, @Nonnull Icon i, @Nonnull WindowInterface wi) {
         super(s, i, wi);
     }
 
@@ -52,6 +46,7 @@ public class CheckForUpdateAction extends jmri.util.swing.JmriAbstractAction {
         super(Bundle.getMessage("TitleUpdate"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent ev) {
 
         final JFrame frame = new JmriJFrame(Bundle.getMessage("TitleUpdate"), false, false);
@@ -98,16 +93,17 @@ public class CheckForUpdateAction extends jmri.util.swing.JmriAbstractAction {
             }
         }
 
-        // add content here!
-        text.append("Most recent production release: " + productionrelease + "\n");
-        text.append("Most recent test release: " + testrelease + "\n");
-        text.append("You have: " + jmri.Version.name() + "\n"); // cleaner form is getCanonicalVersion()
+        // add content
+        text.append(Bundle.getMessage("MostRecent", productionrelease) + "\n");
+        text.append(Bundle.getMessage("MostRecentTest", testrelease) + "\n");
+        text.append(Bundle.getMessage("YouHaveVersion", jmri.Version.name()) + "\n"); // cleaner form is getCanonicalVersion()
 
         JPanel p = new JPanel();
         p.setLayout(new FlowLayout());
 
         JButton go = new JButton(Bundle.getMessage("ButtonDownloadPage"));
         go.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 try {
                     Desktop.getDesktop().browse(new URI("http://jmri.org/download"));
@@ -122,6 +118,7 @@ public class CheckForUpdateAction extends jmri.util.swing.JmriAbstractAction {
 
         JButton close = new JButton(Bundle.getMessage("ButtonClose"));
         close.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 frame.setVisible(false);
                 frame.dispose();
@@ -137,19 +134,19 @@ public class CheckForUpdateAction extends jmri.util.swing.JmriAbstractAction {
 
     }
 
-    String getNumber(BufferedReader reader) throws java.io.IOException {
+    @Nonnull String getNumber(@Nonnull BufferedReader reader) throws java.io.IOException {
+        reader.readLine();  // skip a line
         String line = reader.readLine();
-        line = reader.readLine();
+        if (line == null) return "";
         return line.substring(0, line.length() - 1);  // drop trailing :
     }
 
     // never invoked, because we overrode actionPerformed above
+    @Override
     public JmriPanel makePanel() {
         throw new IllegalArgumentException("Should not be invoked");
     }
 
-    static Logger log = LoggerFactory.getLogger(CheckForUpdateAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CheckForUpdateAction.class);
 
 }
-
-/* @(#)CheckForUpdateAction.java */

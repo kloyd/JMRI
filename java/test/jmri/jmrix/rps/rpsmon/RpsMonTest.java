@@ -1,48 +1,45 @@
-// RpsMonTest.java
 package jmri.jmrix.rps.rpsmon;
 
+import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.netbeans.jemmy.operators.JFrameOperator;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * Tests for the jmri.jmrix.rps.rpsmon package.
  *
  * @author Bob Jacobsen Copyright 2006
- * @version $Revision$
  */
-public class RpsMonTest extends TestCase {
+public class RpsMonTest {
+
+    private RpsSystemConnectionMemo memo = null;
 
     // show the window
+    @Test
     public void testDisplay() {
-        new RpsMonAction().actionPerformed(null);
-//    }
-//  test order isn't guaranteed!
-//    public void testFrameCreation() {
-        jmri.InstanceManager.store(jmri.managers.DefaultUserMessagePreferences.getInstance(), jmri.UserPreferencesManager.class);
-        JFrame f = jmri.util.JmriJFrame.getFrame("RPS Monitor");
-        Assert.assertTrue("found frame", f != null);
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
+        new RpsMonAction(memo).actionPerformed(null);
+        JFrame f = JFrameOperator.waitJFrame("RPS Monitor", true, true);
+        Assert.assertNotNull("found frame", f);
         f.dispose();
     }
 
-    // from here down is testing infrastructure
-    public RpsMonTest(String s) {
-        super(s);
+    @Before
+    public void setUp() throws Exception {
+        JUnitUtil.setUp();
+        memo = new RpsSystemConnectionMemo();
+
+        jmri.util.JUnitUtil.initDefaultUserMessagePreferences();
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {RpsMonTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    @After
+    public void tearDown() throws Exception {
+        JUnitUtil.tearDown();
     }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        apps.tests.AllTest.initLogging();
-        TestSuite suite = new TestSuite(RpsMonTest.class);
-        return suite;
-    }
-
 }

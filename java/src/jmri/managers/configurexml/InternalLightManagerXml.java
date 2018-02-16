@@ -11,18 +11,21 @@ import org.slf4j.LoggerFactory;
  * method here.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2009
- * @version $Revision$
+ * @deprecated As of 4.3.5, see jmri.jmrix.internal.configurexml classes
  */
+@Deprecated
 public class InternalLightManagerXml extends jmri.managers.configurexml.AbstractLightManagerConfigXML {
 
     public InternalLightManagerXml() {
         super();
     }
 
+    @Override
     public void setStoreElementClass(Element lights) {
         lights.setAttribute("class", this.getClass().getName());
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -34,5 +37,5 @@ public class InternalLightManagerXml extends jmri.managers.configurexml.Abstract
         return true;
     }
 
-    static Logger log = LoggerFactory.getLogger(InternalLightManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(InternalLightManagerXml.class);
 }

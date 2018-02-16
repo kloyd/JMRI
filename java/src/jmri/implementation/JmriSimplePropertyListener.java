@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import jmri.Conditional;
 import jmri.NamedBean;
 import jmri.NamedBeanHandle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A service base class for monitoring a bound property in one of the JMRI Named
@@ -23,8 +21,7 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Pete Cressman Copyright (C) 2009
- * @version	$Revision 1.0 $
+ * @author Pete Cressman Copyright (C) 2009
  * @since 2.5.1
  */
 public class JmriSimplePropertyListener implements PropertyChangeListener {
@@ -63,7 +60,7 @@ public class JmriSimplePropertyListener implements PropertyChangeListener {
 
     public NamedBean getBean() {
         if (_namedBean != null) {
-            return (NamedBean) _namedBean.getBean();
+            return  _namedBean.getBean();
         }
         return null;
     }
@@ -105,6 +102,7 @@ public class JmriSimplePropertyListener implements PropertyChangeListener {
      * Conditional.calculates its state and trigger its actions if its state has
      * changed.
      */
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         //log.debug("\""+_varName+"\" sent PropertyChangeEvent "+evt.getPropertyName()+
         //    ", old value =\""+evt.getOldValue()+"\", new value =\""+evt.getNewValue()+
@@ -117,6 +115,4 @@ public class JmriSimplePropertyListener implements PropertyChangeListener {
             _clients.get(i).calculate(_enabled, evt);
         }
     }
-
-    static final Logger log = LoggerFactory.getLogger(JmriSimplePropertyListener.class.getName());
 }

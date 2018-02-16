@@ -1,4 +1,3 @@
-// LocoDataModel.java
 package jmri.jmrix.tams.swing.locodatabase;
 
 import java.awt.event.MouseEvent;
@@ -22,14 +21,9 @@ import org.slf4j.LoggerFactory;
  * Table data model for display the loco database of the Tams MC
  *
  * @author Kevin Dickerson Copyright (C) 2012
- * @version $Revision: 17977 $
  */
 public class LocoDataModel extends javax.swing.table.AbstractTableModel implements TamsListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8162723526280674206L;
     static public final int ADDRCOLUMN = 0;
     static public final int SPDCOLUMN = 1;
     static public final int FMTCOLUMN = 2;
@@ -58,14 +52,17 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
      * This should probably use a local cache instead of counting/searching each
      * time.
      */
+    @Override
     public int getRowCount() {
         return locolist.size();
     }
 
+    @Override
     public int getColumnCount() {
         return NUMCOLUMN;
     }
 
+    @Override
     public String getColumnName(int col) {
         switch (col) {
             case ADDRCOLUMN:
@@ -83,6 +80,7 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
         }
     }
 
+    @Override
     public Class<?> getColumnClass(int col) {
 
         switch (col) {
@@ -93,6 +91,7 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
         }
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
         switch (col) {
             case DELCOLUMN:
@@ -103,6 +102,7 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
     }
 
     @SuppressWarnings("null")
+    @Override
     public Object getValueAt(int row, int col) {
         if (locolist.size() == 0) {
             return null;
@@ -124,12 +124,14 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
                     log.error("internal state inconsistent with table requst for " + row + " " + col);
                     return null;
             }
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
 
         }
         return null;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "DB_DUPLICATE_SWITCH_CLAUSES",
+                    justification="better to keep cases in column order rather than to combine")
     public int getPreferredWidth(int col) {
         switch (col) {
             case ADDRCOLUMN:
@@ -147,6 +149,7 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
         }
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == DELCOLUMN) {
             deleteLoco(row);
@@ -171,7 +174,7 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
      * optional, in that other table formats can use this table model. But we
      * put it here to help keep it consistent.
      *
-     * @param slotTable
+     * @param slotTable the table to configure
      */
     public void configureTable(JTable slotTable) {
         // allow reordering of the columns
@@ -213,6 +216,7 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
         ButtonRenderer buttonRenderer = new ButtonRenderer();
         tcm.getColumn(column).setCellRenderer(buttonRenderer);
         TableCellEditor buttonEditor = new ButtonEditor(new JButton()) {
+            @Override
             public void mousePressed(MouseEvent e) {
                 stopCellEditing();
             }
@@ -228,10 +232,12 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
 
     }
 
+    @Override
     public void message(TamsMessage m) {
 
     }
 
+    @Override
     public void reply(TamsReply r) {
         if (r != null) {
             if (r.match("xLOCADD") >= 0) {
@@ -261,6 +267,6 @@ public class LocoDataModel extends javax.swing.table.AbstractTableModel implemen
         memo.getTrafficController().sendTamsMessage(m, this);
     }
 
-    static Logger log = LoggerFactory.getLogger(LocoDataModel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LocoDataModel.class);
 
 }

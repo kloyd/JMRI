@@ -1,102 +1,83 @@
 package jmri.jmrit.display.controlPanelEditor.shape;
 
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import jmri.jmrit.display.controlPanelEditor.ControlPanelEditor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.jmrit.display.Editor;
 
 /**
- * <P>
- * @author Pete Cressman Copyright: Copyright (c) 2012
- * @version $Revision: 1 $
- *
+ * @author Pete Cressman Copyright (c) 2012
  */
 public class DrawCircle extends DrawFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3871500332284884080L;
-    JTextField _radiusText;
-    int _radius;			// corner radius
+    JTextField _diameterText;
 
-    public DrawCircle(String which, String title, ShapeDrawer parent) {
-        super(which, title, parent);
-        _radius = 100;
+    public DrawCircle(String which, String title, PositionableShape ps) {
+        super(which, title, ps);
     }
 
-    /**
-     * Create a new PositionableShape
-     */
+    @Override
     protected JPanel makeParamsPanel() {
         JPanel panel = super.makeParamsPanel();
 
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.add(new JLabel(Bundle.getMessage("circle")));
+//        p.add(new JLabel(Bundle.getMessage("Circle")));
         JPanel pp = new JPanel();
-        _radiusText = new JTextField(6);
-        _radiusText.setText(Integer.toString(_radius));
-        _radiusText.setHorizontalAlignment(JTextField.RIGHT);
-        pp.add(_radiusText);
+        _diameterText = new JTextField(6);
+        _diameterText.setText(Integer.toString(_shape.getWidth()));
+        _diameterText.setHorizontalAlignment(JTextField.RIGHT);
+        pp.add(_diameterText);
+        _diameterText.addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                updateShape();
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                _shape.setWidth(Integer.parseInt(_diameterText.getText()));
+                updateShape();
+            }
+        });
+        _diameterText.addActionListener((ActionEvent e) -> {
+            _shape.setWidth(Integer.parseInt(_diameterText.getText()));
+            updateShape();
+        });
         pp.add(new JLabel(Bundle.getMessage("circleRadius")));
         p.add(pp);
         panel.add(p);
-        panel.add(Box.createVerticalStrut(STRUT_SIZE));
         return panel;
     }
 
-    protected boolean makeFigure(MouseEvent event) {
-        ControlPanelEditor ed = _parent.getEditor();
+    @Override
+    protected void makeFigure(MouseEvent event, Editor ed) {
         Rectangle r = ed.getSelectRect();
         if (r != null) {
-            _radius = Math.max(r.width, r.height);
-            Ellipse2D.Double rr = new Ellipse2D.Double(0, 0, _radius, _radius);
-            PositionableCircle ps = new PositionableCircle(ed, rr);
-            ps.setLocation(r.x, r.y);
-            ps.setDisplayLevel(ControlPanelEditor.MARKERS);
-            setPositionableParams(ps);
-            ps.updateSize();
-            ed.putItem(ps);
+            int dia = Math.max(r.width, r.height);
+            Ellipse2D.Double rr = new Ellipse2D.Double(0, 0, dia, dia);
+            _shape = new PositionableCircle(ed, rr);
+            _shape.setLocation(r.x, r.y);
+            _shape.updateSize();
+            _shape.setEditFrame(this);
+            setDisplayParams();
+            ed.putItem(_shape);
         }
-        return true;
     }
 
-    /**
-     * Set parameters on a new or updated PositionableShape
-     */
-    protected void setPositionableParams(PositionableShape p) {
-        super.setPositionableParams(p);
-        ((PositionableCircle) p).setRadius(_radius);
+    @Override
+    void setDisplayWidth(int w) {
+        _diameterText.setText(Integer.toString(w));
     }
 
-    /**
-     * Set parameters on the popup that will edit the PositionableShape
-     */
-    protected void setDisplayParams(PositionableShape p) {
-        super.setDisplayParams(p);
-        PositionableCircle pos = (PositionableCircle) p;
-        _radius = pos.getRadius();
+    @Override
+    void setDisplayHeight(int h) {
+        _diameterText.setText(Integer.toString(h));
     }
-
-    /**
-     * Editing is done. Update the existing PositionableShape
-     */
-    protected void updateFigure(PositionableShape p) {
-        PositionableCircle pos = (PositionableCircle) p;
-        _radius = getInteger(_radiusText, _radius);
-        p._width = _radius;
-        p._height = _radius;
-        pos.makeShape();
-        setPositionableParams(pos);
-    }
-
-    static Logger log = LoggerFactory.getLogger(DrawCircle.class.getName());
 }

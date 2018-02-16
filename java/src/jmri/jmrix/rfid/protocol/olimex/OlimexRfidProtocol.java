@@ -1,4 +1,3 @@
-// OlimexRfidProtocol.java
 package jmri.jmrix.rfid.protocol.olimex;
 
 import jmri.jmrix.AbstractMRReply;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Matthew Harris Copyright (C) 2014
- * @version $Revision$
  * @since 3.9.2
  */
 public class OlimexRfidProtocol extends RfidProtocol {
@@ -36,7 +34,7 @@ public class OlimexRfidProtocol extends RfidProtocol {
     @Override
     public String initString() {
         // Continuous scanning, single report per seen tag
-        return "mc00";
+        return "mc00"; // NOI18N
     }
 
     @Override
@@ -73,7 +71,7 @@ public class OlimexRfidProtocol extends RfidProtocol {
                 return true;
             }
             if (log.isDebugEnabled()) {
-                log.debug("Not a correctly formed message");
+                log.debug("Not a correctly formed message"); // NOI18N
             }
             return true;
         }
@@ -98,8 +96,6 @@ public class OlimexRfidProtocol extends RfidProtocol {
         }
     }
 
-    private static final Logger log = LoggerFactory.getLogger(OlimexRfidProtocol.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(OlimexRfidProtocol.class);
 
 }
-
-/* @(#)OlimexRfidProtocol.java */

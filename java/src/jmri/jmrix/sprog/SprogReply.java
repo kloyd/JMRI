@@ -1,4 +1,3 @@
-// SprogReply.java
 package jmri.jmrix.sprog;
 
 import jmri.jmrix.AbstractMRReply;
@@ -7,32 +6,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * SprogReply.java
- *
- * Description:	Carries the reply to a SprogMessage
+ * Carries the reply to a SprogMessage.
  *
  * @author	Bob Jacobsen Copyright (C) 2001
  * @author	Andrew Berridge - refactored, cleaned up, Feb 2010
- * @version	$Revision$
- */
+  */
 public class SprogReply extends AbstractMRReply {
 
     // Longest boot reply is 256bytes each preceded by DLE + 2xSTX + ETX
     static public final int maxSize = 515;
     private boolean _isBoot = false;
+    protected int _id = -1;
 
     // create a new one
     public SprogReply() {
         super();
     }
 
+    public void setId(int id) {
+        _id = id;
+    }
+    
+    public int getId() {
+        return _id;
+    }
+    
     // no need to do anything
+    @Override
     protected int skipPrefix(int index) {
         return index;
     }
 
     /**
-     * Create a new SprogReply as a deep copy of an existing SprogReply
+     * Create a new SprogReply as a deep copy of an existing SprogReply.
      *
      * @param m the SprogReply to copy
      */
@@ -51,10 +57,11 @@ public class SprogReply extends AbstractMRReply {
         for (int i = 0; i < _nDataChars; i++) {
             _dataChars[i] = m._dataChars[i];
         }
+        _id = m._id;
     }
 
     /**
-     * Create a SprogReply from a String
+     * Create a SprogReply from a String.
      *
      * @param replyString a String containing the contents of the reply
      * @param isBoot a boolean indicating if this is a boot reply
@@ -82,7 +89,9 @@ public class SprogReply extends AbstractMRReply {
         return (this.toString().indexOf("!E") >= 0);
     }
 
-    // Check and strip framing characters and DLE from a sprog bootloader reply
+    /**
+     * Check and strip framing characters and DLE from a SPROG bootloader reply.
+     */
     public boolean strip() {
         char tmp[] = new char[_nDataChars];
         int j = 0;
@@ -114,8 +123,11 @@ public class SprogReply extends AbstractMRReply {
         return true;
     }
 
-    // Check and strip checksum from a sprog bootloader reply
-    // Assumes framing and DLE chars have been stripped
+    /**
+     * Check and strip checksum from a SPROG bootloader reply.
+     * <p>
+     * Assumes framing and DLE chars have been stripped
+     */
     public boolean getChecksum() {
         int checksum = 0;
         for (int i = 0; i < _nDataChars; i++) {
@@ -126,8 +138,9 @@ public class SprogReply extends AbstractMRReply {
     }
 
     /**
-     * Returns a string representation of this SprogReply
+     * Return a string representation of this SprogReply.
      */
+    @Override
     public String toString() {
         //String s = "";
         StringBuffer buf = new StringBuffer();
@@ -148,13 +161,16 @@ public class SprogReply extends AbstractMRReply {
     }
 
     /**
-     * Extracts Read-CV returned value from a message. Returns -1 if message
-     * can't be parsed.
-     *
+     * Extract Read-CV returned value from a message.
+     * <p>
      * SPROG is assumed to not be echoing commands. A reply to a command may
-     * include the prompt that was printed after the previous command Reply to a
-     * CV read is of the form " = hvv" where vv is the CV value in hex
+     * include the prompt that was printed after the previous command.
+     * <p>
+     * Reply to a CV read is of the form " = hvv" where vv is the CV value in hex
+     *
+     * @return -1 if message can't be parsed
      */
+    @Override
     public int value() {
         int index = 0;
         index = skipWhiteSpace(index);
@@ -167,18 +183,20 @@ public class SprogReply extends AbstractMRReply {
             int sum = Integer.valueOf(s2, 16).intValue();
             sum += 16 * Integer.valueOf(s1, 16).intValue();
             val = sum;  // don't do this assign until now in case the conversion throws
-        } catch (Exception e) {
-            log.error("Unable to get number from reply: \"" + s1 + s2 + "\" index: " + index
-                    + " message: \"" + toString() + "\"");
+        } catch (NumberFormatException e) {
+            log.error("Unable to get number from reply: \"{}{}\" index: {} message: \"{}\"", s1, s2, index, toString());
         }
         return val;
     }
 
     /**
-     * Returns the index of String s in the reply
+     * Find a specific string in the reply.
+     *
+     * @param s string to look for
+     * @return index of String s in the reply
      */
+    @Override
     public int match(String s) {
-        // find a specific string in the reply
         String rep = new String(_dataChars, 0, _nDataChars);
         return rep.indexOf(s);
     }
@@ -195,11 +213,11 @@ public class SprogReply extends AbstractMRReply {
         return index;
     }
 
-    /*
-     * Normal SPROG replies will end with the prompt for the next command
-     * Bootloader will end with ETX with no preceding DLE
-     * SPROG v4 bootloader replies "L>" on entry and replies "." at other
-     * times
+    /**
+     * Normal SPROG replies will end with the prompt for the next command.
+     * Bootloader will end with ETX with no preceding DLE.
+     * SPROG v4 bootloader replies "L{@literal >}" on entry and replies "." at other
+     * times.
      */
     public boolean endNormalReply() {
         // Detect that the reply buffer ends with "P> " or "R> " (note ending space)
@@ -231,9 +249,9 @@ public class SprogReply extends AbstractMRReply {
     }
 
     public boolean endBootReply() {
-        // Detect that the reply buffer ends with ETX with no preceding DLE
+        // Detect that the reply buffer ends with ETX with no preceding DLE.
         // This is the end of a SPROG II bootloader reply or the end of
-        // a SPROG v4 echoing the botloader version request
+        // a SPROG v4 echoing the bootloader version request
         int num = this.getNumDataElements();
         if (num >= 2) {
             // ptr is offset of last element in SprogReply
@@ -273,9 +291,6 @@ public class SprogReply extends AbstractMRReply {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(SprogReply.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SprogReply.class);
 
 }
-
-
-/* @(#)SprogReply.java */

@@ -1,4 +1,3 @@
-// SerialNode.java
 package jmri.jmrix.secsi;
 
 import jmri.JmriException;
@@ -23,9 +22,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author	Bob Jacobsen Copyright (C) 2003, 2006, 2007, 2008
  * @author Bob Jacobsen, Dave Duchamp, multiNode extensions, 2004
- * @version	$Revision$
- */
+  */
 public class SerialNode extends AbstractNode {
+
+    private SerialTrafficController tc = null;
 
     /**
      * Maximum number of sensors a node can carry.
@@ -71,8 +71,8 @@ public class SerialNode extends AbstractNode {
      * constructor is used, actual node address must be set using
      * setNodeAddress, and actual node type using 'setNodeType'
      */
-    public SerialNode() {
-        this(0, DAUGHTER);
+    public SerialNode(SerialTrafficController _tc) {
+        this(0, DAUGHTER, _tc);
     }
 
     /**
@@ -80,8 +80,9 @@ public class SerialNode extends AbstractNode {
      * address - Address of node on serial bus (0-255) type - a type constant
      * from the class
      */
-    public SerialNode(int address, int type) {
+    public SerialNode(int address, int type, SerialTrafficController _tc) {
         // set address and type and check validity
+        tc = _tc;
         setNodeAddress(address);
         setNodeType(type);
         // set default values for other instance variables
@@ -100,7 +101,7 @@ public class SerialNode extends AbstractNode {
         setMustSend();
         hasActiveSensors = false;
         // register this node
-        SerialTrafficController.instance().registerNode(this);
+        tc.registerNode(this);
     }
 
     /**
@@ -128,6 +129,7 @@ public class SerialNode extends AbstractNode {
      * Public method to return state of Sensors. Note: returns 'true' if at
      * least one sensor is active for this node
      */
+    @Override
     public boolean getSensorsActive() {
         return hasActiveSensors;
     }
@@ -159,6 +161,7 @@ public class SerialNode extends AbstractNode {
     /**
      * Check for valid node address
      */
+    @Override
     protected boolean checkNodeAddress(int address) {
         return (address >= 0) && (address < 128);
     }
@@ -168,6 +171,7 @@ public class SerialNode extends AbstractNode {
      * node. There are currently no SECSI boards that need an init message, so
      * this returns null.
      */
+    @Override
     public AbstractMRMessage createInitPacket() {
         return null;
     }
@@ -175,6 +179,7 @@ public class SerialNode extends AbstractNode {
     /**
      * Public Method to create an Transmit packet (SerialMessage)
      */
+    @Override
     public AbstractMRMessage createOutPacket() {
         if (log.isDebugEnabled()) {
             log.debug("createOutPacket for nodeType "
@@ -289,7 +294,7 @@ public class SerialNode extends AbstractNode {
         } else {
             // multiple registration of the same sensor
             log.warn("multiple registration of same sensor: CS"
-                    + Integer.toString((getNodeAddress() * SerialSensorManager.SENSORSPERNODE) + i + 1));
+                    + Integer.toString((getNodeAddress() * SerialSensorManager.SENSORSPERNODE) + i + 1)); // TODO multichar prefix
         }
     }
 
@@ -299,6 +304,7 @@ public class SerialNode extends AbstractNode {
      *
      * @return true if initialization required
      */
+    @Override
     public boolean handleTimeout(AbstractMRMessage m, AbstractMRListener l) {
         timeout++;
         // normal to timeout in response to init, output
@@ -322,6 +328,7 @@ public class SerialNode extends AbstractNode {
         }
     }
 
+    @Override
     public void resetTimeout(AbstractMRMessage m) {
         if (timeout > 0) {
             log.debug("Reset " + timeout + " timeout count");
@@ -329,7 +336,7 @@ public class SerialNode extends AbstractNode {
         timeout = 0;
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialNode.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialNode.class);
 }
 
-/* @(#)SerialNode.java */
+

@@ -1,4 +1,3 @@
-// IEEE802154TrafficController.java
 package jmri.jmrix.ieee802154;
 
 import jmri.jmrix.AbstractMRListener;
@@ -22,11 +21,9 @@ import org.slf4j.LoggerFactory;
  * configuring nodes, etc, during the initial configuration. A subclass must be
  * instantiated to actually communicate with an adapter.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2003, 2005, 2006, 2008 Converted to
- * multiple connection
+ * @author Bob Jacobsen Copyright (C) 2001, 2003, 2005, 2006, 2008 Converted to multiple connection
  * @author kcameron Copyright (C) 2011
  * @author Paul Bender Copyright (C) 2013
- * @version	$Revision$
  */
 abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficController implements IEEE802154Interface {
 
@@ -47,9 +44,10 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
      * instance use of the traffic controller is no longer used for multiple
      * connections
      */
+    @Override
     @Deprecated
     public void setInstance() {
-        log.error("Deprecated Method setInstance called");
+        log.debug("Deprecated Method setInstance called");
     }
 
     /**
@@ -57,6 +55,9 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
      * <p>
      * This is a default, null implementation, which must be overridden in an
      * adapter-specific subclass.
+     *
+     * @param length length for new message
+     * @return null since this method should be over-ridden
      */
     public IEEE802154Message getIEEE802154Message(int length) {
         return null;
@@ -67,14 +68,17 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     protected boolean logDebug = false;
 
     // The methods to implement the IEEE802154Interface
+    @Override
     public synchronized void addIEEE802154Listener(IEEE802154Listener l) {
         this.addListener(l);
     }
 
+    @Override
     public synchronized void removeIEEE802154Listener(IEEE802154Listener l) {
         this.removeListener(l);
     }
 
+    @Override
     protected int enterProgModeDelayTime() {
         // we should to wait at least a second after enabling the programming track
         return 1000;
@@ -92,6 +96,7 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     /**
      * Forward a reply to all registered IEEE802154Interface listeners.
      */
+    @Override
     protected void forwardReply(AbstractMRListener client, AbstractMRReply r) {
         ((IEEE802154Listener) client).reply((IEEE802154Reply) r);
     }
@@ -99,10 +104,12 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     /**
      * Eventually, do initialization if needed
      */
+    @Override
     protected AbstractMRMessage pollMessage() {
         return null;
     }
 
+    @Override
     protected AbstractMRListener pollReplyHandler() {
         return null;
     }
@@ -110,10 +117,12 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     /**
      * Forward a preformatted message to the actual interface.
      */
+    @Override
     public void sendIEEE802154Message(IEEE802154Message m, IEEE802154Listener reply) {
         sendMessage(m, reply);
     }
 
+    @Override
     protected void forwardToPort(AbstractMRMessage m, AbstractMRListener reply) {
         if (logDebug) {
             log.debug("forward " + m);
@@ -121,10 +130,12 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
         super.forwardToPort(m, reply);
     }
 
+    @Override
     protected AbstractMRMessage enterProgMode() {
         return null;
     }
 
+    @Override
     protected AbstractMRMessage enterNormalMode() {
         return null;
     }
@@ -142,6 +153,7 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     /**
      * IEEE 802.15.4 messages start with a 0x7E delimiter byte.
      */
+    @Override
     protected void waitForStartOfReply(java.io.DataInputStream istream) throws java.io.IOException {
         // loop looking for the start character
         while (readByteProtected(istream) != 0x7E) {
@@ -187,13 +199,15 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     //    m.setElement(0)=0x7E;
     //    return 1;
     //}
+
     /**
      * <p>
      * This is a default, null implementation, which must be overridden in an
      * adapter-specific subclass.
      */
-    //protected AbstractMRReply newReply() {return new IEEE802154Reply(this);}
-    /*
+    //protected AbstractMRReply newReply() {return new IEEE802154Reply();}
+
+    /**
      * Build a new IEEE802154 Node.
      * Must be implemented by derived classes
      * @return new IEEE802154Node.
@@ -204,6 +218,8 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
      * Public method to identify a SerialNode from its node address Note: 'addr'
      * is the node address, numbered from 0. Returns 'null' if a SerialNode with
      * the specified address was not found
+     * @param addr hex string for address
+     * @return null if not found, else serial node id
      */
     synchronized public jmri.jmrix.AbstractNode getNodeFromAddress(String addr) {
         log.debug("String getNodeFromAddress called with " + addr);
@@ -214,10 +230,19 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     /**
      * Public method to identify a SerialNode from its node address Note: 'addr'
      * is the node address, numbered from 0. Returns 'null' if a SerialNode with
-     * the specified address was not found
+     * the specified address was not found.
+     *
+     * @param ia int array of node address
+     * @return null if not found, otherwise serial address
      */
     synchronized public jmri.jmrix.AbstractNode getNodeFromAddress(int ia[]) {
-        log.debug("int array getNodeFromAddress called with " + ia);
+        if(logDebug) {
+           String s="";
+           for( int i=0;i<ia.length;i++) {
+               s=jmri.util.StringUtil.appendTwoHexFromInt(ia[i],s);
+           }
+           log.debug("int array getNodeFromAddress called with " + s);
+        }
         byte ba[] = new byte[ia.length];
         for (int i = 0; i < ia.length; i++) {
             ba[i] = (byte) (ia[i] & 0xff);
@@ -228,10 +253,16 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     /**
      * Public method to identify a SerialNode from its node address Note: 'addr'
      * is the node address, numbered from 0. Returns 'null' if a SerialNode with
-     * the specified address was not found
+     * the specified address was not found.
+     *
+     * @param ba array of bytes in hex address
+     * @return null if not found, otherwise serial node id
      */
     synchronized public jmri.jmrix.AbstractNode getNodeFromAddress(byte ba[]) {
-        log.debug("byte array getNodeFromAddress called with " + ba);
+        if(logDebug) {
+           log.debug("byte array getNodeFromAddress called with " + 
+                    jmri.util.StringUtil.hexStringFromBytes(ba));
+        }
         for (int i = 0; i < numNodes; i++) {
             byte bsa[] = ((IEEE802154Node) getNode(i)).getUserAddress();
             byte bga[] = ((IEEE802154Node) getNode(i)).getGlobalAddress();
@@ -263,6 +294,8 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
     /**
      * Public method to delete a node by the string representation of it's
      * address.
+     *
+     * @param nodeAddress text of hex node address
      */
     public synchronized void deleteNode(String nodeAddress) {
         // find the serial node
@@ -286,9 +319,6 @@ abstract public class IEEE802154TrafficController extends AbstractMRNodeTrafficC
         nodeArray[numNodes] = null;
     }
 
-    static Logger log = LoggerFactory.getLogger(IEEE802154TrafficController.class);
+    private final static Logger log = LoggerFactory.getLogger(IEEE802154TrafficController.class);
 
 }
-
-
-/* @(#)IEEE802154TrafficController.java */

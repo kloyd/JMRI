@@ -1,4 +1,3 @@
-// RosterGroupSelector.java
 package jmri.jmrit.roster.rostergroup;
 
 import java.beans.PropertyChangeListener;
@@ -16,7 +15,7 @@ public interface RosterGroupSelector {
     /**
      * Key for the property "selectedRosterGroup"
      */
-    public final static String selectedRosterGroupProperty = "selectedRosterGroup";
+    public final static String SELECTED_ROSTER_GROUP = "selectedRosterGroup";
 
     public String getSelectedRosterGroup();
 

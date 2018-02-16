@@ -1,34 +1,21 @@
-// SignalMastTableAction.java
 package jmri.jmrit.beantable;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Vector;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
-import jmri.util.com.sun.TableSorter;
+import jmri.SignalMast;
+import jmri.jmrit.beantable.signalmast.SignalMastTableDataModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Swing action to create and register a SignalMastTable GUI.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2009, 2010
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003, 2009, 2010
  */
-public class SignalMastTableAction extends AbstractTableAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -9004328747718013361L;
+public class SignalMastTableAction extends AbstractTableAction<SignalMast> {
 
     /**
      * Create an action with a specific title.
@@ -36,72 +23,43 @@ public class SignalMastTableAction extends AbstractTableAction {
      * Note that the argument is the Action title, not the title of the
      * resulting frame. Perhaps this should be changed?
      *
-     * @param actionName
+     * @param actionName title of the action
      */
     public SignalMastTableAction(String actionName) {
         super(actionName);
     }
 
     public SignalMastTableAction() {
-        this("Signal Mast Table");
+        this(Bundle.getMessage("TitleSignalMastTable"));
     }
 
     /**
      * Create the JTable DataModel, along with the changes for the specific case
-     * of Sensors
+     * of Signal Masts
      */
+    @Override
     protected void createModel() {
-        m = new jmri.jmrit.beantable.signalmast.SignalMastTableDataModel();
+        m = new SignalMastTableDataModel();
     }
 
+    @Override
     protected void setTitle() {
-        f.setTitle(f.rb.getString("TitleSignalMastTable"));
+        f.setTitle(Bundle.getMessage("TitleSignalMastTable"));
     }
 
+    @Override
     protected String helpTarget() {
         return "package.jmri.jmrit.beantable.SignalMastTable";
     }
 
+    // prepare the Add Signal Mast frame
     jmri.jmrit.beantable.signalmast.AddSignalMastJFrame addFrame = null;
 
     // has to agree with number in SignalMastDataModel
     final static int VALUECOL = BeanTableDataModel.VALUECOL;
     final static int SYSNAMECOL = BeanTableDataModel.SYSNAMECOL;
 
-    public void actionPerformed(ActionEvent e) {
-        // create the JTable model, with changes for specific NamedBean
-        createModel();
-        TableSorter sorter = new TableSorter(m);
-        JTable dataTable = m.makeJTable(sorter);
-        sorter.setTableHeader(dataTable.getTableHeader());
-        // create the frame
-        f = new BeanTableFrame(m, helpTarget(), dataTable) {
-
-            /**
-             *
-             */
-            private static final long serialVersionUID = 151993526213329064L;
-
-            /**
-             * Include an "add" button
-             */
-            void extras() {
-                JButton addButton = new JButton(this.rb.getString("ButtonAdd"));
-                addToBottomBox(addButton, this.getClass().getName());
-                addButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        addPressed(e);
-                    }
-                });
-            }
-
-        };
-        setTitle();
-        addToFrame(f);
-        f.pack();
-        f.setVisible(true);
-    }
-
+    @Override
     protected void addPressed(ActionEvent e) {
         if (addFrame == null) {
             addFrame = new jmri.jmrit.beantable.signalmast.AddSignalMastJFrame();
@@ -111,13 +69,32 @@ public class SignalMastTableAction extends AbstractTableAction {
         addFrame.setVisible(true);
     }
 
+    /**
+     * Insert a table specific Tools menu.
+     * Account for the Window and Help menus, which are already added to the menu bar
+     * as part of the creation of the JFrame, by adding the Tools menu 2 places earlier
+     * unless the table is part of the ListedTableFrame, that adds the Help menu later on.
+     * @param f the JFrame of this table
+     */
+    @Override
     public void setMenuBar(BeanTableFrame f) {
         JMenuBar menuBar = f.getJMenuBar();
-        JMenu pathMenu = new JMenu(rb.getString("Tools"));
-        menuBar.add(pathMenu);
-        JMenuItem item = new JMenuItem(rb.getString("MenuItemRepeaters"));
+        int pos = menuBar.getMenuCount() -1; // count the number of menus to insert the TableMenu before 'Window' and 'Help'
+        int offset = 1;
+        log.debug("setMenuBar number of menu items = " + pos);
+        for (int i = 0; i <= pos; i++) {
+            if (menuBar.getComponent(i) instanceof JMenu) {
+                if (((JMenu) menuBar.getComponent(i)).getText().equals(Bundle.getMessage("MenuHelp"))) {
+                    offset = -1; // correct for use as part of ListedTableAction where the Help Menu is not yet present
+                }
+            }
+        }
+        JMenu pathMenu = new JMenu(Bundle.getMessage("MenuTools"));
+        menuBar.add(pathMenu, pos + offset);
+        JMenuItem item = new JMenuItem(Bundle.getMessage("MenuItemRepeaters"));
         pathMenu.add(item);
         item.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 jmri.jmrit.beantable.signalmast.SignalMastRepeaterJFrame frame = new jmri.jmrit.beantable.signalmast.SignalMastRepeaterJFrame();
                 frame.setVisible(true);
@@ -125,55 +102,16 @@ public class SignalMastTableAction extends AbstractTableAction {
         });
     }
 
-    static final Logger log = LoggerFactory.getLogger(SignalMastTableAction.class.getName());
-
-    public static class MyComboBoxRenderer extends JComboBox<String> implements TableCellRenderer {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = 2364477222809281572L;
-
-        public MyComboBoxRenderer(Vector<String> items) {
-            super(items);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                setForeground(table.getSelectionForeground());
-                super.setBackground(table.getSelectionBackground());
-            } else {
-                setForeground(table.getForeground());
-                setBackground(table.getBackground());
-            }
-
-            // Select the current value
-            setSelectedItem(value);
-            return this;
-        }
-    }
-
-    public static class MyComboBoxEditor extends DefaultCellEditor {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = -7751205079226082780L;
-
-        public MyComboBoxEditor(Vector<String> items) {
-            super(new JComboBox<String>(items));
-        }
-    }
-
+    @Override
     protected String getClassName() {
         return SignalMastTableAction.class.getName();
     }
 
+    @Override
     public String getClassDescription() {
-        return rb.getString("TitleSignalGroupTable");
+        return Bundle.getMessage("TitleSignalMastTable");
     }
+
+    private final static Logger log = LoggerFactory.getLogger(SignalMastTableAction.class);
+
 }
-
-
-/* @(#)SignalMastTableAction.java */

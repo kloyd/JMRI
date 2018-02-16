@@ -1,11 +1,11 @@
-// SampleMinimalProgram.java
 package apps;
 
 import jmri.ConfigureManager;
 import jmri.InstanceManager;
 import jmri.implementation.JmriConfigurationManager;
 import jmri.util.Log4JUtil;
-import jmri.web.server.WebServerManager;
+import jmri.web.server.WebServer;
+import jmri.web.server.WebServerPreferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +23,7 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright 2003, 2005, 2007, 2010
- * @version $Revision$
+ * @author Bob Jacobsen Copyright 2003, 2005, 2007, 2010
  */
 public class SampleMinimalProgram {
 
@@ -46,8 +45,11 @@ public class SampleMinimalProgram {
     }
 
     /**
-     * Static method to return a standard program id. Used for logging startup,
-     * etc.
+     * Static method to return a first logging statement. Used for logging
+     * startup, etc.
+     *
+     * @param program the name of the program
+     * @return the logging statement including JMRI and Java versions
      */
     static public String startupInfo(String program) {
         return (program + " version " + jmri.Version.name()
@@ -55,8 +57,8 @@ public class SampleMinimalProgram {
     }
 
     /**
-     * Static method to get Log4J working before the rest of JMRI starts up.
-     * In a non-minimal program, invoke jmri.util.Log4JUtil.initLogging
+     * Static method to get Log4J working before the rest of JMRI starts up. In
+     * a non-minimal program, invoke jmri.util.Log4JUtil.initLogging
      */
     static protected void initLog4J() {
         // initialize log4j - from logging control file (lcf) only
@@ -72,13 +74,14 @@ public class SampleMinimalProgram {
         } catch (java.lang.NoSuchMethodError e) {
             log.error("Exception starting logging: " + e);
         }
-        // install default exception handlers
-        System.setProperty("sun.awt.exception.handler", jmri.util.exceptionhandler.AwtHandler.class.getName());
+        // install default exception handler
         Thread.setDefaultUncaughtExceptionHandler(new jmri.util.exceptionhandler.UncaughtExceptionHandler());
     }
 
     /**
      * Constructor starts the JMRI application running, and then returns.
+     *
+     * @param args command line arguments set at application launch
      */
     public SampleMinimalProgram(String[] args) {
 
@@ -117,11 +120,15 @@ public class SampleMinimalProgram {
 
         // start web server
         final int port = 12080;
-        WebServerManager.getWebServerPreferences().setPort(port);
-        WebServerManager.getWebServer().start();
+        InstanceManager.getDefault(WebServerPreferences.class).setPort(port);
+        try {
+            WebServer.getDefault().start();
+        } catch (Exception ex) {
+            log.error("Unable to start web server.", ex);
+        }
 
         log.info("Up!");
     }
 
-    static Logger log = LoggerFactory.getLogger(SampleMinimalProgram.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SampleMinimalProgram.class);
 }

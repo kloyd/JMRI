@@ -1,4 +1,3 @@
-// LnSensor.java
 package jmri.jmrix.loconet;
 
 import jmri.Sensor;
@@ -14,16 +13,11 @@ import org.slf4j.LoggerFactory;
  * not extend to uses in other software products. If you wish to use this code,
  * algorithm or these message formats outside of JMRI, please contact Digitrax
  * Inc for separate permission.
- * <P>
- * @author	Bob Jacobsen Copyright (C) 2001
- * @version $Revision$
+ *
+ * @author Bob Jacobsen Copyright (C) 2001
  */
 public class LnSensor extends AbstractSensor implements LocoNetListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7056878460532584580L;
     private LnSensorAddress a;
 
     public LnSensor(String systemName, String userName, LnTrafficController tc, String prefix) {
@@ -47,7 +41,7 @@ public class LnSensor extends AbstractSensor implements LocoNetListener {
         // store address forms
         a = new LnSensorAddress(systemName, prefix);
         if (log.isDebugEnabled()) {
-            log.debug("create address " + a);
+            log.debug("create address {}", a);
         }
 
         // At construction, register for messages
@@ -55,8 +49,9 @@ public class LnSensor extends AbstractSensor implements LocoNetListener {
     }
 
     /**
-     * request an update on status by sending a loconet message
+     * Request an update on status by sending a loconet message.
      */
+    @Override
     public void requestUpdateFromLayout() {
         // the only known way to do this from LocoNet is to request the
         // status of _all_ devices, which is here considered too
@@ -70,9 +65,8 @@ public class LnSensor extends AbstractSensor implements LocoNetListener {
      * listeners by putting it out on LocoNet. In turn, the code in this class
      * should use setOwnState to handle internal sets and bean notifies.
      *
-     * @param s
-     * @throws jmri.JmriException
      */
+    @Override
     public void setKnownState(int s) throws jmri.JmriException {
         // send OPC_INPUT_REP with new state to this address
         LocoNetMessage l = new LocoNetMessage(4);
@@ -94,8 +88,8 @@ public class LnSensor extends AbstractSensor implements LocoNetListener {
      * _once_ if anything has changed state (or set the commanded state
      * directly)
      *
-     * @param l
      */
+    @Override
     public void message(LocoNetMessage l) {
         // parse message type
         switch (l.getOpCode()) {
@@ -108,16 +102,16 @@ public class LnSensor extends AbstractSensor implements LocoNetListener {
                     boolean state = ((sw2 & 0x10) != 0) ^ _inverted;
                     if (log.isDebugEnabled()) {
                         log.debug("INPUT_REP received with valid address, old state "
-                                + getRawState() + " new packet " + state);
+                                + getRawState() + " new packet " + state); // NOI18N
                     }
                     if (state && getRawState() != Sensor.ACTIVE) {
                         if (log.isDebugEnabled()) {
-                            log.debug("Set ACTIVE");
+                            log.debug("Set ACTIVE"); // NOI18N
                         }
                         setOwnState(Sensor.ACTIVE);
                     } else if ((!state) && getRawState() != Sensor.INACTIVE) {
                         if (log.isDebugEnabled()) {
-                            log.debug("Set INACTIVE");
+                            log.debug("Set INACTIVE"); // NOI18N
                         }
                         setOwnState(Sensor.INACTIVE);
                     }
@@ -130,13 +124,12 @@ public class LnSensor extends AbstractSensor implements LocoNetListener {
         // reach here only in error
     }
 
+    @Override
     public void dispose() {
         tc.removeLocoNetListener(~0, this);
         super.dispose();
     }
 
-    static Logger log = LoggerFactory.getLogger(LnSensor.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LnSensor.class);
 
 }
-
-/* @(#)LnSensor.java */

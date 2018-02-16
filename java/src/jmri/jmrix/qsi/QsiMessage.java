@@ -1,9 +1,7 @@
-// QsiMessage.java
 package jmri.jmrix.qsi;
 
 import jmri.ProgrammingMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.StringUtil;
 
 /**
  * Encodes a message to an QSI command station.
@@ -11,7 +9,6 @@ import org.slf4j.LoggerFactory;
  * The {@link QsiReply} class handles the response from the command station.
  *
  * @author	Bob Jacobsen Copyright (C) 2007, 2008
- * @version	$Revision$
  */
 public class QsiMessage extends jmri.jmrix.AbstractMessage {
 
@@ -86,9 +83,7 @@ public class QsiMessage extends jmri.jmrix.AbstractMessage {
     }
 
     public void setData(int[] d) {
-        for (int i = 0; i < d.length; i++) {
-            _dataChars[5 + i] = d[i];
-        }
+        System.arraycopy(d, 0, _dataChars, 5, d.length);
     }
 
     public void setV4Data(int[] d) {
@@ -154,7 +149,7 @@ public class QsiMessage extends jmri.jmrix.AbstractMessage {
     }
 
     public QsiMessage v4frame() {
-        int i = 0;
+        int i;
         // Create new message to hold the framed one
         QsiMessage f = new QsiMessage(MAXSIZE);
         f.setElement(0, ':');
@@ -169,21 +164,27 @@ public class QsiMessage extends jmri.jmrix.AbstractMessage {
         return f;
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION")
-    // Only used occasionally, so inefficient String processing not really a problem
-    // though it would be good to fix it if you're working in this area
+    @Override
     public String toString() {
-        String s = "";
-        if (!QsiTrafficController.instance().isSIIBootMode()) {
+        QsiSystemConnectionMemo memo = jmri.InstanceManager.getDefault(jmri.jmrix.qsi.QsiSystemConnectionMemo.class);
+        return toString(memo.getQsiTrafficController());
+    }
+
+    public String toString(QsiTrafficController controller) {
+        if (_dataChars == null) {
+            return "<none>";
+        }
+        StringBuilder s = new StringBuilder("");
+        if (controller == null || controller.isSIIBootMode()) {
             for (int i = 0; i < _nDataChars; i++) {
-                s += jmri.util.StringUtil.twoHexFromInt(_dataChars[i]) + " ";
+                s.append(StringUtil.twoHexFromInt(_dataChars[i])).append(" ");
             }
         } else {
             for (int i = 0; i < _nDataChars; i++) {
-                s += "<" + _dataChars[i] + ">";
+                s.append("<").append(_dataChars[i]).append(">");
             }
         }
-        return s;
+        return s.toString();
     }
 
     // diagnose format
@@ -379,8 +380,4 @@ public class QsiMessage extends jmri.jmrix.AbstractMessage {
         return m.frame();
     }
 
-    static Logger log = LoggerFactory.getLogger(QsiMessage.class.getName());
-
 }
-
-/* @(#)QsiMessage.java */

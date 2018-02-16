@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
  * time.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2002, 2008
- * @version $Revision$
  */
 public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanManagerConfigXML {
 
@@ -34,6 +33,7 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
      * @param o Object to store, of type MemoryManager
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         Element memories = new Element("memories");
         setStoreElementClass(memories);
@@ -52,11 +52,11 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
                 String sname = iter.next();
                 if (sname == null) {
                     log.error("System name null during store");
+                    break;
                 }
                 log.debug("system name is " + sname);
                 Memory m = tm.getBySystemName(sname);
-                Element elem = new Element("memory")
-                        .setAttribute("systemName", sname);
+                Element elem = new Element("memory");
                 elem.addContent(new Element("systemName").addContent(sname));
 
                 // store common part
@@ -92,6 +92,7 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
      */
     abstract public void setStoreElementClass(Element memories);
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -100,10 +101,10 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
      * Create a MemoryManager object of the correct class, then register and
      * fill it.
      *
-     * @param sharedMemories Shared top level Element to unpack.
+     * @param sharedMemories  Shared top level Element to unpack.
      * @param perNodeMemories Per-node top level Element to unpack.
      * @return true if successful
-     * @throws jmri.configurexml.JmriConfigureXmlException
+     * @throws jmri.configurexml.JmriConfigureXmlException if error during load.
      */
     @Override
     abstract public boolean load(Element sharedMemories, Element perNodeMemories) throws JmriConfigureXmlException;
@@ -133,6 +134,8 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
 
             String userName = getUserName(memoryList.get(i));
 
+            checkNameNormalization(sysName, userName, tm);
+
             if (log.isDebugEnabled()) {
                 log.debug("create Memory: (" + sysName + ")(" + (userName == null ? "<null>" : userName) + ")");
             }
@@ -145,6 +148,7 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
         }
     }
 
+    @Override
     public int loadOrder() {
         return InstanceManager.memoryManagerInstance().getXMLOrder();
     }
@@ -154,7 +158,7 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
         if (memory.getAttribute("valueClass") != null) {
             String adapter = memory.getAttribute("valueClass").getValue();
             if (adapter.equals("jmri.jmrit.roster.RosterEntry")) {
-                RosterEntry re = jmri.jmrit.roster.Roster.instance().getEntryForId(value);
+                RosterEntry re = jmri.jmrit.roster.Roster.getDefault().getEntryForId(value);
                 m.setValue(re);
                 return;
             }
@@ -162,5 +166,5 @@ public abstract class AbstractMemoryManagerConfigXML extends AbstractNamedBeanMa
         m.setValue(value);
     }
 
-    static Logger log = LoggerFactory.getLogger(AbstractMemoryManagerConfigXML.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractMemoryManagerConfigXML.class);
 }

@@ -1,42 +1,32 @@
-// PackageTest.java
 package jmri.web.servlet;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+   jmri.web.servlet.config.PackageTest.class,
+   jmri.web.servlet.directory.PackageTest.class,
+   jmri.web.servlet.frameimage.PackageTest.class,
+   jmri.web.servlet.home.PackageTest.class,
+   jmri.web.servlet.json.PackageTest.class,
+   jmri.web.servlet.operations.PackageTest.class,
+   jmri.web.servlet.panel.PackageTest.class,
+   jmri.web.servlet.roster.PackageTest.class,
+   jmri.web.servlet.simple.PackageTest.class,
+   jmri.web.servlet.about.PackageTest.class,
+   BundleTest.class,
+   DenialServletTest.class,
+   RedirectionServletTest.class,
+   ServletUtilTest.class
+})
 
 /**
  * Invokes complete set of tests in the jmri.web.servlet tree
  *
  * @author	Bob Jacobsen Copyright 2013
- * @version $Revision$
+ * @author	Paul Bender Copyright (C) 2016
  */
-public class PackageTest extends TestCase {
+public class PackageTest {
 
-    // from here down is testing infrastructure
-    public PackageTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {PackageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite("jmri.web.servlet.PackageTest");   // no tests in this class itself
-        suite.addTest(jmri.web.servlet.frameimage.PackageTest.suite());
-        return suite;
-    }
-
-    // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
-    }
-
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
-    }
 }

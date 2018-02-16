@@ -1,4 +1,3 @@
-// PanelPro.java
 package apps.PanelPro;
 
 import apps.Apps;
@@ -8,7 +7,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import jmri.util.JmriJFrame;
@@ -34,37 +32,36 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright 2003
  */
 public class PanelPro extends Apps {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6877561526624987567L;
-
-    PanelPro(JFrame p) {
-        super(p);
+    PanelPro() {
+        super();
     }
 
+    @Override
     protected String logo() {
         return "resources/PanelPro.gif";
     }
 
+    @Override
     protected String mainWindowHelpID() {
         return "package.apps.PanelPro.PanelPro";
     }
 
+    @Override
     protected String line1() {
         return MessageFormat.format(Bundle.getMessage("PanelProVersionCredit"),
                 new Object[]{jmri.Version.name()});
     }
 
+    @Override
     protected String line2() {
         return "http://jmri.org/PanelPro ";
     }
 
+    @Override
     protected JPanel statusPanel() {
         JPanel j = new JPanel();
         j.setLayout(new BoxLayout(j, BoxLayout.Y_AXIS));
@@ -72,11 +69,7 @@ public class PanelPro extends Apps {
 
         // Buttons
         Action quit = new AbstractAction(Bundle.getMessage("MenuItemQuit")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 8078721796099848602L;
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Apps.handleQuit();
             }
@@ -106,12 +99,13 @@ public class PanelPro extends Apps {
         Apps.setStartupInfo("PanelPro");
 
         setConfigFilename("PanelProConfig2.xml", args);
-        JmriJFrame f = new JmriJFrame("PanelPro");
-        createFrame(new PanelPro(f), f);
+        PanelPro p = new PanelPro();
+        JmriJFrame f = new JmriJFrame(jmri.Application.getApplicationName());
+        createFrame(p, f);
 
-        log.debug("main initialization done");
+        log.info("Main initialization done");
         splash(false);
     }
 
-    static Logger log = LoggerFactory.getLogger(PanelPro.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PanelPro.class);
 }

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -26,14 +27,17 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableRowSorter;
+import jmri.InstanceInitializer;
 import jmri.InstanceManager;
+import jmri.implementation.AbstractInstanceInitializer;
 import jmri.jmrit.display.palette.ItemPalette;
 import jmri.jmrit.picker.PickListModel;
 import jmri.jmrit.picker.PickPanel;
 import jmri.util.JmriJFrame;
-import jmri.util.com.sun.TableSorter;
 import jmri.util.table.ButtonEditor;
 import jmri.util.table.ButtonRenderer;
+import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,28 +49,27 @@ import org.slf4j.LoggerFactory;
  */
 public class TrackerTableAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3359499686576807040L;
-
     static int STRUT_SIZE = 10;
 
-    private static TrackerTableAction _instance;
-    private static ArrayList<Tracker> _trackerList = new ArrayList<Tracker>();
-    private static TableFrame _frame;
+    private final ArrayList<Tracker> _trackerList = new ArrayList<Tracker>();
+    private TableFrame _frame;
 
     private TrackerTableAction(String menuOption) {
         super(menuOption);
     }
 
+    /**
+     *
+     * @return the managed instance
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
+     */
+    @Deprecated
     public static TrackerTableAction getInstance() {
-        if (_instance == null) {
-            _instance = new TrackerTableAction(Bundle.getMessage("MenuTrackers"));
-        }
-        return _instance;
+        return InstanceManager.getDefault(TrackerTableAction.class);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (_frame != null) {
             _frame.setVisible(true);
@@ -75,28 +78,28 @@ public class TrackerTableAction extends AbstractAction {
         }
     }
 
-    synchronized static public boolean mouseClickedOnBlock(OBlock block) {
+    synchronized public boolean mouseClickedOnBlock(OBlock block) {
         if (_frame != null) {
             return _frame.mouseClickedOnBlock(block);
         }
         return false;
     }
 
-    static public Tracker markNewTracker(OBlock block, String name) {
+    public Tracker markNewTracker(OBlock block, String name) {
         if (_frame == null) {
             _frame = new TableFrame();
         }
         return _frame.addTracker(block, name);
     }
 
-    static public void stopTracker(Tracker t) {
+    public void stopTracker(Tracker t) {
         if (_frame == null) {
             _frame = new TableFrame();
         }
         _frame.stopTrain(t);
     }
 
-    static public void stopTrackerIn(OBlock block) {
+    public void stopTrackerIn(OBlock block) {
         Iterator<Tracker> iter = _trackerList.iterator();
         while (iter.hasNext()) {
             Tracker t = iter.next();
@@ -117,9 +120,8 @@ public class TrackerTableAction extends AbstractAction {
      * @author Peter Cressman
      *
      */
-    static class TableFrame extends JmriJFrame implements PropertyChangeListener, MouseListener {
+    private class TableFrame extends JmriJFrame implements PropertyChangeListener, MouseListener {
 
-        private static final long serialVersionUID = -56337259221744388L;
         private TrackerTableModel _model;
         private JmriJFrame _pickFrame;
         JDialog _dialog;
@@ -127,24 +129,15 @@ public class TrackerTableAction extends AbstractAction {
         JTextField _trainLocationBox = new JTextField(30);
         JTextField _status = new JTextField(80);
         ArrayList<String> _statusHistory = new ArrayList<String>();
-        public static int _maxHistorySize = 20;
-        boolean _appendStatus = false;
+        public int _maxHistorySize = 20;
         HashMap<OBlock, List<Tracker>> _blocks = new HashMap<OBlock, List<Tracker>>();
 
         TableFrame() {
             setTitle(Bundle.getMessage("TrackerTable"));
             _model = new TrackerTableModel(this);
-            JTable table;   // = new JTable(_model);
-            try {   // following might fail due to a missing method on Mac Classic
-                TableSorter sorter = new jmri.util.com.sun.TableSorter(_model);
-                table = jmri.util.JTableUtil.sortableDataModel(sorter);
-                sorter.setTableHeader(table.getTableHeader());
-                // set model last so later casts will work
-                ((jmri.util.com.sun.TableSorter) table.getModel()).setTableModel(_model);
-            } catch (Throwable e) { // NoSuchMethodError, NoClassDefFoundError and others on early JVMs
-                log.error("WarrantTable: Unexpected error: " + e);
-                table = new JTable(_model);
-            }
+            JTable table = new JTable(_model);
+            TableRowSorter<TrackerTableModel> sorter = new TableRowSorter<>(_model);
+            table.setRowSorter(sorter);
             table.getColumnModel().getColumn(TrackerTableModel.STOP_COL).setCellEditor(new ButtonEditor(new JButton()));
             table.getColumnModel().getColumn(TrackerTableModel.STOP_COL).setCellRenderer(new ButtonRenderer());
             for (int i = 0; i < _model.getColumnCount(); i++) {
@@ -155,8 +148,8 @@ public class TrackerTableAction extends AbstractAction {
             table.setTransferHandler(new jmri.util.DnDTableExportHandler());
             JScrollPane tablePane = new JScrollPane(table);
             Dimension dim = table.getPreferredSize();
-            table.getRowHeight(new JButton("STOPIT").getPreferredSize().height);
-            dim.height = table.getRowHeight() * 2;
+            int height = new JButton("STOPIT").getPreferredSize().height;
+            dim.height = height * 2;
             tablePane.getViewport().setPreferredSize(dim);
 
             JPanel tablePanel = new JPanel();
@@ -177,6 +170,7 @@ public class TrackerTableAction extends AbstractAction {
             p = new JPanel();
             JButton button = new JButton(Bundle.getMessage("MenuNewTracker"));
             button.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent a) {
                     newTrackerDialog();
                 }
@@ -186,6 +180,7 @@ public class TrackerTableAction extends AbstractAction {
 
             button = new JButton(Bundle.getMessage("MenuRefresh"));
             button.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent a) {
                     _model.fireTableDataChanged();
                 }
@@ -195,6 +190,7 @@ public class TrackerTableAction extends AbstractAction {
 
             button = new JButton(Bundle.getMessage("MenuBlockPicker"));
             button.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent a) {
                     openPickList();
                 }
@@ -206,6 +202,7 @@ public class TrackerTableAction extends AbstractAction {
             tablePanel.add(panel, BorderLayout.CENTER);
 
             addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     dispose();
                 }
@@ -213,6 +210,7 @@ public class TrackerTableAction extends AbstractAction {
             setContentPane(tablePanel);
 
             addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     setDefaultCloseOperation(javax.swing.WindowConstants.HIDE_ON_CLOSE);
                     _model.fireTableDataChanged();
@@ -296,6 +294,7 @@ public class TrackerTableAction extends AbstractAction {
             JButton doneButton;
             doneButton = new JButton(Bundle.getMessage("ButtonDone"));
             doneButton.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent a) {
                     if (doDoneAction()) {
                         _dialog.dispose();
@@ -353,7 +352,7 @@ public class TrackerTableAction extends AbstractAction {
             }
         }
 
-        static protected String blockInUse(OBlock b) {
+        protected String blockInUse(OBlock b) {
             Iterator<Tracker> iter = _trackerList.iterator();
             while (iter.hasNext()) {
                 Tracker t = iter.next();
@@ -364,7 +363,7 @@ public class TrackerTableAction extends AbstractAction {
             return null;
         }
 
-        static boolean nameInuse(String name) {
+        boolean nameInuse(String name) {
             Iterator<Tracker> iter = _trackerList.iterator();
             while (iter.hasNext()) {
                 Tracker t = iter.next();
@@ -383,8 +382,8 @@ public class TrackerTableAction extends AbstractAction {
             JPanel blurb = new JPanel();
             blurb.setLayout(new BoxLayout(blurb, BoxLayout.Y_AXIS));
             blurb.add(Box.createVerticalStrut(ItemPalette.STRUT_SIZE));
-//	        blurb.add(new JLabel(Bundle.getMessage("DragOccupancyName")));
-//	        blurb.add(new JLabel(Bundle.getMessage("DragErrorName")));
+//         blurb.add(new JLabel(Bundle.getMessage("DragOccupancyName")));
+//         blurb.add(new JLabel(Bundle.getMessage("DragErrorName")));
             blurb.add(Box.createVerticalStrut(ItemPalette.STRUT_SIZE));
             JPanel panel = new JPanel();
             panel.add(blurb);
@@ -393,9 +392,9 @@ public class TrackerTableAction extends AbstractAction {
             content.add(new PickPanel(models));
 
             _pickFrame.setContentPane(content);
-            /*	        _pickFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+            /*         _pickFrame.addWindowListener(new java.awt.event.WindowAdapter() {
              public void windowClosing(java.awt.event.WindowEvent e) {
-             closePickList();                   
+             closePickList();
              }
              });*/
             _pickFrame.setLocationRelativeTo(this);
@@ -405,10 +404,9 @@ public class TrackerTableAction extends AbstractAction {
         }
 
         /**
-         * Adds listeners to all blocks in the range of a Tracker.
-         * Called when a new tracker is created.
-         *
-         * @param newTracker
+         * Adds listeners to all blocks in the range of a Tracker. Called when a
+         * new tracker is created.
+         * <p>
          */
         private void addBlockListeners(Tracker tracker) {
             List<OBlock> range = tracker.getRange();
@@ -433,17 +431,17 @@ public class TrackerTableAction extends AbstractAction {
                 _blocks.put(block, trackers);
                 block.addPropertyChangeListener(this);
                 if (log.isDebugEnabled()) {
-                    log.debug("\taddPropertyChangeListener for block " + block.getDisplayName());
+                    log.debug("\taddPropertyChangeListener for block {}", block.getDisplayName());
                 }
             } else {
-                if (trackers.size() == 0) {
+                if (trackers.isEmpty()) {
                     block.addPropertyChangeListener(this);
                     if (log.isDebugEnabled()) {
-                        log.debug("\taddPropertyChangeListener for block " + block.getDisplayName());
+                        log.debug("\taddPropertyChangeListener for block {}", block.getDisplayName());
                     }
                 } else {
                     if (log.isDebugEnabled()) {
-                        log.debug("\tassumed block " + block.getDisplayName() + "already has listener");
+                        log.debug("\tassumed block {} already has listener" + block.getDisplayName());
                     }
                 }
                 if (!trackers.contains(tracker)) {
@@ -462,7 +460,7 @@ public class TrackerTableAction extends AbstractAction {
                 OBlock b = iter.next();
                 if (oldRange.contains(b)) {
                     oldRange.remove(b);
-                    continue;	// held in common. keep listener	    			
+                    continue; // held in common. keep listener
                 }
                 addBlockListener(b, tracker);       // new block.  Add Listener
             }
@@ -497,94 +495,95 @@ public class TrackerTableAction extends AbstractAction {
                     }
                 }
             } else {
-                log.error("Block \"" + b.getDisplayName() + "\" has no listeners.  Tracker for train "
-                        + tracker.getTrainName() + " expected a listener");
+                if (log.isDebugEnabled()) {
+                    log.error("Block \"" + b.getDisplayName() + "\" has no listeners.  Tracker for train "
+                            + tracker.getTrainName() + " expected a listener");
+                }
             }
         }
 
+        @Override
         public void propertyChange(java.beans.PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals("state")) {
                 OBlock b = (OBlock) evt.getSource();
                 int state = ((Number) evt.getNewValue()).intValue();
                 int oldState = ((Number) evt.getOldValue()).intValue();
                 if (log.isDebugEnabled()) {
-                    log.debug("propertyChange to block= "+b.getDisplayName()+" state= "+state+" oldstate= "+oldState);
+                    log.debug("propertyChange to block= " + b.getDisplayName() + " state= " + state + " oldstate= " + oldState);
                 }
                 // The "jiggle" (see tracker.showBlockValue() causes some state changes to be duplicated.
                 // The following washes out the extra notifications
 /*                if ((state & (OBlock.UNOCCUPIED | OBlock.RUNNING)) == (OBlock.UNOCCUPIED | OBlock.RUNNING)) {
                     b.setState(state & ~OBlock.RUNNING);
-                    return;		// will do the tracker.move() on the next (repeat call
+                    return;  // will do the tracker.move() on the next (repeat call
                 } else if ((state & OBlock.RUNNING) != 0) {
-                    return;		// repeats previous call that was completed.	            	
+                    return;  // repeats previous call that was completed.
                 }*/
-                if ((state & (OBlock.UNOCCUPIED | OBlock.RUNNING)) == (oldState & (OBlock.UNOCCUPIED | OBlock.RUNNING)) &&
-                        (state & (OBlock.OCCUPIED | OBlock.RUNNING)) == (oldState & (OBlock.OCCUPIED | OBlock.RUNNING))) {
+                if ((state & (OBlock.UNOCCUPIED | OBlock.RUNNING)) == (oldState & (OBlock.UNOCCUPIED | OBlock.RUNNING))
+                        && (state & (OBlock.OCCUPIED | OBlock.RUNNING)) == (oldState & (OBlock.OCCUPIED | OBlock.RUNNING))) {
                     return;
-                }                    
+                }
                 List<Tracker> trackers = _blocks.get(b);
                 if (trackers == null) {
                     log.error("No Trackers found for block " + b.getDisplayName() + " going to state= " + state);
                     b.removePropertyChangeListener(this);
-                } else {
-                    // perhaps several trackers listen for this block
-                    if ((state & OBlock.OCCUPIED) != 0) {
-                        // going occupied
-                        if (b.getValue() == null) {
-                            String[] trains = new String[trackers.size()];
-                            int i = 0;
-                            Warrant w = b.getWarrant();
-                            if (w != null) {
-                                int idx = w.getCurrentOrderIndex();
-                                // Was it a warranted train that entered the block, 
-                                // is distance of 1 block OK?
-                                // Can't tell who got notified first - tracker or warrant?
-                                if (w.getIndexOfBlock(b, idx) - idx < 2) {
-                                    return;
-                                }
-                            }
-                            Iterator<Tracker> iter = trackers.iterator();
-                            while (iter.hasNext()) {
-                                Tracker t = iter.next();
-                                trains[i++] = t.getTrainName();
-                            }
-                            Tracker t = trackers.get(0);
-                            if (i > 1) {
-                                Object selection = JOptionPane.showInputDialog(this, Bundle.getMessage("MultipleTrackers",
-                                        b.getDisplayName()), Bundle.getMessage("WarningTitle"),
-                                        JOptionPane.INFORMATION_MESSAGE, null, trains, null);
-                                if (selection != null) {
-                                    iter = _trackerList.iterator();
-                                    while (iter.hasNext()) {
-                                        t = iter.next();
-                                        if (((String) selection).equals(t.getTrainName())) {
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    return;
-                                }
-                            }
-                            processTrackerStateChange(t, b, state);
-                        } else {
-                            log.warn("Block " + b.getDisplayName() + " going active with value= "
-                                    + b.getValue() + " Wasup wi dat?");
-                        }
-                    } else if ((state & OBlock.UNOCCUPIED) != 0) {
-                        // b going unoccupied.
-                        // to avoid ConcurrentModificationException if a tracker is deleted, use a copy
-                        Tracker[] copy = new Tracker[trackers.size()];
-                        Iterator<Tracker> iter = trackers.iterator();
+                } else // perhaps several trackers listen for this block
+                if ((state & OBlock.OCCUPIED) != 0) {
+                    // going occupied
+                    if (b.getValue() == null) {
+                        String[] trains = new String[trackers.size()];
                         int i = 0;
+                        Warrant w = b.getWarrant();
+                        if (w != null) {
+                            int idx = w.getCurrentOrderIndex();
+                            // Was it a warranted train that entered the block,
+                            // is distance of 1 block OK?
+                            // Can't tell who got notified first - tracker or warrant?
+                            if (w.getIndexOfBlock(b, idx) - idx < 2) {
+                                return;
+                            }
+                        }
+                        Iterator<Tracker> iter = trackers.iterator();
                         while (iter.hasNext()) {
-                            copy[i++] = iter.next();
+                            Tracker t = iter.next();
+                            trains[i++] = t.getTrainName();
                         }
-                        for (int k = 0; k < i; k++) {
-                            processTrackerStateChange(copy[k], b, state);
+                        Tracker t = trackers.get(0);
+                        if (i > 1) {
+                            Object selection = JOptionPane.showInputDialog(this, Bundle.getMessage("MultipleTrackers",
+                                    b.getDisplayName()), Bundle.getMessage("WarningTitle"),
+                                    JOptionPane.INFORMATION_MESSAGE, null, trains, null);
+                            if (selection != null) {
+                                iter = _trackerList.iterator();
+                                while (iter.hasNext()) {
+                                    t = iter.next();
+                                    if (((String) selection).equals(t.getTrainName())) {
+                                        break;
+                                    }
+                                }
+                            } else {
+                                return;
+                            }
                         }
+                        processTrackerStateChange(t, b, state);
+                    } else {
+                        log.warn("Block " + b.getDisplayName() + " going active with value= "
+                                + b.getValue() + " Wasup wi dat?");
+                    }
+                } else if ((state & OBlock.UNOCCUPIED) != 0) {
+                    // b going unoccupied.
+                    // to avoid ConcurrentModificationException if a tracker is deleted, use a copy
+                    Tracker[] copy = new Tracker[trackers.size()];
+                    Iterator<Tracker> iter = trackers.iterator();
+                    int i = 0;
+                    while (iter.hasNext()) {
+                        copy[i++] = iter.next();
+                    }
+                    for (int k = 0; k < i; k++) {
+                        processTrackerStateChange(copy[k], b, state);
                     }
                 }
- /*               if ((state & OBlock.UNOCCUPIED) != 0) {
+                /*               if ((state & OBlock.UNOCCUPIED) != 0) {
                     b.setValue(null);
                 }*/
             }
@@ -593,16 +592,13 @@ public class TrackerTableAction extends AbstractAction {
 
         /**
          * Called when a state change has occurred for one the blocks listened
-         * to for this tracker. Trackcr.move makes the changes to OBlocks to
+         * to for this tracker. Tracker.move makes the changes to OBlocks to
          * indicate the new occupancy positions of the train. Upon return,
          * update the listeners for the trains next move
-         *
-         * @param tracker
-         * @param block
-         * @param state
+         * <p>
          */
         private void processTrackerStateChange(Tracker tracker, OBlock block, int state) {
-            List<OBlock> oldRange = tracker.getRange();// range in effect when state change was detected 
+            List<OBlock> oldRange = tracker.getRange();// range in effect when state change was detected
             switch (tracker.move(block, state)) {
                 case Tracker.NO_BLOCK:
                     adjustBlockListeners(oldRange, tracker.getRange(), tracker);
@@ -628,6 +624,9 @@ public class TrackerTableAction extends AbstractAction {
                 case Tracker.ERROR_BLOCK:
                     // tracker wrote error message
                     break;
+                default:
+                    log.warn("Unhandled tracker move: {}", tracker.move(block, state));
+                    break;
             }
         }
 
@@ -640,7 +639,7 @@ public class TrackerTableAction extends AbstractAction {
                 t.removeBlock(b);
             }
             list = t.getBlocksOccupied();
-//			removeBlockListeners(list, t);
+//   removeBlockListeners(list, t);
             iter = list.iterator();
             while (iter.hasNext()) {
                 OBlock b = iter.next();
@@ -652,6 +651,7 @@ public class TrackerTableAction extends AbstractAction {
             setStatus(Bundle.getMessage("TrackerStopped", t.getTrainName()));
         }
 
+        @Override
         public void mouseClicked(MouseEvent event) {
             javax.swing.JPopupMenu popup = new javax.swing.JPopupMenu();
             for (int i = _statusHistory.size() - 1; i >= 0; i--) {
@@ -660,15 +660,19 @@ public class TrackerTableAction extends AbstractAction {
             popup.show(_status, 0, 0);
         }
 
+        @Override
         public void mousePressed(MouseEvent event) {
         }
 
+        @Override
         public void mouseEntered(MouseEvent event) {
         }
 
+        @Override
         public void mouseExited(MouseEvent event) {
         }
 
+        @Override
         public void mouseReleased(MouseEvent event) {
         }
 
@@ -684,9 +688,8 @@ public class TrackerTableAction extends AbstractAction {
         }
     }
 
-    static class TrackerTableModel extends AbstractTableModel {
+    private class TrackerTableModel extends AbstractTableModel {
 
-        private static final long serialVersionUID = -8320710926680330134L;
         public static final int NAME_COL = 0;
         public static final int STATUS_COL = 1;
         public static final int STOP_COL = 2;
@@ -699,24 +702,31 @@ public class TrackerTableAction extends AbstractAction {
             _parent = f;
         }
 
+        @Override
         public int getColumnCount() {
             return NUMCOLS;
         }
 
+        @Override
         public int getRowCount() {
             return _trackerList.size();
         }
 
+        @Override
         public String getColumnName(int col) {
             switch (col) {
                 case NAME_COL:
                     return Bundle.getMessage("TrainName");
                 case STATUS_COL:
                     return Bundle.getMessage("status");
+                default:
+                    // fall out
+                    break;
             }
             return "";
         }
 
+        @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             switch (columnIndex) {
                 case NAME_COL:
@@ -725,10 +735,14 @@ public class TrackerTableAction extends AbstractAction {
                     return _trackerList.get(rowIndex).getStatus();
                 case STOP_COL:
                     return Bundle.getMessage("Stop");
+                default:
+                    // fall out
+                    break;
             }
             return "";
         }
 
+        @Override
         public void setValueAt(Object value, int row, int col) {
             if (col == STOP_COL) {
                 Tracker t = _trackerList.get(row);
@@ -738,6 +752,7 @@ public class TrackerTableAction extends AbstractAction {
             }
         }
 
+        @Override
         public boolean isCellEditable(int row, int col) {
             if (col == STOP_COL) {
                 return true;
@@ -745,6 +760,7 @@ public class TrackerTableAction extends AbstractAction {
             return false;
         }
 
+        @Override
         public Class<?> getColumnClass(int col) {
             if (col == STOP_COL) {
                 return JButton.class;
@@ -760,11 +776,33 @@ public class TrackerTableAction extends AbstractAction {
                     return new JTextField(60).getPreferredSize().width;
                 case STOP_COL:
                     return new JButton("STOPIT").getPreferredSize().width;
+                default:
+                    // fall out
+                    break;
             }
             return 5;
         }
 
     }
 
-    static Logger log = LoggerFactory.getLogger(TrackerTableAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(TrackerTableAction.class);
+
+    @ServiceProvider(service = InstanceInitializer.class)
+    public static class Initializer extends AbstractInstanceInitializer {
+
+        @Override
+        public <T> Object getDefault(Class<T> type) throws IllegalArgumentException {
+            if (type.equals(TrackerTableAction.class)) {
+                return new TrackerTableAction(Bundle.getMessage("MenuTrackers"));
+            }
+            return super.getDefault(type);
+        }
+
+        @Override
+        public Set<Class<?>> getInitalizes() {
+            Set<Class<?>> set = super.getInitalizes();
+            set.add(TrackerTableAction.class);
+            return set;
+        }
+    }
 }

@@ -1,34 +1,32 @@
-// SerialPacketGenAction.java
 package jmri.jmrix.secsi.packetgen;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jmri.jmrix.secsi.SecsiSystemConnectionMemo;
 
 /**
  * Swing action to create and register a SerialPacketGenFrame object
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2007, 2008
- * @version	$Revision$
- */
+  */
 public class SerialPacketGenAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5258440487857635217L;
+    private SecsiSystemConnectionMemo memo = null;
 
-    public SerialPacketGenAction(String s) {
+    public SerialPacketGenAction(String s,SecsiSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public SerialPacketGenAction() {
-        this("Send SECSI message");
+    public SerialPacketGenAction(SecsiSystemConnectionMemo _memo) {
+        this("Send SECSI message",_memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        SerialPacketGenFrame f = new SerialPacketGenFrame();
+        SerialPacketGenFrame f = new SerialPacketGenFrame(memo);
         try {
             f.initComponents();
         } catch (Exception ex) {
@@ -36,8 +34,5 @@ public class SerialPacketGenAction extends AbstractAction {
         }
         f.setVisible(true);
     }
-    static Logger log = LoggerFactory.getLogger(SerialPacketGenAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialPacketGenAction.class);
 }
-
-
-/* @(#)SerialPacketGenAction.java */

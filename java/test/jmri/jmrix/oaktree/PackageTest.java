@@ -1,47 +1,38 @@
-// PackageTest.java
 package jmri.jmrix.oaktree;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+        SerialTurnoutTest.class,
+        SerialTurnoutManagerTest.class,
+        SerialSensorManagerTest.class,
+        SerialNodeTest.class,
+        SerialMessageTest.class,
+        SerialTrafficControllerTest.class,
+        SerialAddressTest.class,
+        jmri.jmrix.oaktree.serialdriver.PackageTest.class,
+        jmri.jmrix.oaktree.configurexml.PackageTest.class,
+        jmri.jmrix.oaktree.nodeconfig.PackageTest.class,
+        jmri.jmrix.oaktree.packetgen.PackageTest.class,
+        jmri.jmrix.oaktree.serialmon.PackageTest.class,
+        OakTreeMenuTest.class,
+        OakTreeSystemConnectionMemoTest.class,
+        SerialPortControllerTest.class,
+        SerialConnectionTypeListTest.class,
+        SerialLightManagerTest.class,
+        SerialReplyTest.class,
+        SerialSensorTest.class,
+        SerialLightTest.class,
+        BundleTest.class,
+        jmri.jmrix.oaktree.swing.PackageTest.class,
+})
 
 /**
  * Tests for the jmri.jmrix.oaktree package.
  *
  * @author Bob Jacobsen Copyright 2003
- * @version $Revision$
  */
-public class PackageTest extends TestCase {
-
-    // from here down is testing infrastructure
-    public PackageTest(String s) {
-        super(s);
-    }
-
-    public void testDefinitions() {
-        Assert.assertEquals("Node definitions match", SerialSensorManager.SENSORSPERNODE,
-                SerialNode.MAXSENSORS + 1);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {PackageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        apps.tests.AllTest.initLogging();
-        TestSuite suite = new TestSuite("jmri.jmrix.oaktree.SerialTest");
-        suite.addTest(SerialTurnoutTest.suite());
-        suite.addTest(SerialTurnoutManagerTest.suite());
-        suite.addTest(SerialSensorManagerTest.suite());
-        suite.addTest(SerialNodeTest.suite());
-        suite.addTest(SerialMessageTest.suite());
-        suite.addTest(SerialTrafficControllerTest.suite());
-        suite.addTest(SerialAddressTest.suite());
-        return suite;
-    }
-
+public class PackageTest  {
 }

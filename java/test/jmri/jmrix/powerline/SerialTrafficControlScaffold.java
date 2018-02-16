@@ -1,4 +1,3 @@
-// SerialInterfaceScaffold.java
 package jmri.jmrix.powerline;
 
 import java.util.Vector;
@@ -11,8 +10,7 @@ import org.slf4j.LoggerFactory;
  * @author	Bob Jacobsen Copyright 2004, 2007, 2008 Converted to multiple
  * connection
  * @author kcameron Copyright (C) 2011
- * @version	$Revision$
- */
+  */
 public class SerialTrafficControlScaffold extends SerialTrafficController {
 
     public SerialTrafficControlScaffold() {
@@ -23,6 +21,7 @@ public class SerialTrafficControlScaffold extends SerialTrafficController {
     }
 
     // override some SerialTrafficController methods for test purposes
+    @Override
     public boolean status() {
         return true;
     }
@@ -32,6 +31,7 @@ public class SerialTrafficControlScaffold extends SerialTrafficController {
      */
     public Vector<SerialMessage> outbound = new Vector<SerialMessage>();  // public OK here, so long as this is a test class
 
+    @Override
     public void sendSerialMessage(SerialMessage m, SerialListener reply) {
         if (log.isDebugEnabled()) {
             log.debug("sendSerialMessage [" + m + "]");
@@ -62,6 +62,6 @@ public class SerialTrafficControlScaffold extends SerialTrafficController {
         return cmdListeners.size();
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialTrafficControlScaffold.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialTrafficControlScaffold.class);
 
 }

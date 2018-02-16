@@ -1,9 +1,11 @@
-// SerialTurnoutManagerTest.java
 package jmri.jmrix.secsi;
 
 import jmri.Turnout;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,30 +15,29 @@ import org.slf4j.LoggerFactory;
  * Description:	tests for the SerialTurnoutManager class
  *
  * @author	Bob Jacobsen Copyright 2004, 2008
- * @version $Revision$
  */
-public class SerialTurnoutManagerTest extends jmri.managers.AbstractTurnoutMgrTest {
+public class SerialTurnoutManagerTest extends jmri.managers.AbstractTurnoutMgrTestBase {
 
+    @Override
+    @Before
     public void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
 
-        // replace the SerialTrafficController
-        SerialTrafficController t = new SerialTrafficController() {
-            SerialTrafficController test() {
-                setInstance();
-                return this;
-            }
-        }.test();
-        t.registerNode(new SerialNode(0, SerialNode.DAUGHTER));
+        SerialTrafficController t = new SerialTrafficControlScaffold();
+        SecsiSystemConnectionMemo memo = new SecsiSystemConnectionMemo();
+        memo.setTrafficController(t);
+        t.registerNode(new SerialNode(0, SerialNode.DAUGHTER,t));
         // create and register the manager object
-        l = new SerialTurnoutManager();
+        l = new SerialTurnoutManager(memo);
         jmri.InstanceManager.setTurnoutManager(l);
     }
 
+    @Override
     public String getSystemName(int n) {
         return "VT" + n;
     }
 
+    @Test
     public void testAsAbstractFactory() {
         // ask for a Turnout, and check type
         Turnout o = l.newTurnout("VT21", "my name");
@@ -44,7 +45,7 @@ public class SerialTurnoutManagerTest extends jmri.managers.AbstractTurnoutMgrTe
         if (log.isDebugEnabled()) {
             log.debug("received turnout value " + o);
         }
-        assertTrue(null != (SerialTurnout) o);
+        Assert.assertTrue(null != (SerialTurnout) o);
 
         // make sure loaded into tables
         if (log.isDebugEnabled()) {
@@ -54,34 +55,16 @@ public class SerialTurnoutManagerTest extends jmri.managers.AbstractTurnoutMgrTe
             log.debug("by user name:   " + l.getByUserName("my name"));
         }
 
-        assertTrue(null != l.getBySystemName("VT21"));
-        assertTrue(null != l.getByUserName("my name"));
+        Assert.assertTrue(null != l.getBySystemName("VT21"));
+        Assert.assertTrue(null != l.getByUserName("my name"));
 
     }
 
-    // from here down is testing infrastructure
-    public SerialTurnoutManagerTest(String s) {
-        super(s);
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {SerialTurnoutManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        apps.tests.AllTest.initLogging();
-        TestSuite suite = new TestSuite(SerialTurnoutManagerTest.class);
-        return suite;
-    }
-
-    // The minimal setup for log4J
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
-    }
-
-    static Logger log = LoggerFactory.getLogger(SerialTurnoutManagerTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialTurnoutManagerTest.class);
 
 }

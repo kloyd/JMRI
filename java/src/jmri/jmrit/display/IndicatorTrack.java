@@ -7,10 +7,8 @@ import jmri.jmrit.logix.OBlock;
 
 /**
  * Defines track objects that display status color.
- * <P>
  *
  * @author Pete Cressman Copyright (c) 2010
- * @version $Revision$
  */
 public interface IndicatorTrack extends Positionable {
 

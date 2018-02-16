@@ -19,17 +19,12 @@ import jmri.jmrit.catalog.NamedIcon;
  * example of how to use this.
  *
  * @author Bob Jacobsen Copyright (c) 2003
- * @version $Revision$
  * @see jmri.jmrit.display.SensorIcon
  * @see jmri.jmrit.display.panelEditor.PanelEditor
  * @see jmri.jmrit.catalog
  */
 public class MultiIconEditor extends JPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1389053721198245719L;
     JButton[] buttonList;
     NamedIcon[] iconList;
 
@@ -74,15 +69,11 @@ public class MultiIconEditor extends JPanel {
 
     private class IconButton extends JButton {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = -309406418364834814L;
-
         IconButton(int index, Icon init) {  // init icon passed to avoid ref before ctor complete
             super(init);
             savedIndex = index;
             addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent a) {
                     pickIcon();
                 }

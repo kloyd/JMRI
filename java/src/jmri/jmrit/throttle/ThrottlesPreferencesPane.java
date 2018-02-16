@@ -1,13 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
- * ThrottlesPreferencesPane.java
- *
- * Created on 17 juil. 2009, 15:05:26
- */
 package jmri.jmrit.throttle;
 
 import java.awt.GridBagConstraints;
@@ -26,16 +16,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import jmri.InstanceManager;
 import jmri.swing.PreferencesPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author lionel
  */
+@ServiceProvider(service = PreferencesPanel.class)
 public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeListener, PreferencesPanel {
-
-    private static final long serialVersionUID = -5473594799045080011L;
 
     private JCheckBox cbUseToolBar;
     private JCheckBox cbUseFunctionIcon;
@@ -47,6 +35,7 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
     private JCheckBox cbHideUndefinedButtons;
     private JCheckBox cbIgnoreThrottlePosition;
     private JCheckBox cbSaveThrottleOnLayoutSave;
+    private JCheckBox cbSilentSteal;
     private JLabel labelApplyWarning;
     private JButton jbApply;
     private JButton jbCancel;
@@ -58,7 +47,7 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
      */
     @SuppressWarnings("LeakingThisInConstructor")
     public ThrottlesPreferencesPane() {
-        if (InstanceManager.getDefault(ThrottlesPreferences.class) == null) {
+        if (InstanceManager.getNullableDefault(ThrottlesPreferences.class) == null) {
             InstanceManager.store(new ThrottlesPreferences(), ThrottlesPreferences.class);
         }
         ThrottlesPreferences tp = InstanceManager.getDefault(ThrottlesPreferences.class);
@@ -77,6 +66,12 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         gridBagConstraints13.anchor = GridBagConstraints.WEST;
         gridBagConstraints13.gridy = 99;
 
+        GridBagConstraints gridBagConstraints15 = new GridBagConstraints();
+        gridBagConstraints15.gridx = 0;
+        gridBagConstraints15.insets = new Insets(2, 23, 2, 2);
+        gridBagConstraints15.anchor = GridBagConstraints.WEST;
+        gridBagConstraints15.gridy = 11;
+        
         GridBagConstraints gridBagConstraints14 = new GridBagConstraints();
         gridBagConstraints14.gridx = 0;
         gridBagConstraints14.insets = new Insets(2, 23, 2, 2);
@@ -88,12 +83,6 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         gridBagConstraints12.insets = new Insets(2, 23, 2, 2);
         gridBagConstraints12.anchor = GridBagConstraints.WEST;
         gridBagConstraints12.gridy = 9;
-
-        GridBagConstraints gridBagConstraints15 = new GridBagConstraints();
-        gridBagConstraints15.gridx = 0;
-        gridBagConstraints15.insets = new Insets(2, 23, 2, 2);
-        gridBagConstraints15.anchor = GridBagConstraints.WEST;
-        gridBagConstraints15.gridy = 8;
 
         GridBagConstraints gridBagConstraints11 = new GridBagConstraints();
         gridBagConstraints11.gridx = 0;
@@ -167,6 +156,7 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         cbHideUndefinedButtons = new JCheckBox();
         cbIgnoreThrottlePosition = new JCheckBox();
         cbSaveThrottleOnLayoutSave = new JCheckBox();
+        cbSilentSteal = new JCheckBox();
 
         labelApplyWarning = new JLabel();
 
@@ -181,6 +171,7 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         cbIgnoreThrottlePosition.setText(Bundle.getMessage("ExThrottleIgnoreThrottlePosition"));
         labelApplyWarning.setText(Bundle.getMessage("ExThrottleLabelApplyWarning"));
         cbSaveThrottleOnLayoutSave.setText(Bundle.getMessage("ExThrottleSaveThrottleOnLayoutSave"));
+        cbSilentSteal.setText(Bundle.getMessage("ExThrottleSilentSteal"));
 
         ActionListener al = (ActionEvent evt) -> {
             checkConsistancy();
@@ -190,20 +181,20 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         cbUseRosterImage.addActionListener(al);
         cbEnableAutoLoad.addActionListener(al);
 
-        jbSave.setText(Bundle.getMessage("ThrottlesPrefsSave"));
+        jbSave.setText(Bundle.getMessage("ButtonSave"));
         jbSave.addActionListener(this::jbSaveActionPerformed);
         jbSave.setVisible(false);
 
         jbCancel.setText(Bundle.getMessage("ThrottlesPrefsReset"));
         jbCancel.addActionListener(this::jbCancelActionPerformed);
 
-        jbApply.setText(Bundle.getMessage("ThrottlesPrefsApply"));
+        jbApply.setText(Bundle.getMessage("ButtonApply"));
         jbApply.addActionListener(this::jbApplyActionPerformed);
 
         setLayout(new GridBagLayout());
 
-        this.add(cbUseExThrottle, gridBagConstraints1);
-        this.add(cbSaveThrottleOnLayoutSave, gridBagConstraints2);
+        this.add(cbUseExThrottle, gridBagConstraints1);        
+        this.add(cbSaveThrottleOnLayoutSave, gridBagConstraints2);        
         this.add(cbUseRosterImage, gridBagConstraints3);
         this.add(cbResizeWinImg, gridBagConstraints4);
         this.add(cbEnableRosterSearch, gridBagConstraints5);
@@ -215,6 +206,7 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         this.add(cbIgnoreThrottlePosition, gridBagConstraints10);
         this.add(cbUseToolBar, gridBagConstraints12);
         this.add(cbUseFunctionIcon, gridBagConstraints14);
+        this.add(cbSilentSteal,gridBagConstraints15 );
         this.add(labelApplyWarning, gridBagConstraints13);
     }
 
@@ -232,6 +224,7 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         cbEnableAutoLoad.setSelected(tp.isAutoLoading());
         cbHideUndefinedButtons.setSelected(tp.isHidingUndefinedFuncButt());
         cbIgnoreThrottlePosition.setSelected(tp.isIgnoringThrottlePosition());
+        cbSilentSteal.setSelected(tp.isSilentSteal());
     }
 
     private ThrottlesPreferences getThrottlesPreferences() {
@@ -242,6 +235,7 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
         tp.setResizeWindow(cbResizeWinImg.isSelected());
         tp.setUseRosterImage(cbUseRosterImage.isSelected());
         tp.setSaveThrottleOnLayoutSave(cbSaveThrottleOnLayoutSave.isSelected());
+        tp.setSilentSteal(cbSilentSteal.isSelected());
         tp.setEnableRosterSearch(cbEnableRosterSearch.isSelected());
         tp.setAutoLoad(cbEnableAutoLoad.isSelected());
         tp.setHideUndefinedFuncButt(cbHideUndefinedButtons.isSelected());
@@ -268,24 +262,24 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
     }
 
     private void jbApplyActionPerformed(ActionEvent evt) {
-        ThrottleFrameManager.instance().getThrottlesPreferences().set(getThrottlesPreferences());
+        InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().set(getThrottlesPreferences());
     }
 
     public void jbSaveActionPerformed(ActionEvent evt) {
-        ThrottleFrameManager.instance().getThrottlesPreferences().set(getThrottlesPreferences());
-        ThrottleFrameManager.instance().getThrottlesPreferences().save();
+        InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().set(getThrottlesPreferences());
+        InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().save();
         if (m_container != null) {
-            ThrottleFrameManager.instance().getThrottlesPreferences().removePropertyChangeListener(this);
+            InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().removePropertyChangeListener(this);
             m_container.setVisible(false); // should do with events...
             m_container.dispose();
         }
     }
 
     private void jbCancelActionPerformed(ActionEvent evt) {
-        setComponents(ThrottleFrameManager.instance().getThrottlesPreferences());
+        setComponents(InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences());
         checkConsistancy();
         if (m_container != null) {
-            ThrottleFrameManager.instance().getThrottlesPreferences().removePropertyChangeListener(this);
+            InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().removePropertyChangeListener(this);
             m_container.setVisible(false); // should do with events...
             m_container.dispose();
         }
@@ -294,10 +288,8 @@ public class ThrottlesPreferencesPane extends JPanel implements PropertyChangeLi
     public void setContainer(JFrame f) {
         m_container = f;
         jbSave.setVisible(true);
-        jbCancel.setText(Bundle.getMessage("ThrottlesPrefsCancel"));
+        jbCancel.setText(Bundle.getMessage("ButtonCancel"));
     }
-
-    static Logger log = LoggerFactory.getLogger(ThrottlesPreferencesPane.class.getName());
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {

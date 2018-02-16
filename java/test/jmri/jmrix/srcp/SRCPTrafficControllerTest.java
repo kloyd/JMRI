@@ -1,11 +1,8 @@
 package jmri.jmrix.srcp;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * SRCPTrafficControllerTest.java
@@ -13,41 +10,20 @@ import junit.framework.TestSuite;
  * Description:	tests for the jmri.jmrix.srcp.SRCPTrafficController class
  *
  * @author	Bob Jacobsen
- * @version $Revision$
  */
-public class SRCPTrafficControllerTest extends TestCase {
-
-    public void testCtor() {
-        SRCPTrafficController m = new SRCPTrafficController();
-        Assert.assertNotNull(m);
-    }
-
-    // from here down is testing infrastructure
-    public SRCPTrafficControllerTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", SRCPTrafficControllerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(SRCPTrafficControllerTest.class);
-        return suite;
-    }
+public class SRCPTrafficControllerTest extends jmri.jmrix.AbstractMRTrafficControllerTest {
 
     // The minimal setup for log4J
     @Override
-    protected void setUp() {
+    @Before
+    public void setUp() {
         apps.tests.Log4JFixture.setUp();
+        tc = new SRCPTrafficController();
     }
 
     @Override
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
-    static Logger log = LoggerFactory.getLogger(SRCPTrafficControllerTest.class.getName());
 }

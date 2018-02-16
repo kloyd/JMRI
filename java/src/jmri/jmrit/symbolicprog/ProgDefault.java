@@ -1,11 +1,9 @@
-// ProgDefault.java
 package jmri.jmrit.symbolicprog;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import jmri.InstanceManager;
 import jmri.jmrit.XmlFile;
 import jmri.util.FileUtil;
@@ -23,8 +21,7 @@ import org.slf4j.LoggerFactory;
  * not fix the problem. What did fix it was an ugly hack in the
  * {@link CombinedLocoSelPane} class; see comments there for more information.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002
  */
 public class ProgDefault {
 
@@ -37,7 +34,12 @@ public class ProgDefault {
         XmlFilenameFilter filter = new XmlFilenameFilter();
         if (fp.exists()) {
             sp = fp.list(filter);
-            np = sp.length;
+            if (sp != null) {
+                np = sp.length;
+            } else {
+                sp = new String[]{};
+                np = 0;
+            }
         } else {
             log.warn(FileUtil.getUserFilesPath() + "programmers was missing, though tried to create it");
         }
@@ -46,28 +48,30 @@ public class ProgDefault {
         }
         // create an array of file names from xml/programmers, count entries
         fp = new File(XmlFile.xmlDir() + "programmers");
-        int nx;
-        String[] sx;
+        int nx = 0;
+        String[] sx = {};
         if (fp.exists()) {
             sx = fp.list(filter);
-            nx = sx.length;
-            if (log.isDebugEnabled()) {
-                log.debug("Got " + nx + " programmers from " + fp.getPath());
+            if (sx != null) {
+                nx = sx.length;
+            } else {
+                sx = new String[]{};
             }
+            log.debug("Got {} programmers from {}", nx, fp.getPath());
         } else {
             // create an array of file names from jmri.jar!xml/programmers, count entries
-            List<String> sr = new ArrayList<String>();
-            Enumeration<JarEntry> je = FileUtil.jmriJarFile().entries();
-            while (je.hasMoreElements()) {
-                String name = je.nextElement().getName();
-                if (name.startsWith("xml" + File.separator + "programmers") && name.endsWith(".xml")) {
-                    sr.add(name.substring(name.lastIndexOf(File.separator)));
-                }
-            }
-            sx = sr.toArray(new String[sr.size()]);
-            nx = sx.length;
-            if (log.isDebugEnabled()) {
-                log.debug("Got " + nx + " programmers from jmri.jar");
+            List<String> sr = new ArrayList<>();
+            JarFile jar = FileUtil.jmriJarFile();
+            if (jar != null) {
+                jar.stream().forEach((je) -> {
+                    String name = je.getName();
+                    if (name.startsWith("xml" + File.separator + "programmers") && name.endsWith(".xml")) {
+                        sr.add(name.substring(name.lastIndexOf(File.separator)));
+                    }
+                });
+                sx = sr.toArray(new String[sr.size()]);
+                nx = sx.length;
+                log.debug("Got {} programmers from jmri.jar", nx);
             }
         }
         // copy the programmer entries to the final array
@@ -75,11 +79,15 @@ public class ProgDefault {
         // But for now I can live with that.
         String sbox[] = new String[np + nx];
         int n = 0;
-        for (String s : sp) {
-            sbox[n++] = s.substring(0, s.length() - 4);
+        if (np > 0) {
+            for (String s : sp) {
+                sbox[n++] = s.substring(0, s.length() - 4);
+            }
         }
-        for (String s : sx) {
-            sbox[n++] = s.substring(0, s.length() - 4);
+        if (nx > 0) {
+            for (String s : sx) {
+                sbox[n++] = s.substring(0, s.length() - 4);
+            }
         }
         return sbox;
     }
@@ -92,5 +100,5 @@ public class ProgDefault {
         InstanceManager.getDefault(ProgrammerConfigManager.class).setDefaultFile(s);
     }
 
-    static Logger log = LoggerFactory.getLogger(ProgDefault.class);
+    private final static Logger log = LoggerFactory.getLogger(ProgDefault.class);
 }

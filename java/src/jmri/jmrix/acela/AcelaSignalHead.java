@@ -1,4 +1,3 @@
-// AcelaSignalHead.java
 package jmri.jmrix.acela;
 
 import jmri.implementation.DefaultSignalHead;
@@ -6,39 +5,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AcelaSignalHead.java
- *
- *
- * Description: extend jmri.AbstractSignalHead for Acela signals based upon
- * Grapevine example by Bob Jacobsen
+ * Extend jmri.AbstractSignalHead for Acela signals based upon
+ * Grapevine example by Bob Jacobsen.
  *
  * @author Bob Coleman Copyright (C) 2009
  */
 public class AcelaSignalHead extends DefaultSignalHead {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4814823979680236593L;
+    AcelaSystemConnectionMemo _memo = null;
 
     /**
      * Create a SignalHead object, with only a system name.
      * <P>
      * 'systemName' should have been previously validated
      */
-    public AcelaSignalHead(String systemName) {
+    public AcelaSignalHead(String systemName, AcelaSystemConnectionMemo memo) {
         super(systemName);
+        _memo = memo;
         // Save system Name
         tSystemName = systemName;
 
         // Extract the Bit from the name
-        int num = AcelaAddress.getBitFromSystemName(systemName);
+        int num = AcelaAddress.getBitFromSystemName(systemName, _memo.getSystemPrefix());
         addr = num;
 
-        AcelaNode tNode = AcelaAddress.getNodeFromSystemName(tSystemName);
+        AcelaNode tNode = AcelaAddress.getNodeFromSystemName(tSystemName, _memo);
         if (tNode == null) {
             // node does not exist, ignore call
-            log.error("Can't find new Acela Signal with name '" + tSystemName);
+            log.error("Can't find new Acela Signal with name '{}'", tSystemName);
             return;
         }
         tNode.setOutputSpecial(addr, 1);
@@ -50,19 +44,20 @@ public class AcelaSignalHead extends DefaultSignalHead {
      * <P>
      * 'systemName' should have been previously validated
      */
-    public AcelaSignalHead(String systemName, String userName) {
+    public AcelaSignalHead(String systemName, String userName, AcelaSystemConnectionMemo memo) {
         super(systemName, userName);
+        _memo = memo;
         // Save system Name
         tSystemName = systemName;
 
         // Extract the Bit from the name
-        int num = AcelaAddress.getBitFromSystemName(systemName);
+        int num = AcelaAddress.getBitFromSystemName(systemName, _memo.getSystemPrefix());
         addr = num;
 
-        AcelaNode tNode = AcelaAddress.getNodeFromSystemName(tSystemName);
+        AcelaNode tNode = AcelaAddress.getNodeFromSystemName(tSystemName, _memo);
         if (tNode == null) {
             // node does not exist, ignore call
-            log.error("Can't find new Acela Signal with name '" + tSystemName);
+            log.error("Can't find new Acela Signal with name '{}'", tSystemName);
             return;
         }
         tNode.setOutputSpecial(addr, 1);
@@ -72,11 +67,12 @@ public class AcelaSignalHead extends DefaultSignalHead {
     /**
      * Handle a request to change state on layout
      */
+    @Override
     protected void updateOutput() {
-        AcelaNode tNode = AcelaAddress.getNodeFromSystemName(tSystemName);
+        AcelaNode tNode = AcelaAddress.getNodeFromSystemName(tSystemName,_memo);
         if (tNode == null) {
             // node does not exist, ignore call
-            log.error("Can't resolve Acela Signal with name '" + tSystemName + "', command ignored");
+            log.error("Can't resolve Acela Signal with name '{}'. command ingnored", tSystemName);
             return;
         }
 
@@ -106,7 +102,7 @@ public class AcelaSignalHead extends DefaultSignalHead {
                     cmd = 7;
                     break;
                 default:
-                    log.warn("Unexpected new appearance: " + mAppearance);
+                    log.warn("Unexpected new appearance: {}", mAppearance);
                     cmd = 2;
                     break;  // flash red for error
             }
@@ -132,7 +128,6 @@ public class AcelaSignalHead extends DefaultSignalHead {
     String tSystemName; // System Name of this signal head
     int addr;         // output address
 
-    static Logger log = LoggerFactory.getLogger(AcelaSignalHead.class.getName());
-}
+    private final static Logger log = LoggerFactory.getLogger(AcelaSignalHead.class);
 
-/* @(#)AcelaSignalHead.java */
+}

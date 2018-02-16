@@ -1,21 +1,11 @@
-// PowerPanelAction.java
 package jmri.jmrit.powerpanel;
-
-import java.util.ResourceBundle;
 
 /**
  * Swing action to create and register a PowerPanelFrame object.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2010
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2010
  */
 public class PowerPanelAction extends jmri.util.swing.JmriNamedPaneAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6470371810613141456L;
-    static ResourceBundle res = ResourceBundle.getBundle("jmri.jmrit.powerpanel.PowerPanelBundle");
 
     public PowerPanelAction(String s, jmri.util.swing.WindowInterface wi) {
         super(s, wi, "jmri.jmrit.powerpanel.PowerPane");
@@ -33,16 +23,14 @@ public class PowerPanelAction extends jmri.util.swing.JmriNamedPaneAction {
     }
 
     public PowerPanelAction() {
-        this(res.getString("TitlePowerPanel"));
+        this(Bundle.getMessage("TitlePowerPanel"));
     }
 
     void checkManager() {
         // disable ourself if there is no power Manager
-        if (jmri.InstanceManager.powerManagerInstance() == null) {
+        if (jmri.InstanceManager.getNullableDefault(jmri.PowerManager.class) == null) {
             setEnabled(false);
         }
     }
 
 }
-
-/* @(#)PowerPanelAction.java */

@@ -1,17 +1,16 @@
-// ConnectionConfig.java
 package jmri.jmrix.secsi.serialdriver;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import jmri.jmrix.secsi.nodeconfig.NodeConfigAction;
+import jmri.jmrix.secsi.SecsiSystemConnectionMemo;
 
 /**
  * Definition of objects to handle configuring a SECSI layout connection
  *
  * @author Bob Jacobsen Copyright (C) 2003, 2006, 2007
- * @version	$Revision$
- */
+  */
 public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig {
 
     /**
@@ -29,6 +28,7 @@ public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig 
         super();
     }
 
+    @Override
     public void loadDetails(JPanel details) {
         // have to embed the usual one in a new JPanel
 
@@ -43,15 +43,20 @@ public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig 
 
         details.add(b);
 
-        b.addActionListener(new NodeConfigAction());
+        b.addActionListener(new NodeConfigAction((SecsiSystemConnectionMemo)adapter.getSystemConnectionMemo()));
 
     }
 
+    @Override
     public String name() {
         return "SECSI Layout Bus";
     }
 
+    @Override
     protected void setInstance() {
-        adapter = SerialDriverAdapter.instance();
+        if(adapter == null ) {
+           adapter = new SerialDriverAdapter();
+        }
     }
+
 }

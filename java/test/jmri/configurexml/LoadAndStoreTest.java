@@ -1,7 +1,9 @@
-// LoadAndStoreTest.java
 package jmri.configurexml;
 
-import junit.framework.Test;
+
+import java.io.File;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  * Test that configuration files can be read and then stored again consistently.
@@ -16,23 +18,16 @@ import junit.framework.Test;
  *
  * @author Bob Jacobsen Copyright 2009, 2014
  * @since 2.5.5 (renamed & reworked in 3.9 series)
- * @version $Revision$
  */
+@RunWith(Parameterized.class)
 public class LoadAndStoreTest extends LoadAndStoreTestBase {
 
-    // from here down is testing infrastructure
-    public LoadAndStoreTest(String s) {
-        super(s);
+    @Parameterized.Parameters(name = "{0} (pass={1})")
+    public static Iterable<Object[]> data() {
+        return getFiles(new File("java/test/jmri/configurexml"), false, true);
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", LoadAndStoreTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    public LoadAndStoreTest(File file, boolean pass) {
+        super(file, pass, SaveType.Config, false);
     }
-
-    public static Test suite() {
-        return LoadAndStoreTestBase.makeSuite("java/test/jmri/configurexml/");
-    }
-
 }

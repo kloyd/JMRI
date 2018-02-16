@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Mark Riddoch Copyright (C) 2015
- * @version $Revision$
  *
  */
 public class CbusReporter extends AbstractReporter implements CanListener {
@@ -128,5 +127,5 @@ public class CbusReporter extends AbstractReporter implements CanListener {
         return rval;
     }
 
-    private static final Logger log = LoggerFactory.getLogger(CbusReporter.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CbusReporter.class);
 }

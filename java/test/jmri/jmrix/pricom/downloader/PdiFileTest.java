@@ -1,17 +1,15 @@
-// PdiFileTest.java
 package jmri.jmrix.pricom.downloader;
 
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the PdiFile class
  *
  * @author	Bob Jacobsen Copyright 2005
- * @version	$Revision$
- */
+  */
 public class PdiFileTest extends TestCase {
 
     public void testCreate() {
@@ -32,7 +30,7 @@ public class PdiFileTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {PdiFileTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

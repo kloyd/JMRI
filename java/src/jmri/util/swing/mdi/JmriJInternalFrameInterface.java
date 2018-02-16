@@ -1,4 +1,3 @@
-// JmriJInternalFrameInterface.java
 package jmri.util.swing.mdi;
 
 import java.awt.Frame;
@@ -17,7 +16,6 @@ import jmri.util.JmriJFrame;
  *
  * @author Bob Jacobsen Copyright 2010
  * @since 2.9.4
- * @version $Revision$
  */
 public class JmriJInternalFrameInterface implements jmri.util.swing.WindowInterface {
 
@@ -29,6 +27,7 @@ public class JmriJInternalFrameInterface implements jmri.util.swing.WindowInterf
     JDesktopPane desktop;
     JmriJFrame mainFrame;
 
+    @Override
     public void show(final jmri.util.swing.JmriPanel child,
             jmri.util.swing.JmriAbstractAction act,
             Hint hint) {
@@ -49,10 +48,8 @@ public class JmriJInternalFrameInterface implements jmri.util.swing.WindowInterf
             bar = new JMenuBar();
         }
         List<JMenu> list = child.getMenus();
-        if (list != null) {
-            for (JMenu menu : list) {
-                bar.add(menu);
-            }
+        for (JMenu menu : list) {
+            bar.add(menu);
         }
 
         // add help menu if requested; this is similar
@@ -83,18 +80,21 @@ public class JmriJInternalFrameInterface implements jmri.util.swing.WindowInterf
         frame.moveToFront();
     }
 
+    @Override
     public void show(final jmri.util.swing.JmriPanel child,
             jmri.util.swing.JmriAbstractAction act) {
 
         show(child, act, Hint.DEFAULT);
     }
 
+    @Override
     public void dispose() {
     }
 
     /**
      * Create new windows on each request
      */
+    @Override
     public boolean multipleInstances() {
         return true;
     }

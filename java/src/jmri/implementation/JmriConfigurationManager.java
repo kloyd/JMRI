@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ServiceLoader;
+import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import jmri.Application;
@@ -17,11 +18,12 @@ import jmri.InstanceManager;
 import jmri.JmriException;
 import jmri.configurexml.ConfigXmlManager;
 import jmri.configurexml.swing.DialogErrorHandler;
+import jmri.jmrit.XmlFile;
 import jmri.profile.Profile;
 import jmri.profile.ProfileManager;
-import jmri.spi.InitializationException;
-import jmri.spi.PreferencesProvider;
+import jmri.spi.PreferencesManager;
 import jmri.util.FileUtil;
+import jmri.util.prefs.InitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,19 +35,21 @@ public class JmriConfigurationManager implements ConfigureManager {
 
     private final static Logger log = LoggerFactory.getLogger(JmriConfigurationManager.class);
     private final ConfigXmlManager legacy = new ConfigXmlManager();
-    private final HashMap<PreferencesProvider, InitializationException> initializationExceptions = new HashMap<>();
+    private final HashMap<PreferencesManager, InitializationException> initializationExceptions = new HashMap<>();
+    private final List<PreferencesManager> initialized = new ArrayList<>();
 
     @SuppressWarnings("unchecked") // For types in InstanceManager.store()
     public JmriConfigurationManager() {
-        ServiceLoader<PreferencesProvider> sl = ServiceLoader.load(PreferencesProvider.class);
-        for (PreferencesProvider pp : sl) {
-            InstanceManager.store(pp, PreferencesProvider.class);
+        ServiceLoader<PreferencesManager> sl = ServiceLoader.load(PreferencesManager.class);
+        for (PreferencesManager pp : sl) {
+            InstanceManager.store(pp, PreferencesManager.class);
             for (Class provided : pp.getProvides()) { // use raw class so next line can compile
                 InstanceManager.store(provided.cast(pp), provided);
             }
         }
-        if (ProfileManager.getDefault().getActiveProfile() != null) {
-            this.legacy.setPrefsLocation(new File(ProfileManager.getDefault().getActiveProfile().getPath(), Profile.CONFIG_FILENAME));
+        Profile profile = ProfileManager.getDefault().getActiveProfile();
+        if (profile != null) {
+            this.legacy.setPrefsLocation(new File(profile.getPath(), Profile.CONFIG_FILENAME));
         }
         if (!GraphicsEnvironment.isHeadless()) {
             ConfigXmlManager.setErrorHandler(new DialogErrorHandler());
@@ -54,8 +58,8 @@ public class JmriConfigurationManager implements ConfigureManager {
 
     @Override
     public void registerPref(Object o) {
-        if ((o instanceof PreferencesProvider)) {
-            InstanceManager.store((PreferencesProvider) o, PreferencesProvider.class);
+        if ((o instanceof PreferencesManager)) {
+            InstanceManager.store((PreferencesManager) o, PreferencesManager.class);
         }
         this.legacy.registerPref(o);
     }
@@ -101,7 +105,7 @@ public class JmriConfigurationManager implements ConfigureManager {
     }
 
     @Override
-    public ArrayList<Object> getInstanceList(Class<?> c) {
+    public List<Object> getInstanceList(Class<?> c) {
         return this.legacy.getInstanceList(c);
     }
 
@@ -120,12 +124,10 @@ public class JmriConfigurationManager implements ConfigureManager {
     public void storePrefs() {
         log.debug("Saving preferences...");
         Profile profile = ProfileManager.getDefault().getActiveProfile();
-        InstanceManager.getList(PreferencesProvider.class).stream().forEach((o) -> {
+        InstanceManager.getList(PreferencesManager.class).stream().forEach((o) -> {
             log.debug("Saving preferences for {}", o.getClass().getName());
             o.savePreferences(profile);
         });
-        log.debug("Saving backwards compatible preferences...");
-        this.legacy.storePrefs();
     }
 
     /**
@@ -135,15 +137,7 @@ public class JmriConfigurationManager implements ConfigureManager {
      */
     @Override
     public void storePrefs(File file) {
-        // only call storePrefs() once legacy is removed
-        log.debug("Saving preferences...");
-        Profile profile = ProfileManager.getDefault().getActiveProfile();
-        InstanceManager.getList(PreferencesProvider.class).stream().forEach((o) -> {
-            log.debug("Saving preferences for {}", o.getClass().getName());
-            o.savePreferences(profile);
-        });
-        log.debug("Saving backwards compatible preferences...");
-        this.legacy.storePrefs(file);
+        this.storePrefs();
     }
 
     @Override
@@ -167,8 +161,8 @@ public class JmriConfigurationManager implements ConfigureManager {
     }
 
     @Override
-    public boolean load(URL file) throws JmriException {
-        return this.load(file, false);
+    public boolean load(URL url) throws JmriException {
+        return this.load(url, false);
     }
 
     @Override
@@ -177,34 +171,41 @@ public class JmriConfigurationManager implements ConfigureManager {
     }
 
     @Override
-    public boolean load(URL file, boolean registerDeferred) throws JmriException {
-        log.debug("loading {} ...", file);
+    public boolean load(URL url, boolean registerDeferred) throws JmriException {
+        log.debug("loading {} ...", url);
         try {
-            if (file == null
-                    || (new File(file.toURI())).getName().equals("ProfileConfig.xml") //NOI18N
-                    || (new File(file.toURI())).getName().equals(Profile.CONFIG)) {
-                List<PreferencesProvider> providers = new ArrayList<>(InstanceManager.getList(PreferencesProvider.class));
+            if (url == null
+                    || (new File(url.toURI())).getName().equals("ProfileConfig.xml") //NOI18N
+                    || (new File(url.toURI())).getName().equals(Profile.CONFIG)) {
+                Profile profile = ProfileManager.getDefault().getActiveProfile();
+                List<PreferencesManager> providers = new ArrayList<>(InstanceManager.getList(PreferencesManager.class));
                 providers.stream().forEach((provider) -> {
-                    this.initializeProvider(provider, ProfileManager.getDefault().getActiveProfile());
+                    this.initializeProvider(provider, profile);
                 });
                 if (!this.initializationExceptions.isEmpty()) {
                     if (!GraphicsEnvironment.isHeadless()) {
-                        String[] errors = new String[this.initializationExceptions.size()];
-                        int i = 0;
-                        for (InitializationException e : this.initializationExceptions.values()) {
-                            errors[i] = e.getLocalizedMessage();
-                            i++;
-                        }
+                        List<String> errors = new ArrayList<>();
+                        this.initialized.forEach((provider) -> {
+                            List<Exception> exceptions = provider.getInitializationExceptions(profile);
+                            if (!exceptions.isEmpty()) {
+                                exceptions.forEach((exception) -> {
+                                    errors.add(exception.getLocalizedMessage());
+                                });
+                            } else if (this.initializationExceptions.get(provider) != null) {
+                                errors.add(this.initializationExceptions.get(provider).getLocalizedMessage());
+                            }
+                        });
                         Object list;
-                        if (this.initializationExceptions.size() == 1) {
-                            list = errors[0];
+                        if (errors.size() == 1) {
+                            list = errors.get(0);
                         } else {
-                            list = new JList<>(errors);
+                            list = new JList<>(errors.toArray(new String[errors.size()]));
                         }
                         JOptionPane.showMessageDialog(null,
                                 new Object[]{
+                                    (list instanceof JList) ? Bundle.getMessage("InitExMessageListHeader") : null,
                                     list,
-                                    "<html><br></html>", // NOI18N // Add a visual break between list of errors and notes
+                                    "<html><br></html>", // Add a visual break between list of errors and notes // NOI18N
                                     Bundle.getMessage("InitExMessageLogs"), // NOI18N
                                     Bundle.getMessage("InitExMessagePrefs"), // NOI18N
                                 },
@@ -213,17 +214,21 @@ public class JmriConfigurationManager implements ConfigureManager {
                         (new TabbedPreferencesAction()).actionPerformed();
                     }
                 }
-                if (file != null && (new File(file.toURI())).getName().equals("ProfileConfig.xml")) { // NOI18N
+                if (url != null && (new File(url.toURI())).getName().equals("ProfileConfig.xml")) { // NOI18N
                     log.debug("Loading legacy configuration...");
-                    return this.legacy.load(file, registerDeferred);
+                    return this.legacy.load(url, registerDeferred);
                 }
                 return this.initializationExceptions.isEmpty();
             }
         } catch (URISyntaxException ex) {
-            log.error("Unable to get File for {}", file);
+            log.error("Unable to get File for {}", url);
             throw new JmriException(ex.getMessage(), ex);
         }
-        return this.legacy.load(file, registerDeferred);
+        // make this url the default "Save Panels..." file
+        JFileChooser ufc = jmri.configurexml.StoreXmlUserAction.getUserFileChooser();
+        ufc.setSelectedFile(new File(FileUtil.urlToURI(url)));
+
+        return this.legacy.load(url, registerDeferred);
         // return true; // always return true once legacy support is dropped
     }
 
@@ -247,10 +252,10 @@ public class JmriConfigurationManager implements ConfigureManager {
         return this.legacy.makeBackup(file);
     }
 
-    private boolean initializeProvider(PreferencesProvider provider, Profile profile) {
-        if (!provider.isInitialized(profile)) {
+    private void initializeProvider(PreferencesManager provider, Profile profile) {
+        if (!provider.isInitialized(profile) && !provider.isInitializedWithExceptions(profile)) {
             log.debug("Initializing provider {}", provider.getClass());
-            for (Class<? extends PreferencesProvider> c : provider.getRequires()) {
+            for (Class<? extends PreferencesManager> c : provider.getRequires()) {
                 InstanceManager.getList(c).stream().forEach((p) -> {
                     this.initializeProvider(p, profile);
                 });
@@ -266,12 +271,23 @@ public class JmriConfigurationManager implements ConfigureManager {
                     log.error("Additional exception initializing {}: {}", provider.getClass().getName(), ex.getMessage());
                 }
             }
+            this.initialized.add(provider);
             log.debug("Initialized provider {}", provider.getClass());
         }
-        return provider.isInitialized(profile);
     }
 
-    public HashMap<PreferencesProvider, InitializationException> getInitializationExceptions() {
-        return initializationExceptions;
+    public HashMap<PreferencesManager, InitializationException> getInitializationExceptions() {
+        return new HashMap<>(initializationExceptions);
     }
+
+    @Override
+    public void setValidate(XmlFile.Validate v) {
+        legacy.setValidate(v);
+    }
+
+    @Override
+    public XmlFile.Validate getValidate() {
+        return legacy.getValidate();
+    }
+
 }

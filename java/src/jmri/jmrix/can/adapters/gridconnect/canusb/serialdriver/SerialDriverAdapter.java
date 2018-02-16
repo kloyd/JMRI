@@ -1,9 +1,6 @@
-// SerialDriverAdapter.java
 package jmri.jmrix.can.adapters.gridconnect.canusb.serialdriver;
 
 import jmri.jmrix.can.adapters.gridconnect.GcSerialDriverAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implements SerialPortAdapter for GridConnect adapters.
@@ -12,15 +9,15 @@ import org.slf4j.LoggerFactory;
  * controlled by the SerialDriverFrame class.
  * <P>
  *
- * @author	Andrew Crosland Copyright (C) 2008
- * @author	Bob Jacobsen Copyright (C) 2009
- * @version	$Revision$
- */
+ * @author Andrew Crosland Copyright (C) 2008
+ * @author Bob Jacobsen Copyright (C) 2009
+  */
 public class SerialDriverAdapter extends GcSerialDriverAdapter implements jmri.jmrix.SerialPortAdapter {
 
     /**
      * Get an array of valid baud rates.
      */
+    @Override
     public String[] validBaudRates() {
         return new String[]{"57,600", "115,200", "230,400", "250,000", "288,000", "333,333", "460,800"};
     }
@@ -28,10 +25,9 @@ public class SerialDriverAdapter extends GcSerialDriverAdapter implements jmri.j
     /**
      * And the corresponding values.
      */
+    @Override
     public int[] validBaudValues() {
         return new int[]{57600, 115200, 230400, 250000, 288000, 333333, 460800};
     }
-
-    static Logger log = LoggerFactory.getLogger(SerialDriverAdapter.class.getName());
 
 }

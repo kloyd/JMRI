@@ -1,33 +1,23 @@
-// LV102Frame.java
 package jmri.jmrix.lenz.swing.lv102;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Frame displaying the LV102 configuration utility
- *
+ * <p>
  * This is a container for the LV102 configuration utility. The actual utility
  * is defined in {@link LV102InternalFrame}
  *
- * @author	Paul Bender Copyright (C) 2004,2005
- * @version	$Revision$
- */
+ * @author Paul Bender Copyright (C) 2004,2005
+  */
 public class LV102Frame extends jmri.util.JmriJFrame {
 
-    //private ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.lenz.swing.lv102.LV102Bundle");
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6327549110966065451L;
-
     public LV102Frame() {
-        this("LV102 Configuration Utility");
+        this(Bundle.getMessage("MenuItemLV102ConfigurationManager"));
     }
 
     public LV102Frame(String FrameName) {
@@ -51,6 +41,7 @@ public class LV102Frame extends jmri.util.JmriJFrame {
 
         // install close button handler
         closeButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 setVisible(false);
                 dispose();
@@ -59,13 +50,12 @@ public class LV102Frame extends jmri.util.JmriJFrame {
         );
     }
 
-    JToggleButton closeButton = new JToggleButton("Close");
+    JButton closeButton = new JButton(Bundle.getMessage("ButtonClose"));
 
+    @Override
     public void dispose() {
         // take apart the JFrame
         super.dispose();
     }
-
-    static Logger log = LoggerFactory.getLogger(LV102Frame.class.getName());
 
 }

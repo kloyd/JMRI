@@ -1,4 +1,3 @@
-// jmri.jmrit.display.layoutEditor.configurexml.LayoutTurntableXml.java
 package jmri.jmrit.display.layoutEditor.configurexml;
 
 import java.awt.geom.Point2D;
@@ -9,6 +8,7 @@ import jmri.jmrit.display.layoutEditor.LayoutEditor;
 import jmri.jmrit.display.layoutEditor.LayoutTurntable;
 import jmri.jmrit.display.layoutEditor.TrackSegment;
 import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
  * LayoutEditor.
  *
  * @author David Duchamp Copyright (c) 2007
- * @version $Revision$
  */
 public class LayoutTurntableXml extends AbstractXmlAdapter {
 
@@ -31,6 +30,7 @@ public class LayoutTurntableXml extends AbstractXmlAdapter {
      * @param o Object to store, of type LayoutTurntable
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
 
         LayoutTurntable p = (LayoutTurntable) o;
@@ -38,20 +38,20 @@ public class LayoutTurntableXml extends AbstractXmlAdapter {
         Element element = new Element("layoutturntable");
         boolean turnoutControl = p.isTurnoutControlled();
         // include attributes
-        element.setAttribute("ident", p.getID());
+        element.setAttribute("ident", p.getId());
         element.setAttribute("radius", "" + p.getRadius());
         Point2D coords = p.getCoordsCenter();
         element.setAttribute("xcen", "" + coords.getX());
         element.setAttribute("ycen", "" + coords.getY());
         element.setAttribute("turnoutControlled", "" + (turnoutControl ? "yes" : "no"));
-        element.setAttribute("class", "jmri.jmrit.display.configurexml.LayoutTurntableXml");
+        element.setAttribute("class", getClass().getName());
         // add ray tracks
         for (int i = 0; i < p.getNumberRays(); i++) {
             Element rElem = new Element("raytrack");
             rElem.setAttribute("angle", "" + p.getRayAngle(i));
             TrackSegment t = p.getRayConnectOrdered(i);
             if (t != null) {
-                rElem.setAttribute("connectname", t.getID());
+                rElem.setAttribute("connectname", t.getId());
             }
             rElem.setAttribute("index", "" + p.getRayIndex(i));
             if (turnoutControl && p.getRayTurnoutName(i) != null) {
@@ -79,6 +79,7 @@ public class LayoutTurntableXml extends AbstractXmlAdapter {
      * @param element Top level Element to unpack.
      * @param o       LayoutEditor as an Object
      */
+    @Override
     public void load(Element element, Object o) {
         // create the objects
         LayoutEditor p = (LayoutEditor) o;
@@ -99,13 +100,12 @@ public class LayoutTurntableXml extends AbstractXmlAdapter {
         LayoutTurntable l = new LayoutTurntable(name, new Point2D.Double(x, y), p);
         l.setRadius(radius);
 
-        boolean turnoutControl = false;
-        if (element.getAttribute("turnoutControlled") != null) {
-            if (element.getAttribute("turnoutControlled").getValue().equals("yes")) {
-                turnoutControl = true;
-            }
+        try {
+            l.setTurnoutControlled(element.getAttribute("turnoutControlled").getBooleanValue());
+        } catch (DataConversionException e1) {
+            log.warn("unable to convert layout turnout turnoutControlled attribute");
+        } catch (NullPointerException e) {  // considered normal if the attribute is not present
         }
-        l.setTurnoutControlled(turnoutControl);
 
         // load ray tracks 
         List<Element> rayTrackList = element.getChildren("raytrack");
@@ -126,7 +126,7 @@ public class LayoutTurntableXml extends AbstractXmlAdapter {
                     connectName = a.getValue();
                 }
                 l.addRayTrack(angle, index, connectName);
-                if (turnoutControl && relem.getAttribute("turnout") != null) {
+                if (l.isTurnoutControlled() && relem.getAttribute("turnout") != null) {
                     //Turnout t = jmri.InstanceManager.turnoutManagerInstance().getTurnout();
                     if (relem.getAttribute("turnoutstate").getValue().equals("thrown")) {
                         l.setRayTurnout(index, relem.getAttribute("turnout").getValue(), Turnout.THROWN);
@@ -136,8 +136,8 @@ public class LayoutTurntableXml extends AbstractXmlAdapter {
                 }
             }
         }
-        p.turntableList.add(l);
+        p.getLayoutTracks().add(l);
     }
 
-    static Logger log = LoggerFactory.getLogger(LayoutTurntableXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LayoutTurntableXml.class);
 }

@@ -1,9 +1,6 @@
 package jmri.jmrit.display.layoutEditor;
 
-/**
- * An icon to display a status of a Memory.<P>
- */
-import java.awt.event.ActionListener;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -12,34 +9,35 @@ import jmri.jmrit.roster.RosterEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// This is the same name as display.MemoryIcon, but a very
-// separate class. That's not good. Unfortunately, it's too 
-// hard to disentangle that now because it's resident in the
-// panel file that have been written out, so we just annote 
-// the fact.
-@edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "NM_SAME_SIMPLE_NAME_AS_SUPERCLASS")
+/**
+ * An icon to display a status of a Memory.
+ *
+ * This is the same name as display.MemoryIcon, but a very
+ * separate class. That's not good. Unfortunately, it's too
+ * hard to disentangle that now because it's resident in the
+ * panel file that have been written out, so we just annotated
+ * the fact, but now we want to leave it on the list to fix.
+ */
+@SuppressFBWarnings(value = "NM_SAME_SIMPLE_NAME_AS_SUPERCLASS", justification="Cannot rename for user data compatiblity reasons.")
 public class MemoryIcon extends jmri.jmrit.display.MemoryIcon {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 446165214555001212L;
-    String defaultText = " ";
+    private String defaultText = " ";
 
     public MemoryIcon(String s, LayoutEditor panel) {
         super(s, panel);
         log.debug("MemoryIcon ctor= " + MemoryIcon.class.getName());
     }
 
+    @Override
     public void setText(String text) {
-        if (text == null || text.length() == 0) {
+        if (text == null || text.isEmpty()) {
             super.setText(defaultText);
         } else {
             super.setText(text);
         }
     }
 
-    LayoutBlock lBlock = null;
+    private transient LayoutBlock lBlock = null;
 
     public LayoutBlock getLayoutBlock() {
         return lBlock;
@@ -49,6 +47,7 @@ public class MemoryIcon extends jmri.jmrit.display.MemoryIcon {
         lBlock = lb;
     }
 
+    @Override
     public void displayState() {
         log.debug("displayState");
         if (getMemory() == null) {  // use default if not connected yet
@@ -75,7 +74,7 @@ public class MemoryIcon extends jmri.jmrit.display.MemoryIcon {
                     }
                 }
                 if (val instanceof String) {
-                    if (val.equals("")) {
+                    if (((String)val).isEmpty()) {
                         setText(defaultText);
                     } else {
                         setText((String) val);
@@ -133,22 +132,21 @@ public class MemoryIcon extends jmri.jmrit.display.MemoryIcon {
         }
     }
 
-    JCheckBoxMenuItem updateBlockItem = new JCheckBoxMenuItem("Update Block Details");
+    private JCheckBoxMenuItem updateBlockItem = new JCheckBoxMenuItem("Update Block Details");
 
     @Override
     public boolean showPopUp(JPopupMenu popup) {
         if (isEditable()) {
             popup.add(updateBlockItem);
             updateBlockItem.setSelected(updateBlockValueOnChange());
-            updateBlockItem.addActionListener(new ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent e) {
-                    updateBlockValueOnChange(updateBlockItem.isSelected());
-                }
+            updateBlockItem.addActionListener((java.awt.event.ActionEvent e) -> {
+                updateBlockValueOnChange(updateBlockItem.isSelected());
             });
         }  // end of selectable
         return super.showPopUp(popup);
     }
 
+    @Override
     public void setMemory(String pName) {
         super.setMemory(pName);
         lBlock = jmri.InstanceManager.getDefault(LayoutBlockManager.class).getBlockWithMemoryAssigned(getMemory());
@@ -164,6 +162,7 @@ public class MemoryIcon extends jmri.jmrit.display.MemoryIcon {
         }
     }
 
+    @Override
     protected void addRosterToIcon(RosterEntry roster) {
         if (!jmri.InstanceManager.getDefault(LayoutBlockManager.class).isAdvancedRoutingEnabled() || lBlock == null) {
             super.addRosterToIcon(roster);
@@ -217,22 +216,12 @@ public class MemoryIcon extends jmri.jmrit.display.MemoryIcon {
             }
         }
         if (getMemory().getValue() == roster) {
-            //No change in the loco but a change in direction facing might have occured
+            //No change in the loco but a change in direction facing might have occurred
             updateIconFromRosterVal(roster);
         } else {
             setValue(roster);
         }
     }
 
-    protected boolean updateBlockValue = false;
-
-    public void updateBlockValueOnChange(boolean boo) {
-        updateBlockValue = boo;
-    }
-
-    public boolean updateBlockValueOnChange() {
-        return updateBlockValue;
-    }
-
-    static Logger log = LoggerFactory.getLogger(MemoryIcon.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(MemoryIcon.class);
 }

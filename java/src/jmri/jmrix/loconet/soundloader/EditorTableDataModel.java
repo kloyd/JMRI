@@ -1,6 +1,6 @@
-// EditorTableDataModel.java
 package jmri.jmrix.loconet.soundloader;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.Font;
 import java.io.IOException;
 import java.util.ResourceBundle;
@@ -24,16 +24,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Table data model for display of Digitrax SPJ files
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2006
+ * @author Bob Jacobsen Copyright (C) 2003, 2006
  * @author Dennis Miller Copyright (C) 2006
- * @version	$Revision$
  */
 public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6127498935819325767L;
     static public final int HEADERCOL = 0;
     static public final int TYPECOL = 1;
     static public final int MAPCOL = 2;
@@ -49,8 +44,8 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
 
     SpjFile file;
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-            justification = "cache resource at 1st start, threading OK")
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+            justification = "cache resource at 1st start, threading OK") // NOI18N
     public EditorTableDataModel(SpjFile file) {
         super();
         if (res == null) {
@@ -59,15 +54,18 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         this.file = file;
     }
 
+    @Override
     public int getRowCount() {
         // The 0th header is not displayed
         return file.numHeaders() - 1;
     }
 
+    @Override
     public int getColumnCount() {
         return NUMCOLUMN;
     }
 
+    @Override
     public String getColumnName(int col) {
         switch (col) {
             case HEADERCOL:
@@ -83,15 +81,16 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
             case LENGTHCOL:
                 return res.getString("HeaderLENGTHCOL");
             case PLAYBUTTONCOL:
-                return res.getString("HeaderPLAYBUTTONCOL");
+                return ""; // no title
             case REPLACEBUTTONCOL:
-                return res.getString("HeaderREPLACEBUTTONCOL");
+                return ""; // no title
 
             default:
                 return "unknown";
         }
     }
 
+    @Override
     public Class<?> getColumnClass(int col) {
         switch (col) {
             case HEADERCOL:
@@ -111,6 +110,7 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
         switch (col) {
             case REPLACEBUTTONCOL:
@@ -121,6 +121,7 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         switch (col) {
             case HEADERCOL:
@@ -143,7 +144,7 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
                     return null;
                 }
                 float time = file.getHeader(row + 1).getDataLength() / rate;
-                return new Float(time);
+                return Float.valueOf(time);
             case PLAYBUTTONCOL:
                 if (file.getHeader(row + 1).isWAV()) {
                     return res.getString("ButtonPlay");
@@ -171,6 +172,8 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "DB_DUPLICATE_SWITCH_CLAUSES",
+            justification = "better to keep cases in column order rather than to combine")
     public int getPreferredWidth(int col) {
         JTextField b;
         switch (col) {
@@ -197,6 +200,7 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == PLAYBUTTONCOL) {
             // button fired, handle
@@ -266,7 +270,7 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         JFrame frame = new JFrame();
         JTextArea text = new JTextArea(content);
         text.setEditable(false);
-        text.setFont(new Font("Monospaced", Font.PLAIN, text.getFont().getSize()));
+        text.setFont(new Font("Monospaced", Font.PLAIN, text.getFont().getSize())); // NOI18N
         frame.getContentPane().add(new JScrollPane(text));
         frame.pack();
         frame.setVisible(true);
@@ -279,7 +283,7 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         JFrame frame = new jmri.util.JmriJFrame(res.getString("TitleSdfView"));
         JTextArea text = new JTextArea(content);
         text.setEditable(false);
-        text.setFont(new Font("Monospaced", Font.PLAIN, text.getFont().getSize()));
+        text.setFont(new Font("Monospaced", Font.PLAIN, text.getFont().getSize())); // NOI18N
         frame.getContentPane().add(new JScrollPane(text));
         frame.pack();
         frame.setVisible(true);
@@ -296,8 +300,6 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
      * Configure a table to have our standard rows and columns. This is
      * optional, in that other table formats can use this table model. But we
      * put it here to help keep it consistent.
-     *
-     * @param table
      */
     public void configureTable(JTable table) {
         // allow reordering of the columns
@@ -344,8 +346,6 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
      * Service method to setup a column so that it will hold a button for it's
      * values
      *
-     * @param table
-     * @param column
      * @param sample Typical button, used for size
      */
     void setColumnToHoldButton(JTable table, int column, JButton sample) {
@@ -368,11 +368,10 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
      * Method to self print or print preview the table. Printed in equally sized
      * columns across the page with headings and vertical lines between each
      * column. Data is word wrapped within a column. Can handle data as strings,
-     * comboboxes or booleans
+     * comboboxes or booleans.
+     *
+     * @param w the printer output to write to
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION")
-    // Only used occasionally, so inefficient String processing not really a problem
-    // though it would be good to fix it if you're working in this area
     public void printTable(HardcopyWriter w) {
         // determine the column size - evenly sized, with space between for lines
         int columnSize = (w.getCharactersPerLine() - this.getColumnCount() - 1) / this.getColumnCount();
@@ -395,15 +394,15 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
 
         // now print each row of data
         // create a base string the width of the column
-        String spaces = "";
+        StringBuilder spaces = new StringBuilder("");
         for (int i = 0; i < columnSize; i++) {
-            spaces = spaces + " ";
+            spaces.append(" ");
         }
         for (int i = 0; i < this.getRowCount(); i++) {
             for (int j = 0; j < this.getColumnCount(); j++) {
                 //check for special, non string contents
                 if (this.getValueAt(i, j) == null) {
-                    columnStrings[j] = spaces;
+                    columnStrings[j] = spaces.toString();
                 } else if (this.getValueAt(i, j) instanceof JComboBox) {
                     columnStrings[j] = (String) ((JComboBox<?>) this.getValueAt(i, j)).getSelectedItem();
                 } else if (this.getValueAt(i, j) instanceof Boolean) {
@@ -419,16 +418,13 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
         w.close();
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION")
-    // Only used occasionally, so inefficient String processing not really a problem
-    // though it would be good to fix it if you're working in this area
     protected void printColumns(HardcopyWriter w, String columnStrings[], int columnSize) {
         String columnString = "";
-        String lineString = "";
+        StringBuilder lineString = new StringBuilder("");
         // create a base string the width of the column
-        String spaces = "";
+        StringBuilder spaces = new StringBuilder("");
         for (int i = 0; i < columnSize; i++) {
-            spaces = spaces + " ";
+            spaces.append(" ");
         }
         // loop through each column
         boolean complete = false;
@@ -463,23 +459,22 @@ public class EditorTableDataModel extends javax.swing.table.AbstractTableModel {
                     columnString = columnStrings[i] + spaces.substring(columnStrings[i].length());
                     columnStrings[i] = "";
                 }
-                lineString = lineString + columnString + " ";
+                lineString.append(columnString).append(" ");
             }
             try {
-                w.write(lineString);
+                w.write(lineString.toString());
                 //write vertical dividing lines
                 for (int i = 0; i < w.getCharactersPerLine(); i = i + columnSize + 1) {
                     w.write(w.getCurrentLineNumber(), i, w.getCurrentLineNumber() + 1, i);
                 }
-                lineString = "\n";
-                w.write(lineString);
-                lineString = "";
+                w.write("\n"); // NOI18N
+                lineString = new StringBuilder("");
             } catch (IOException e) {
-                log.warn("error during printing: " + e);
+                log.warn("error during printing:", e);
             }
         }
     }
 
-    static final Logger log = LoggerFactory.getLogger(EditorTableDataModel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(EditorTableDataModel.class);
 
 }

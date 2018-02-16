@@ -5,9 +5,11 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.util.List;
 import javax.swing.JFrame;
+import jmri.ConfigureManager;
 import jmri.InstanceManager;
 import jmri.configurexml.AbstractXmlAdapter;
 import jmri.configurexml.XmlAdapter;
+import jmri.jmrit.display.PanelMenu;
 import jmri.jmrit.display.Positionable;
 import jmri.jmrit.display.panelEditor.PanelEditor;
 import org.jdom2.Attribute;
@@ -19,7 +21,6 @@ import org.slf4j.LoggerFactory;
  * Handle configuration for {@link PanelEditor} panes.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2002
- * @version $Revision$
  */
 public class PanelEditorXml extends AbstractXmlAdapter {
 
@@ -32,6 +33,7 @@ public class PanelEditorXml extends AbstractXmlAdapter {
      * @param o Object to store, of type PanelEditor
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         PanelEditor p = (PanelEditor) o;
         Element panel = new Element("paneleditor");
@@ -49,7 +51,7 @@ public class PanelEditorXml extends AbstractXmlAdapter {
         panel.setAttribute("editable", "" + (p.isEditable() ? "yes" : "no"));
         panel.setAttribute("positionable", "" + (p.allPositionable() ? "yes" : "no"));
         //panel.setAttribute("showcoordinates", ""+(p.showCoordinates()?"yes":"no"));
-        panel.setAttribute("showtooltips", "" + (p.showTooltip() ? "yes" : "no"));
+        panel.setAttribute("showtooltips", "" + (p.showToolTip() ? "yes" : "no"));
         panel.setAttribute("controlling", "" + (p.allControlling() ? "yes" : "no"));
         panel.setAttribute("hide", p.isVisible() ? "no" : "yes");
         panel.setAttribute("panelmenu", p.isPanelMenuVisible() ? "yes" : "no");
@@ -73,9 +75,8 @@ public class PanelEditorXml extends AbstractXmlAdapter {
                     if (e != null) {
                         panel.addContent(e);
                     }
-                } catch (Exception e) {
-                    log.error("Error storing panel element: " + e);
-                    e.printStackTrace();
+                } catch (RuntimeException e) {
+                    log.error("Error storing panel element", e);
                 }
             }
         }
@@ -83,6 +84,7 @@ public class PanelEditorXml extends AbstractXmlAdapter {
         return panel;
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -92,7 +94,6 @@ public class PanelEditorXml extends AbstractXmlAdapter {
      * JFrame
      *
      * @param shared Top level Element to unpack.
-     * @param perNode
      * @return true if successful
      */
     @Override
@@ -118,19 +119,17 @@ public class PanelEditorXml extends AbstractXmlAdapter {
             name = shared.getAttribute("name").getValue();
         }
         // confirm that panel hasn't already been loaded
-        if (jmri.jmrit.display.PanelMenu.instance().isPanelNameUsed(name)) {
-            log.warn("File contains a panel with the same name (" + name + ") as an existing panel");
+        if (InstanceManager.getDefault(PanelMenu.class).isPanelNameUsed(name)) {
+            log.warn("File contains a panel with the same name ({}) as an existing panel", name);
             result = false;
         }
         PanelEditor panel = new PanelEditor(name);
-        //panel.makeFrame(name);
-        jmri.jmrit.display.PanelMenu.instance().addEditorPanel(panel);
+        panel.setTitle();
         panel.getTargetFrame().setLocation(x, y);
         panel.getTargetFrame().setSize(width, height);
+        InstanceManager.getDefault(PanelMenu.class).addEditorPanel(panel);
 
-        panel.setTitle();
-
-        // Load editor option flags. This has to be done before the content 
+        // Load editor option flags. This has to be done before the content
         // items are loaded, to preserve the individual item settings
         Attribute a;
         boolean value = true;
@@ -155,7 +154,7 @@ public class PanelEditorXml extends AbstractXmlAdapter {
         if ((a = shared.getAttribute("showtooltips")) != null && a.getValue().equals("no")) {
             value = false;
         }
-        panel.setAllShowTooltip(value);
+        panel.setAllShowToolTip(value);
 
         value = true;
         if ((a = shared.getAttribute("controlling")) != null && a.getValue().equals("no")) {
@@ -208,10 +207,11 @@ public class PanelEditorXml extends AbstractXmlAdapter {
                 if (!panel.loadOK()) {
                     result = false;
                 }
-            } catch (Exception e) {
-                log.error("Exception while loading " + item.getName() + ":" + e);
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                    | jmri.configurexml.JmriConfigureXmlException
+                    | RuntimeException e) {
+                log.error("Exception while loading {}", item.getName(), e);
                 result = false;
-                e.printStackTrace();
             }
         }
         panel.disposeLoadData();     // dispose of url correction data
@@ -226,7 +226,10 @@ public class PanelEditorXml extends AbstractXmlAdapter {
         panel.getTargetFrame().setVisible(true);    // always show the panel
 
         // register the resulting panel for later configuration
-        InstanceManager.configureManagerInstance().registerUser(panel);
+        ConfigureManager cm = InstanceManager.getNullableDefault(jmri.ConfigureManager.class);
+        if (cm != null) {
+            cm.registerUser(panel);
+        }
 
         // reset the size and position, in case the display caused it to change
         panel.getTargetFrame().setLocation(x, y);
@@ -234,10 +237,11 @@ public class PanelEditorXml extends AbstractXmlAdapter {
         return result;
     }
 
+    @Override
     public int loadOrder() {
         return jmri.Manager.PANELFILES;
     }
 
-    static Logger log = LoggerFactory.getLogger(PanelEditorXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PanelEditorXml.class);
 
 }

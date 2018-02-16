@@ -1,13 +1,15 @@
 package jmri.jmrit.jython;
 
 import java.io.File;
-import org.python.util.PythonInterpreter;
+import java.io.FileReader;
+import javax.script.ScriptEngine;
+import jmri.script.JmriScriptEngineManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * A JynstrumentFactory handles instantiation and connection of
- * {@link Jynstrument} instances
+ * {@link Jynstrument} instances.
  *
  * @see Jynstrument
  * @author Lionel Jeanson Copyright 2009
@@ -30,15 +32,20 @@ public class JynstrumentFactory {
             }
         }
         String jyFile = path + File.separator + className + ".py";
-        PythonInterpreter interp = jmri.util.PythonInterp.getPythonInterpreter();
+        ScriptEngine engine = JmriScriptEngineManager.getDefault().getEngine(JmriScriptEngineManager.PYTHON);
         Jynstrument jyns;
         try {
-            interp.execfile(jyFile);
-            interp.exec(instanceName + " = " + className + "()");		// instantiate one
-            jyns = interp.get(instanceName, Jynstrument.class); // get it
-            interp.exec("del " + instanceName);  // delete reference in Jython interpreter
-        } catch (Exception e) {
-            log.error("Exception while creating Jynstrument: " + e);
+            FileReader fr = new FileReader(jyFile);
+            try {
+                engine.eval(fr);
+                engine.eval(instanceName + " = " + className + "()");
+                jyns = (Jynstrument) engine.get(instanceName);
+                engine.eval("del " + instanceName);
+            } finally {
+                fr.close();
+            }
+        } catch (java.io.IOException | javax.script.ScriptException ex) {
+            log.error("Exception while creating Jynstrument: " + ex);
             return null;
         }
         jyns.setClassName(className);
@@ -81,7 +88,7 @@ public class JynstrumentFactory {
         String assumedClassName = f.getName().substring(0, f.getName().length() - 4);
         for (int i = 0; i < children.length; i++) {
             if ((children[i]).compareToIgnoreCase(assumedClassName + ".py") == 0) {
-                return assumedClassName; // got exact match for folder name			
+                return assumedClassName; // got exact match for folder name
             } else if (children[i].substring(children[i].length() - 3).compareToIgnoreCase(".py") == 0) {
                 className = children[i].substring(0, children[i].length() - 3); // else take whatever comes
             }
@@ -89,5 +96,5 @@ public class JynstrumentFactory {
         return className;
     }
 
-    static Logger log = LoggerFactory.getLogger(JynstrumentFactory.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(JynstrumentFactory.class);
 }

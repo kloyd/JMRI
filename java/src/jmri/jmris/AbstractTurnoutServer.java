@@ -1,4 +1,3 @@
-//AbstractTurnoutServer.java
 package jmri.jmris;
 
 import java.beans.PropertyChangeEvent;
@@ -17,12 +16,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Paul Bender Copyright (C) 2010-2013
  * @author Randall Wood Copyright (C) 2013
- * @version $Revision$
  */
 abstract public class AbstractTurnoutServer {
 
     protected final HashMap<String, TurnoutListener> turnouts;
-    private final static Logger log = LoggerFactory.getLogger(AbstractTurnoutServer.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractTurnoutServer.class);
 
     public AbstractTurnoutServer() {
         turnouts = new HashMap<String, TurnoutListener>();
@@ -39,19 +37,26 @@ abstract public class AbstractTurnoutServer {
 
     synchronized protected void addTurnoutToList(String turnoutName) {
         if (!turnouts.containsKey(turnoutName)) {
-            turnouts.put(turnoutName, new TurnoutListener(turnoutName));
-            InstanceManager.turnoutManagerInstance().getTurnout(turnoutName).addPropertyChangeListener(turnouts.get(turnoutName));
+            Turnout t = InstanceManager.turnoutManagerInstance().getTurnout(turnoutName);
+            if(t!=null) {
+               TurnoutListener tl = new TurnoutListener(turnoutName);
+               t.addPropertyChangeListener(tl);
+               turnouts.put(turnoutName, tl);
+            }
         }
     }
 
     synchronized protected void removeTurnoutFromList(String turnoutName) {
         if (turnouts.containsKey(turnoutName)) {
-            InstanceManager.turnoutManagerInstance().getTurnout(turnoutName).removePropertyChangeListener(turnouts.get(turnoutName));
-            turnouts.remove(turnoutName);
+            Turnout t = InstanceManager.turnoutManagerInstance().getTurnout(turnoutName);
+            if(t!=null) {
+               t.removePropertyChangeListener(turnouts.get(turnoutName));
+               turnouts.remove(turnoutName);
+            }
         }
     }
 
-    public Turnout initTurnout(String turnoutName) {
+    public Turnout initTurnout(String turnoutName) throws IllegalArgumentException {
         Turnout turnout = InstanceManager.turnoutManagerInstance().provideTurnout(turnoutName);
         this.addTurnoutToList(turnoutName);
         return turnout;
@@ -106,13 +111,20 @@ abstract public class AbstractTurnoutServer {
 
     public void dispose() {
         for (Map.Entry<String, TurnoutListener> turnout : this.turnouts.entrySet()) {
-            InstanceManager.turnoutManagerInstance().getTurnout(turnout.getKey()).removePropertyChangeListener(turnout.getValue());
+            Turnout t = InstanceManager.turnoutManagerInstance().getTurnout(turnout.getKey());
+            if(t!=null) {
+               t.removePropertyChangeListener(turnout.getValue());
+            }
         }
         this.turnouts.clear();
     }
 
     protected TurnoutListener getListener(String turnoutName) {
-        return new TurnoutListener(turnoutName);
+        if (!turnouts.containsKey(turnoutName)) {
+           return new TurnoutListener(turnoutName);
+        } else {
+           return turnouts.get(turnoutName);
+        }        
     }
 
     protected class TurnoutListener implements PropertyChangeListener {

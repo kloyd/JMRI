@@ -1,10 +1,8 @@
-// QuadOutputSignalHead.java
 package jmri.implementation;
 
+import java.util.Arrays;
 import jmri.NamedBeanHandle;
 import jmri.Turnout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Drive a single signal head via four "Turnout" objects.
@@ -19,15 +17,9 @@ import org.slf4j.LoggerFactory;
  * This class doesn't currently listen to the Turnout's to see if they've been
  * changed via some other mechanism.
  *
- * @author	Bob Jacobsen Copyright (C) 2009
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2009
  */
 public class QuadOutputSignalHead extends TripleTurnoutSignalHead {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3055732456230925340L;
 
     public QuadOutputSignalHead(String sys, String user, NamedBeanHandle<Turnout> green, NamedBeanHandle<Turnout> yellow, NamedBeanHandle<Turnout> red, NamedBeanHandle<Turnout> lunar) {
         super(sys, user, green, yellow, red);
@@ -39,6 +31,7 @@ public class QuadOutputSignalHead extends TripleTurnoutSignalHead {
         mLunar = lunar;
     }
 
+    @Override
     protected void updateOutput() {
         if (mLit == false) {
             super.updateOutput();
@@ -52,7 +45,6 @@ public class QuadOutputSignalHead extends TripleTurnoutSignalHead {
             mYellow.getBean().setCommandedState(Turnout.CLOSED);
             mGreen.getBean().setCommandedState(Turnout.CLOSED);
             mLunar.getBean().setCommandedState(Turnout.CLOSED);
-            return;
 
         } else {
             switch (mAppearance) {
@@ -76,6 +68,7 @@ public class QuadOutputSignalHead extends TripleTurnoutSignalHead {
      * Remove references to and from this object, so that it can eventually be
      * garbage-collected.
      */
+    @Override
     public void dispose() {
         mLunar = null;
         super.dispose();
@@ -115,27 +108,21 @@ public class QuadOutputSignalHead extends TripleTurnoutSignalHead {
         Bundle.getMessage("SignalHeadStateFlashingGreen")
     };
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP") // OK until Java 1.6 allows return of cheap array copy
+    @Override
     public int[] getValidStates() {
-        return validStates;
+        return Arrays.copyOf(validStates, validStates.length);
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP") // OK until Java 1.6 allows return of cheap array copy
+    @Override
     public String[] getValidStateNames() {
-        return validStateNames;
+        return Arrays.copyOf(validStateNames, validStateNames.length);
     }
 
+    @Override
     boolean isTurnoutUsed(Turnout t) {
         if (super.isTurnoutUsed(t)) {
             return true;
         }
-        if (getLunar() != null && t.equals(getLunar().getBean())) {
-            return true;
-        }
-        return false;
+        return getLunar() != null && t.equals(getLunar().getBean());
     }
-
-    static Logger log = LoggerFactory.getLogger(QuadOutputSignalHead.class.getName());
 }
-
-/* @(#)QuadOutputSignalHead.java */

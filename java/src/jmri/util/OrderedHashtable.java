@@ -8,14 +8,12 @@ import java.util.Hashtable;
  * Hashtable that preserves order for later access.
  *
  * @author Bob Jacobsen
- * @version $Revision$
+ * @param <K> key class
+ * @param <V> value class
+ * @deprecated since 4.7.2; use {@link java.util.LinkedHashMap} instead.
  */
+@Deprecated
 public class OrderedHashtable<K, V> extends Hashtable<K, V> {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8358692158328153199L;
 
     @Override
     public V put(K key, V value) {
@@ -52,14 +50,16 @@ public class OrderedHashtable<K, V> extends Hashtable<K, V> {
         return super.hashCode();
     }
 
-    ArrayList<K> keys = new ArrayList<K>();
+    ArrayList<K> keys = new ArrayList<>();
 
     class LocalEnumeration implements Enumeration<K> {
 
+        @Override
         public boolean hasMoreElements() {
             return (i < keys.size());
         }
 
+        @Override
         public K nextElement() {
             return keys.get(i++);
         }

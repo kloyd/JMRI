@@ -12,25 +12,37 @@ import javax.annotation.Nonnull;
  * A NullProfile allows an application using JMRI as a library to set the active
  * JMRI profile to an identity set by that application, if the use of a standard
  * JMRI profile is not acceptable.
+ * <p>
+ * This class deliberately overrides all methods of {@link jmri.profile.Profile}
+ * that access the {@link #name} and {@link #id} fields to remove protections
+ * and restrictions on those fields.
  *
- * @author rhwood Copyright (C) 2014
+ * @author Randall Wood Copyright (C) 2014
  * @see jmri.profile.ProfileManager#setActiveProfile(jmri.profile.Profile)
  */
 public class NullProfile extends Profile {
 
-    private String name;
-    private String id;
-    private File path;
+    /**
+     * Create a NullProfile object given just a path to it. The Profile must
+     * exist in storage on the computer. Uses a random identity for the Profile.
+     *
+     * @param path The Profile's directory
+     * @throws java.io.IOException If path is not readable
+     */
+    public NullProfile(@Nonnull File path) throws IOException {
+        super(path, false);
+    }
 
     /**
      * Create a NullProfile object given just a path to it. The Profile must
      * exist in storage on the computer.
      *
      * @param path The Profile's directory
-     * @throws IOException
+     * @param id   The Profile's id
+     * @throws java.io.IOException If path is not readable
      */
-    public NullProfile(File path) throws IOException {
-        super(path, false);
+    public NullProfile(@Nonnull File path, @Nonnull String id) throws IOException {
+        super(path, id, false);
     }
 
     /**
@@ -42,50 +54,15 @@ public class NullProfile extends Profile {
      * read-only property of the Profile. The {@link ProfileManager} will only
      * load a single profile with a given id.
      *
-     * @param name
+     * @param name The name of the profile.
      * @param id   If null, {@link jmri.profile.ProfileManager#createUniqueId()}
      *             will be used to generate the id.
-     * @param path
-     * @throws IOException
-     * @throws IllegalArgumentException
+     * @param path The path where the profile is stored.
+     * @throws java.io.IOException If path is not readable.
      */
-    public NullProfile(String name, String id, File path) throws IOException, IllegalArgumentException {
-        super(path, false);
-        this.name = name;
-        if (null != id) {
-            this.id = id;
-        } else {
-            this.id = ProfileManager.createUniqueId();
-        }
-    }
-
-    /**
-     * @return the name
-     */
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the id
-     */
-    @Override
-    public @Nonnull String getId() {
-        return id;
-    }
-
-    /**
-     * @return the path
-     */
-    @Override
-    public File getPath() {
-        return path;
+    public NullProfile(String name, String id, @Nonnull File path) throws IOException, IllegalArgumentException {
+        this(path, (null != id) ? id : ProfileManager.createUniqueId());
+        this.setNameInConstructor(name);
     }
 
     @Override
@@ -96,7 +73,7 @@ public class NullProfile extends Profile {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 71 * hash + (this.id != null ? this.id.hashCode() : 0);
+        hash = 71 * hash + this.getId().hashCode();
         return hash;
     }
 
@@ -109,7 +86,7 @@ public class NullProfile extends Profile {
             return false;
         }
         final NullProfile other = (NullProfile) obj;
-        return !((this.id == null) ? (other.id != null) : !this.id.equals(other.id));
+        return this.getId().equals(other.getId());
     }
 
     /**
@@ -129,6 +106,6 @@ public class NullProfile extends Profile {
      */
     @Override
     public String getUniqueId() {
-        return this.id; // NOI18N
+        return this.getId(); // NOI18N
     }
 }

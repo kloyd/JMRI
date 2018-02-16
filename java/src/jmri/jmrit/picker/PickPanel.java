@@ -19,15 +19,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Tabbed Container for holding pick list tables
+ * <p>
+ * Should perhaps be called PickTabbedPanel to distinguish from PickSinglePanel
  *
  * @author Pete Cressman Copyright (c) 2010
  */
 public class PickPanel extends JPanel implements ListSelectionListener, ChangeListener {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5093844168716608126L;
 
     private int ROW_HEIGHT;
 
@@ -38,8 +35,8 @@ public class PickPanel extends JPanel implements ListSelectionListener, ChangeLi
     JPanel _cantAddPanel;
     JTextField _sysNametext;
     JTextField _userNametext;
+    jmri.jmrit.picker.PickFrame _pickTables; // Opened from LogixTableAction
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP2")
     public PickPanel(PickListModel[] models) {
         _tabPane = new JTabbedPane();
         _models = new PickListModel[models.length];
@@ -62,17 +59,28 @@ public class PickPanel extends JPanel implements ListSelectionListener, ChangeLi
     private JPanel makeAddToTablePanel() {
         _sysNametext = new JTextField();
         _userNametext = new JTextField();
-        ActionListener listener = new ActionListener() {
+
+        ActionListener cancelListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent a) {
+                //do nothing as Cancel button is hidden on Pick Lists
+            }
+        };
+
+        ActionListener okListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 addToTable();
             }
         };
         _addPanel = new jmri.jmrit.beantable.AddNewDevicePanel(
-                _sysNametext, _userNametext, "addToTable", listener);
+                _sysNametext, _userNametext, "addToTable", okListener, cancelListener); // No I18N
+        // hide Cancel button as not handled bij Picker Panel
+
         _cantAddPanel = new JPanel();
         _cantAddPanel.setLayout(new BorderLayout(5, 5));
-        _cantAddPanel.add(new JLabel("Cannot add new items to this pick panel", SwingConstants.CENTER), BorderLayout.NORTH);
-        _cantAddPanel.add(new JLabel("Open another tool to add an item.", SwingConstants.CENTER), BorderLayout.SOUTH);
+        _cantAddPanel.add(new JLabel(Bundle.getMessage("CantAddNew"), SwingConstants.CENTER), BorderLayout.NORTH);
+        _cantAddPanel.add(new JLabel(Bundle.getMessage("OpenToAdd"), SwingConstants.CENTER), BorderLayout.SOUTH);
         JPanel p = new JPanel();
         p.add(_addPanel);
         p.add(_cantAddPanel);
@@ -83,10 +91,10 @@ public class PickPanel extends JPanel implements ListSelectionListener, ChangeLi
     }
 
     void addToTable() {
-        String sysname = _sysNametext.getText();
+        String sysname = _sysNametext.getText();  //N11N
         if (sysname != null && sysname.length() > 1) {
             PickListModel model = _models[_tabPane.getSelectedIndex()];
-            String uname = _userNametext.getText();
+            String uname = _userNametext.getText();         //N11N
             if (uname != null && uname.trim().length() == 0) {
                 uname = null;
             }
@@ -101,6 +109,7 @@ public class PickPanel extends JPanel implements ListSelectionListener, ChangeLi
         }
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
         PickListModel model = _models[_tabPane.getSelectedIndex()];
         if (model.canAddBean()) {
@@ -112,6 +121,7 @@ public class PickPanel extends JPanel implements ListSelectionListener, ChangeLi
         }
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("ListSelectionEvent from " + e.getSource().getClass().getName()
@@ -120,5 +130,5 @@ public class PickPanel extends JPanel implements ListSelectionListener, ChangeLi
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(PickPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PickPanel.class);
 }

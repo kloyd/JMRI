@@ -1,35 +1,33 @@
-// SoundSetAction.java
 package jmri.jmrix.rps.swing.soundset;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * Swing action to create and register a SoundSetFrame object
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
  */
 public class SoundSetAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3969609830068349700L;
+    RpsSystemConnectionMemo memo = null;
 
-    public SoundSetAction(String s) {
+    public SoundSetAction(String s,RpsSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public SoundSetAction() {
-        this("RPS Sound Speed Monitor");
+    public SoundSetAction(RpsSystemConnectionMemo _memo) {
+        this("RPS Sound Speed Monitor",_memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         log.debug("starting frame creation");
-        SoundSetFrame f = new SoundSetFrame();
+        SoundSetFrame f = new SoundSetFrame(memo);
         try {
             f.initComponents();
         } catch (Exception ex) {
@@ -39,9 +37,6 @@ public class SoundSetAction extends AbstractAction {
 
     }
 
-    static Logger log = LoggerFactory.getLogger(SoundSetAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SoundSetAction.class);
 
 }
-
-
-/* @(#)SoundSetAction.java */

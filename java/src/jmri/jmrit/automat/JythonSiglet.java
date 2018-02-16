@@ -1,4 +1,3 @@
-// JythonSiglet.java
 package jmri.jmrit.automat;
 
 import jmri.InstanceManager;
@@ -16,11 +15,10 @@ import org.slf4j.LoggerFactory;
  * </UL>
  * <P>
  * Access is via Java reflection so that both users and developers can work
- * without the jython.jar file in the classpath. To make it easier to read the
+ * without the jython-standalone-2.7.0.jar file in the classpath. To make it easier to read the
  * code, the "non-reflection" statements are in the comments.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  */
 public class JythonSiglet extends Siglet {
 
@@ -41,8 +39,9 @@ public class JythonSiglet extends Siglet {
      * <LI>Run the python defineIO routine
      * </UL>
      * Initialization of the Python in the actual script file is deferred until
-     * the {@link #handle} method.
+     * the {@link #defineIO} method.
      */
+    @Override
     public void defineIO() {
 
         try {
@@ -56,8 +55,6 @@ public class JythonSiglet extends Siglet {
             interp = Class.forName("org.python.util.PythonInterpreter").newInstance();
 
             // load some general objects
-            // interp.set("dcc", InstanceManager.commandStationInstance());
-            // interp.set("self", this);
             java.lang.reflect.Method set
                     = interp.getClass().getMethod("set", new Class[]{String.class, Object.class});
             set.invoke(interp, new Object[]{"self", this});
@@ -67,8 +64,8 @@ public class JythonSiglet extends Siglet {
 
             set.invoke(interp, new Object[]{"turnouts", InstanceManager.turnoutManagerInstance()});
             set.invoke(interp, new Object[]{"sensors", InstanceManager.sensorManagerInstance()});
-            set.invoke(interp, new Object[]{"signals", InstanceManager.signalHeadManagerInstance()});
-            set.invoke(interp, new Object[]{"dcc", InstanceManager.commandStationInstance()});
+            set.invoke(interp, new Object[]{"signals", InstanceManager.getDefault(jmri.SignalHeadManager.class)});
+            set.invoke(interp, new Object[]{"dcc", InstanceManager.getNullableDefault(jmri.CommandStation.class)});
 
             set.invoke(interp, new Object[]{"CLOSED", Integer.valueOf(jmri.Turnout.CLOSED)});
             set.invoke(interp, new Object[]{"THROWN", Integer.valueOf(jmri.Turnout.THROWN)});
@@ -105,6 +102,7 @@ public class JythonSiglet extends Siglet {
     /**
      * Invoke the Jython setOutput function
      */
+    @Override
     public void setOutput() {
         if (interp == null) {
             log.error("No interpreter, so cannot handle automat");
@@ -114,16 +112,13 @@ public class JythonSiglet extends Siglet {
             // execute the handle routine in the jython
             exec.invoke(interp, new Object[]{"setOutput()"});
         } catch (Exception e) {
-            log.error("Exception invoking jython command: " + e);
-            e.printStackTrace();
+            log.error("Exception invoking jython command:", e);
         }
     }
 
     java.lang.reflect.Method exec;
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(JythonSiglet.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(JythonSiglet.class);
 
 }
-
-/* @(#)JythonAutomaton.java */

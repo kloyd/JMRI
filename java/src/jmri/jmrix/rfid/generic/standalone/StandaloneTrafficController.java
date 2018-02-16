@@ -1,4 +1,3 @@
-// SpecificTrafficController.java
 package jmri.jmrix.rfid.generic.standalone;
 
 import jmri.jmrix.AbstractMRListener;
@@ -22,16 +21,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2003, 2005, 2006, 2008
  * @author Matthew Harris Copyright (c) 2011
- * @version $Revision$
  * @since 2.11.4
  */
 public class StandaloneTrafficController extends RfidTrafficController {
 
-    private final RfidSystemConnectionMemo memo;
-
     @Override
     public void sendInitString() {
-        String init = memo.getProtocol().initString();
+        String init = adapterMemo.getProtocol().initString();
         if (init.length() > 0) {
             sendRfidMessage(new StandaloneMessage(init, 0), null);
         }
@@ -39,7 +35,7 @@ public class StandaloneTrafficController extends RfidTrafficController {
 
     public StandaloneTrafficController(RfidSystemConnectionMemo memo) {
         super();
-        this.memo = memo;
+        adapterMemo = memo;
         logDebug = log.isDebugEnabled();
 
         // not polled at all, so allow unexpected messages, and
@@ -65,7 +61,7 @@ public class StandaloneTrafficController extends RfidTrafficController {
 
     @Override
     protected AbstractMRReply newReply() {
-        StandaloneReply reply = new StandaloneReply(memo.getTrafficController());
+        StandaloneReply reply = new StandaloneReply(adapterMemo.getTrafficController());
         return reply;
     }
 
@@ -76,13 +72,10 @@ public class StandaloneTrafficController extends RfidTrafficController {
 
     @Override
     protected boolean endOfMessage(AbstractMRReply msg) {
-        return memo.getProtocol().endOfMessage(msg);
+        return adapterMemo.getProtocol().endOfMessage(msg);
     }
 
     boolean sendInterlock = false; // send the 00 interlock when CRC received
 
-    private static final Logger log = LoggerFactory.getLogger(StandaloneTrafficController.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(StandaloneTrafficController.class);
 }
-
-
-/* @(#)SpecificTrafficController.java */

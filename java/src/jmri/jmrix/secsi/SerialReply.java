@@ -1,4 +1,3 @@
-// SerialReply.java
 package jmri.jmrix.secsi;
 
 import org.slf4j.Logger;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
  * payload.
  *
  * @author	Bob Jacobsen Copyright (C) 2002, 2006, 2007, 2008
- * @version $Revision$
  */
 public class SerialReply extends jmri.jmrix.AbstractMRReply {
 
@@ -33,18 +31,18 @@ public class SerialReply extends jmri.jmrix.AbstractMRReply {
      * Is reply to poll message
      */
     public int getAddr() {
-        log.error("getAddr should not be called");
-        new Exception().printStackTrace();
+        log.error("getAddr should not be called", new Exception());
         return getElement(0);
     }
 
+    @Override
     protected int skipPrefix(int index) {
         // doesn't have to do anything
         return index;
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialReply.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialReply.class);
 
 }
 
-/* @(#)SerialReply.java */
+

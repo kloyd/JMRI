@@ -1,4 +1,3 @@
-// JavaSoundAudioBuffer.java
 package jmri.jmrit.audio;
 
 import java.io.File;
@@ -37,7 +36,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Matthew Harris copyright (c) 2009, 2011
- * @version $Revision$
  */
 public class JavaSoundAudioBuffer extends AbstractAudioBuffer {
 
@@ -398,17 +396,13 @@ public class JavaSoundAudioBuffer extends AbstractAudioBuffer {
     }
 
     @Override
-    protected void cleanUp() {
+    protected void cleanup() {
         if (log.isDebugEnabled()) {
             log.debug("Cleanup JavaSoundAudioBuffer (" + this.getSystemName() + ")");
         }
         this.dispose();
     }
 
-    private static final long serialVersionUID = 1L;
-
-    private static final Logger log = LoggerFactory.getLogger(JavaSoundAudioBuffer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(JavaSoundAudioBuffer.class);
 
 }
-
-/* $(#)JavaSoundAudioBuffer.java */

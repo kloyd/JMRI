@@ -1,23 +1,20 @@
-// ProxyTurnoutManagerTest.java
 package jmri.managers;
 
 import java.beans.PropertyChangeListener;
 import jmri.InstanceManager;
 import jmri.Turnout;
 import jmri.TurnoutManager;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * Test the ProxyTurnoutManager
  *
  * @author	Bob Jacobsen 2003, 2006, 2008, 2014
- * @version	$Revision$
- */
+  */
 public class ProxyTurnoutManagerTest extends TestCase {
 
     public String getSystemName(int i) {
@@ -30,6 +27,7 @@ public class ProxyTurnoutManagerTest extends TestCase {
 
     protected class Listen implements PropertyChangeListener {
 
+        @Override
         public void propertyChange(java.beans.PropertyChangeEvent e) {
             listenerResult = true;
         }
@@ -54,6 +52,25 @@ public class ProxyTurnoutManagerTest extends TestCase {
         // check
         Assert.assertTrue("real object returned ", t != null);
         Assert.assertTrue("system name correct ", t == l.getBySystemName(getSystemName(getNumToTest1())));
+    }
+
+    public void testNormalizeName() {
+        // create
+        String name = l.provideTurnout("" + getNumToTest1()).getSystemName();
+        // check
+        Assert.assertEquals(name, l.normalizeSystemName(name));
+    }
+
+    public void testProvideFailure() {
+        boolean correct = false;
+        try {
+            l.provideTurnout("");
+            Assert.fail("didn't throw");
+        } catch (IllegalArgumentException ex) {
+            correct = true;
+        }
+        Assert.assertTrue("Exception thrown properly", correct);
+        jmri.util.JUnitAppender.assertErrorMessage("Invalid system name for turnout: JT needed JT");
     }
 
     public void testSingleObject() {
@@ -82,7 +99,7 @@ public class ProxyTurnoutManagerTest extends TestCase {
     }
 
     public void testRename() {
-        // get 
+        // get
         Turnout t1 = l.newTurnout(getSystemName(getNumToTest1()), "before");
         Assert.assertNotNull("t1 real object ", t1);
         t1.setUserName("after");
@@ -136,6 +153,7 @@ public class ProxyTurnoutManagerTest extends TestCase {
         Assert.assertNotNull(InstanceManager.getDefault(TurnoutManager.class).provideTurnout("IS1"));
 
         InternalTurnoutManager m = new InternalTurnoutManager() {
+            @Override
             public String getSystemPrefix() {
                 return "J";
             }
@@ -166,7 +184,7 @@ public class ProxyTurnoutManagerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", ProxyTurnoutManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -176,10 +194,12 @@ public class ProxyTurnoutManagerTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
         apps.tests.Log4JFixture.setUp();
         // create and register the manager object
         l = new InternalTurnoutManager() {
+            @Override
             public String getSystemPrefix() {
                 return "J";
             }
@@ -189,9 +209,7 @@ public class ProxyTurnoutManagerTest extends TestCase {
 
     @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(ProxyTurnoutManagerTest.class.getName());
 
 }

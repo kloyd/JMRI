@@ -1,4 +1,3 @@
-// SpecificSystemConnectionMemo.java
 package jmri.jmrix.rfid.generic.standalone;
 
 import jmri.InstanceManager;
@@ -26,7 +25,6 @@ import jmri.jmrix.rfid.RfidSystemConnectionMemo;
  * <P>
  *
  * @author Matthew Harris Copyright (C) 2011
- * @version $Revision$
  * @since 2.11.4
  */
 public class StandaloneSystemConnectionMemo extends RfidSystemConnectionMemo {
@@ -41,8 +39,10 @@ public class StandaloneSystemConnectionMemo extends RfidSystemConnectionMemo {
      */
     @Override
     public void configureManagers(RfidSensorManager sensorManager, RfidReporterManager reporterManager) {
-        InstanceManager.setSensorManager(new StandaloneSensorManager(getTrafficController(), getSystemPrefix()));
-        InstanceManager.setReporterManager(new StandaloneReporterManager(getTrafficController(), getSystemPrefix()));
+        this.sensorManager = new StandaloneSensorManager(getTrafficController(), getSystemPrefix());
+        InstanceManager.setSensorManager(sensorManager);
+        this.reporterManager = new StandaloneReporterManager(getTrafficController(), getSystemPrefix());
+        InstanceManager.setReporterManager(reporterManager);
     }
 
     @Override
@@ -52,5 +52,3 @@ public class StandaloneSystemConnectionMemo extends RfidSystemConnectionMemo {
     }
 
 }
-
-/* @(#)SpecificSystemConnectionMemo.java */

@@ -1,4 +1,3 @@
-// TrainConductorAction.java
 package jmri.jmrit.operations.trains;
 
 import java.awt.Frame;
@@ -10,14 +9,9 @@ import javax.swing.AbstractAction;
  *
  * @author Bob Jacobsen Copyright (C) 2001
  * @author Daniel Boudreau Copyright (C) 2011
- * @version $Revision: 17977 $
  */
 public class TrainConductorAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6897376422747877387L;
     Train train;
     TrainConductorFrame f = null;
 
@@ -34,8 +28,8 @@ public class TrainConductorAction extends AbstractAction {
         } else {
             f.setExtendedState(Frame.NORMAL);
         }
-        f.setVisible(true);	// this also brings the frame into focus
+        f.setVisible(true); // this also brings the frame into focus
     }
 }
 
-/* @(#)TrainConductorAction.java */
+

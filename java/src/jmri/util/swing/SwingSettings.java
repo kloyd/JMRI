@@ -1,8 +1,7 @@
-// SwingSettings.java
 package jmri.util.swing;
 
 /**
- * Settings for e.g. workarounds, etc.
+ * Settings for workarounds in Swing API.
  * <p>
  * By convention, "false" is the default, usual behavior for these.
  * <dl>
@@ -16,7 +15,6 @@ package jmri.util.swing;
  *
  * @author Bob Jacobsen Copyright 2010
  * @since 2.9.4
- * @version $Revision$
  */
 public class SwingSettings {
 

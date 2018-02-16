@@ -1,4 +1,3 @@
-// SerialPacketGenFrame.java
 package jmri.jmrix.oaktree.packetgen;
 
 import java.awt.Dimension;
@@ -9,21 +8,16 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import jmri.jmrix.oaktree.SerialMessage;
 import jmri.jmrix.oaktree.SerialReply;
-import jmri.jmrix.oaktree.SerialTrafficController;
+import jmri.jmrix.oaktree.OakTreeSystemConnectionMemo;
 import jmri.util.StringUtil;
 
 /**
  * Frame for user input of serial messages
  *
- * @author	Bob Jacobsen Copyright (C) 2002, 2003, 2006
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002, 2003, 2006
  */
 public class SerialPacketGenFrame extends jmri.util.JmriJFrame implements jmri.jmrix.oaktree.SerialListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7440833458945674404L;
     // member declarations
     javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
     javax.swing.JButton sendButton = new javax.swing.JButton();
@@ -32,11 +26,18 @@ public class SerialPacketGenFrame extends jmri.util.JmriJFrame implements jmri.j
     javax.swing.JButton pollButton = new javax.swing.JButton("Send poll");
     javax.swing.JTextField uaAddrField = new javax.swing.JTextField(5);
 
-    public SerialPacketGenFrame() {
+    private OakTreeSystemConnectionMemo _memo = null;
+
+    public SerialPacketGenFrame(OakTreeSystemConnectionMemo memo) {
         super();
+        _memo = memo;
     }
 
-    public void initComponents() throws Exception {
+    /** 
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents() {
         // the following code sets the frame's initial state
 
         jLabel1.setText("Command:");
@@ -62,6 +63,7 @@ public class SerialPacketGenFrame extends jmri.util.JmriJFrame implements jmri.j
         getContentPane().add(sendButton);
 
         sendButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 sendButtonActionPerformed(e);
             }
@@ -80,6 +82,7 @@ public class SerialPacketGenFrame extends jmri.util.JmriJFrame implements jmri.j
         getContentPane().add(pane3);
 
         pollButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 pollButtonActionPerformed(e);
             }
@@ -92,11 +95,11 @@ public class SerialPacketGenFrame extends jmri.util.JmriJFrame implements jmri.j
 
     public void pollButtonActionPerformed(java.awt.event.ActionEvent e) {
         SerialMessage msg = SerialMessage.getPoll(Integer.valueOf(uaAddrField.getText()).intValue());
-        SerialTrafficController.instance().sendSerialMessage(msg, this);
+        _memo.getTrafficController().sendSerialMessage(msg, this);
     }
 
     public void sendButtonActionPerformed(java.awt.event.ActionEvent e) {
-        SerialTrafficController.instance().sendSerialMessage(createPacket(packetTextField.getText()), this);
+        _memo.getTrafficController().sendSerialMessage(createPacket(packetTextField.getText()), this);
     }
 
     SerialMessage createPacket(String s) {
@@ -112,9 +115,19 @@ public class SerialPacketGenFrame extends jmri.util.JmriJFrame implements jmri.j
         return m;
     }
 
+    /** 
+     * {@inheritDoc}
+     * Ignores messages.
+     */
+    @Override
     public void message(SerialMessage m) {
-    }  // ignore replies
+    }
 
+    /** 
+     * {@inheritDoc}
+     * Ignore replies.
+     */
+    @Override
     public void reply(SerialReply r) {
-    } // ignore replies
+    }
 }

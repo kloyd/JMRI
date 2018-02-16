@@ -1,6 +1,6 @@
-// SerialNode.java
 package jmri.jmrix.grapevine;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jmri.JmriException;
 import jmri.Sensor;
 import jmri.jmrix.AbstractMRListener;
@@ -21,9 +21,8 @@ import org.slf4j.LoggerFactory;
  * on the serial bus. E.g. you can manually change a state via an icon, and not
  * have it change back the next time that node is polled.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2006, 2007, 2008
+ * @author Bob Jacobsen Copyright (C) 2003, 2006, 2007, 2008
  * @author Bob Jacobsen, Dave Duchamp, multiNode extensions, 2004
- * @version	$Revision$
  */
 public class SerialNode extends AbstractNode {
 
@@ -141,6 +140,7 @@ public class SerialNode extends AbstractNode {
      * Public method to return state of Sensors. Note: returns 'true' if at
      * least one sensor is active for this node
      */
+    @Override
     public boolean getSensorsActive() {
         return hasActiveSensors;
     }
@@ -149,6 +149,7 @@ public class SerialNode extends AbstractNode {
      * Public to reset state of needSend flag. Can only reset if there are no
      * bytes that need to be sent
      */
+    @Override
     public void resetMustSend() {
         for (int i = 0; i < (outputBits[nodeType] + 7) / 8; i++) {
             if (outputByteChanged[i]) {
@@ -169,7 +170,7 @@ public class SerialNode extends AbstractNode {
      * Public method to set node type.
      */
     @SuppressWarnings("fallthrough")
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SF_SWITCH_FALLTHROUGH")
+    @SuppressFBWarnings(value = "SF_SWITCH_FALLTHROUGH")
     public void setNodeType(int type) {
         nodeType = type;
         switch (nodeType) {
@@ -186,6 +187,7 @@ public class SerialNode extends AbstractNode {
     /**
      * Check for valid node address
      */
+    @Override
     protected boolean checkNodeAddress(int address) {
         return (address >= 1) && (address <= 127);
     }
@@ -203,16 +205,18 @@ public class SerialNode extends AbstractNode {
      * As an Ugly Hack to keep these separate, only the first is put in the
      * reply from this. The other(s) are sent via the usual output methods.
      */
+    @Override
     public AbstractMRMessage createInitPacket() {
 
         // first, queue a timer to send 2nd message
         javax.swing.Timer timer = new javax.swing.Timer(250, null);
         java.awt.event.ActionListener l = new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 SerialMessage m2 = new SerialMessage(4);
                 int i = 0;
 
-                // turn on 2nd parallel inputs        
+                // turn on 2nd parallel inputs
                 m2.setElement(i++, getNodeAddress() | 0x80);  // address
                 m2.setElement(i++, 0x73);  // command
                 m2.setElement(i++, getNodeAddress() | 0x80);  // address
@@ -230,7 +234,7 @@ public class SerialNode extends AbstractNode {
         SerialMessage m1 = new SerialMessage(4);
         int i = 0;
 
-        // turn on ASD     
+        // turn on ASD
         m1.setElement(i++, getNodeAddress() | 0x80);  // address
         m1.setElement(i++, 0x71);  // command
         m1.setElement(i++, getNodeAddress() | 0x80);  // address
@@ -243,6 +247,7 @@ public class SerialNode extends AbstractNode {
     /**
      * Public Method to create an Transmit packet (SerialMessage)
      */
+    @Override
     public AbstractMRMessage createOutPacket() {
         if (log.isDebugEnabled()) {
             log.debug("createOutPacket for nodeType "
@@ -302,7 +307,7 @@ public class SerialNode extends AbstractNode {
             return;  // not interesting message
         }
         // Yes, continue.
-        // Want to get individual sensor bits, and xor them with the 
+        // Want to get individual sensor bits, and xor them with the
         // past state and the inverted bit.
 
         if (l.isFromNewSerialSensor()) {
@@ -359,7 +364,7 @@ public class SerialNode extends AbstractNode {
             log.debug("Mark bit " + sensorNum + " " + input + " in node " + getNodeAddress());
         }
         if (sensorArray[sensorNum] == null) {
-            log.info("Try to create sensor " + sensorNum + " on node " + getNodeAddress() + ", since sensor doesn't exist");
+            log.debug("Try to create sensor " + sensorNum + " on node " + getNodeAddress() + ", since sensor doesn't exist");
             // try to make the sensor, which will also register it
             jmri.InstanceManager.sensorManagerInstance()
                     .provideSensor("GS" + (getNodeAddress() * 1000 + sensorNum));
@@ -416,9 +421,9 @@ public class SerialNode extends AbstractNode {
             }
         } else {
             // multiple registration of the same sensor
-            new Exception("mult reg " + i + " S:" + s.getSystemName()).printStackTrace();
-            log.warn("multiple registration of same sensor: GS"
-                    + Integer.toString((getNodeAddress() * SerialSensorManager.SENSORSPERNODE) + i));
+            log.warn("multiple registration of same sensor: GS{}",
+                    (getNodeAddress() * SerialSensorManager.SENSORSPERNODE) + i,
+                    new Exception("mult reg " + i + " S:" + s.getSystemName())); // TODO multichar prefix
         }
     }
 
@@ -428,6 +433,7 @@ public class SerialNode extends AbstractNode {
      *
      * @return true if initialization required
      */
+    @Override
     public boolean handleTimeout(AbstractMRMessage m, AbstractMRListener l) {
         timeout++;
         // normal to timeout in response to init, output
@@ -451,6 +457,7 @@ public class SerialNode extends AbstractNode {
         }
     }
 
+    @Override
     public void resetTimeout(AbstractMRMessage m) {
         if (timeout > 0) {
             log.debug("Reset " + timeout + " timeout count");
@@ -458,7 +465,5 @@ public class SerialNode extends AbstractNode {
         timeout = 0;
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialNode.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialNode.class);
 }
-
-/* @(#)SerialNode.java */

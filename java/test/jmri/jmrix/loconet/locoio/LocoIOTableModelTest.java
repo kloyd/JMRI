@@ -1,6 +1,6 @@
-// LocoIOTableModelTest.java
 package jmri.jmrix.loconet.locoio;
 
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -9,7 +9,6 @@ import junit.framework.TestSuite;
  * Tests for the jmri.jmrix.loconet.locoio.LocoIOTableModel class.
  *
  * @author	Bob Jacobsen Copyright (C) 2002
- * @version $Revision$
  */
 public class LocoIOTableModelTest extends TestCase {
 
@@ -475,7 +474,7 @@ public class LocoIOTableModelTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {LocoIOTableModelTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -485,12 +484,14 @@ public class LocoIOTableModelTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

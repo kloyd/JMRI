@@ -1,4 +1,3 @@
-//SimpleOperationsServer.java
 package jmri.jmris.simpleserver;
 
 import java.beans.PropertyChangeEvent;
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory;
  * @author Dan Boudreau Copyright (C) 2012 (Documented the code, changed reply
  * format, and some minor refactoring)
  * @author Randall Wood Copyright (C) 2012
- * @version $Revision$
  */
 public class SimpleOperationsServer extends AbstractOperationsServer {
 
@@ -140,7 +138,6 @@ public class SimpleOperationsServer extends AbstractOperationsServer {
      *
      * @param contents is the ArrayList of Attributes to be sent. A linefeed
      *                 ('\n") is appended to the String.
-     * @throws java.io.IOException
      */
     @Override
     public void sendMessage(ArrayList<Attribute> contents) throws IOException {
@@ -213,7 +210,11 @@ public class SimpleOperationsServer extends AbstractOperationsServer {
      * @param message is the String received
      * @return an ArrayList of Attributes of the constituent pieces of the
      *         message
+     * @deprecated since 4.7.1
      */
+    // This should never have been a public method, Deprecating so we can 
+    // make it private or eliminate it later.
+    @Deprecated
     public static ArrayList<Attribute> parseOperationsMessage(String message) {
         ArrayList<Attribute> contents = new ArrayList<Attribute>();
         int start;
@@ -249,9 +250,6 @@ public class SimpleOperationsServer extends AbstractOperationsServer {
      * command like "LOCATIONS". A command like "TRAINLENGTH" requires a train
      * name. The delimiter is the tab character.
      *
-     * @param statusString
-     * @throws jmri.JmriException
-     * @throws java.io.IOException
      */
     @Override
     public void parseStatus(String statusString) throws JmriException, IOException {
@@ -392,6 +390,7 @@ public class SimpleOperationsServer extends AbstractOperationsServer {
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
         log.debug("property change: {} old: {} new: {}", e.getPropertyName(), e.getOldValue(), e.getNewValue());
         if (e.getPropertyName().equals(Train.BUILT_CHANGED_PROPERTY)) {
@@ -403,6 +402,6 @@ public class SimpleOperationsServer extends AbstractOperationsServer {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(SimpleOperationsServer.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SimpleOperationsServer.class);
 
 }

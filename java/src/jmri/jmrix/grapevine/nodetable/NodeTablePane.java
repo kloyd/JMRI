@@ -1,10 +1,8 @@
-// NodeTableFrame.java
 package jmri.jmrix.grapevine.nodetable;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ResourceBundle;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -12,16 +10,17 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SortOrder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableRowSorter;
 import jmri.jmrix.grapevine.SerialMessage;
 import jmri.jmrix.grapevine.SerialReply;
-import jmri.jmrix.grapevine.SerialTrafficController;
 import jmri.jmrix.grapevine.nodeconfig.NodeConfigFrame;
+import jmri.jmrix.grapevine.GrapevineSystemConnectionMemo;
+import jmri.swing.RowSorterUtil;
 import jmri.util.table.ButtonEditor;
 import jmri.util.table.ButtonRenderer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Pane for user management of serial nodes. Contains a table that does the real
@@ -34,23 +33,19 @@ import org.slf4j.LoggerFactory;
  * <LI>Not present
  * </OL>
  *
- * @author	Bob Jacobsen Copyright (C) 2004, 2007, 2008
- * @author	Dave Duchamp Copyright (C) 2004, 2006
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2004, 2007, 2008
+ * @author Dave Duchamp Copyright (C) 2004, 2006
  */
 public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grapevine.SerialListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -1719197383229554709L;
-    ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.grapevine.nodetable.NodeTableBundle");
+    private GrapevineSystemConnectionMemo memo = null;
 
     /**
      * Constructor method
      */
-    public NodeTablePane() {
+    public NodeTablePane(GrapevineSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
     }
 
     NodesModel nodesModel = null;
@@ -65,7 +60,7 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
 
         nodesModel = new NodesModel();
 
-        JTable nodesTable = jmri.util.JTableUtil.sortableDataModel(nodesModel);
+        JTable nodesTable = new JTable(nodesModel);
 
         // install a button renderer & editor
         ButtonRenderer buttonRenderer = new ButtonRenderer();
@@ -73,11 +68,9 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
         TableCellEditor buttonEditor = new ButtonEditor(new JButton());
         nodesTable.setDefaultEditor(JButton.class, buttonEditor);
 
-        try {
-            jmri.util.com.sun.TableSorter tmodel = ((jmri.util.com.sun.TableSorter) nodesTable.getModel());
-            tmodel.setSortingStatus(NodeTablePane.NodesModel.STATUSCOL, jmri.util.com.sun.TableSorter.DESCENDING);
-        } catch (ClassCastException e3) {
-        }  // if not a sortable table model
+        TableRowSorter<NodesModel> sorter = new TableRowSorter<>(nodesModel);
+        RowSorterUtil.setSortOrder(sorter, NodesModel.STATUSCOL, SortOrder.DESCENDING);
+        nodesTable.setRowSorter(sorter);
         nodesTable.setRowSelectionAllowed(false);
         nodesTable.setPreferredScrollableViewportSize(new java.awt.Dimension(580, 80));
 
@@ -86,11 +79,7 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
 
         // status info on bottom
         JPanel p = new JPanel() {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 2856738173612573500L;
-
+            @Override
             public Dimension getMaximumSize() {
                 int height = getPreferredSize().height;
                 int width = super.getMaximumSize().width;
@@ -98,9 +87,10 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
             }
         };
         p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
-        JButton b = new JButton(rb.getString("ButtonCheck"));
-        b.setToolTipText(rb.getString("TipCheck"));
+        JButton b = new JButton(Bundle.getMessage("ButtonCheck"));
+        b.setToolTipText(Bundle.getMessage("TipCheck"));
         b.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 startPoll();
             }
@@ -112,8 +102,9 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
         p.add(Box.createHorizontalGlue());
 
         // renumber button
-        b = new JButton(rb.getString("ButtonRenumber"));
+        b = new JButton(Bundle.getMessage("ButtonRenumber"));
         b.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 renumber();
             }
@@ -129,7 +120,7 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
      * Open a renumber frame
      */
     void renumber() {
-        RenumberFrame f = new RenumberFrame();
+        RenumberFrame f = new RenumberFrame(memo);
         f.initComponents();
         f.setVisible(true);
     }
@@ -145,15 +136,16 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
             scanSeen[i] = false;
         }
 
-        status.setText(rb.getString("StatusStart"));
+        status.setText(Bundle.getMessage("StatusStart"));
 
         // create a timer to send messages
         timer = new javax.swing.Timer(50, new java.awt.event.ActionListener() {
             int node = 1;
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 // send message to node
-                SerialTrafficController.instance().sendSerialMessage(SerialMessage.getPoll(node), null);
+                memo.getTrafficController().sendSerialMessage(SerialMessage.getPoll(node), null);
                 // done?
                 node++;
                 if (node >= 128) {
@@ -161,10 +153,10 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
                     timer.stop();
                     timer = null;
                     // if nothing seen yet, this is a failure
-                    if (status.getText().equals(rb.getString("StatusStart"))) {
-                        status.setText(rb.getString("StatusFail"));
+                    if (status.getText().equals(Bundle.getMessage("StatusStart"))) {
+                        status.setText(Bundle.getMessage("StatusFail"));
                     } else {
-                        status.setText(rb.getString("StatusOK"));
+                        status.setText(Bundle.getMessage("StatusOK"));
                     }
                 }
             }
@@ -183,16 +175,18 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
     /**
      * Ignore messages being sent
      */
+    @Override
     public void message(SerialMessage m) {
     }
 
     /**
      * Listen for software version messages to know a node is present
      */
+    @Override
     public void reply(SerialReply m) {
         // set the status as having seen something
-        if (status.getText().equals(rb.getString("StatusStart"))) {
-            status.setText(rb.getString("StatusRunning"));
+        if (status.getText().equals(Bundle.getMessage("StatusStart"))) {
+            status.setText(Bundle.getMessage("StatusRunning"));
         }
         // is this a software version reply?
         if (m.getNumDataElements() != 2) {
@@ -220,11 +214,6 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
      * </ol>
      */
     public class NodesModel extends AbstractTableModel {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = -5628722202249990632L;
         static private final int ADDRCOL = 0;
         static private final int STATUSCOL = 1;
         static private final int EDITCOL = 2;
@@ -232,27 +221,31 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
 
         static private final int LAST = 3;
 
+        @Override
         public int getColumnCount() {
             return LAST + 1;
         }
 
+        @Override
         public int getRowCount() {
             return 127;
         }
 
+        @Override
         public String getColumnName(int c) {
             switch (c) {
                 case ADDRCOL:
-                    return rb.getString("TitleAddress");
+                    return Bundle.getMessage("TitleAddress");
                 case STATUSCOL:
-                    return rb.getString("TitleStatus");
+                    return Bundle.getMessage("TitleStatus");
                 case EDITCOL:
-                    return rb.getString("TitleConfigure");
+                    return ""; // no title over Edit column
                 default:
                     return "";
             }
         }
 
+        @Override
         public Class<?> getColumnClass(int c) {
             if (c == EDITCOL || c == INITCOL) {
                 return JButton.class;
@@ -263,10 +256,12 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
             }
         }
 
+        @Override
         public boolean isCellEditable(int r, int c) {
             return (c == EDITCOL || c == INITCOL);
         }
 
+        @Override
         public Object getValueAt(int r, int c) {
             // r is row number, from 0, and therefore r+1 is node number
             switch (c) {
@@ -274,27 +269,27 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
                     return Integer.valueOf(r + 1);
                 case STATUSCOL:
                     // see if node exists
-                    if (SerialTrafficController.instance().getNodeFromAddress(r + 1) != null) {
-                        return rb.getString("StatusConfig");
+                    if (memo.getTrafficController().getNodeFromAddress(r + 1) != null) {
+                        return Bundle.getMessage("StatusConfig");
                     } else {
                         // see if seen in scan
                         if (scanSeen[r + 1]) {
-                            return rb.getString("StatusPresent");
+                            return Bundle.getMessage("StatusPresent");
                         } else {
-                            return rb.getString("StatusAbsent");
+                            return Bundle.getMessage("StatusAbsent");
                         }
                     }
                 case EDITCOL:
                     // see if node exists
-                    if (SerialTrafficController.instance().getNodeFromAddress(r + 1) != null) {
-                        return rb.getString("ButtonEdit");
+                    if (memo.getTrafficController().getNodeFromAddress(r + 1) != null) {
+                        return Bundle.getMessage("ButtonEdit");
                     } else {
-                        return rb.getString("ButtonAdd");
+                        return Bundle.getMessage("ButtonAdd");
                     }
                 case INITCOL:
                     // see if node exists
-                    if (SerialTrafficController.instance().getNodeFromAddress(r + 1) != null) {
-                        return rb.getString("ButtonInit");
+                    if (memo.getTrafficController().getNodeFromAddress(r + 1) != null) {
+                        return Bundle.getMessage("ButtonInit");
                     } else {
                         return null;
                     }
@@ -304,27 +299,26 @@ public class NodeTablePane extends javax.swing.JPanel implements jmri.jmrix.grap
             }
         }
 
+        @Override
         public void setValueAt(Object type, int r, int c) {
             switch (c) {
                 case EDITCOL:
-                    NodeConfigFrame f = new NodeConfigFrame();
+                    NodeConfigFrame f = new NodeConfigFrame(memo);
                     f.initComponents();
                     f.setNodeAddress(r + 1);
                     f.setVisible(true);
                     return;
                 case INITCOL:
-                    jmri.jmrix.AbstractNode t = SerialTrafficController.instance().getNodeFromAddress(r + 1);
+                    jmri.jmrix.AbstractNode t = memo.getTrafficController().getNodeFromAddress(r + 1);
                     if (t == null) {
                         return;
                     }
-                    SerialTrafficController.instance().sendSerialMessage((SerialMessage) t.createInitPacket(), null);
+                    memo.getTrafficController().sendSerialMessage((SerialMessage) t.createInitPacket(), null);
                     return;
                 default:
                     return;
             }
         }
     }
-
-    static Logger log = LoggerFactory.getLogger(NodeTableFrame.class.getName());
 
 }

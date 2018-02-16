@@ -1,4 +1,3 @@
-// ConsistManager.java
 package jmri;
 
 import java.util.ArrayList;
@@ -20,39 +19,53 @@ import java.util.ArrayList;
  * <P>
  *
  * @author Paul Bender Copyright (C) 2003
- * @version $Revision$
  */
 public interface ConsistManager {
 
     /**
      * Find a Consist with this consist address, and return it. If the Consist
      * doesn't exit, create it.
+     *
+     * @param address the consist address
+     * @return an existing or new consist
      */
-    public Consist getConsist(DccLocoAddress address);
+    public Consist getConsist(LocoAddress address);
 
     /**
-     * Remove an old Consist
+     * Remove an old Consist.
+     *
+     * @param address the consist address
      */
-    public void delConsist(DccLocoAddress address);
+    public void delConsist(LocoAddress address);
 
     /**
      * Does this implementation support Command Station Consists?
+     *
+     * @return true if command station consists are supported; false otherwise
      */
     public boolean isCommandStationConsistPossible();
 
     /**
-     * Does a CS consist require a separate consist address?
+     * Does a command station consist require a separate consist address from
+     * locomotives in consist?
+     *
+     * @return true is command station consist requires separate address; false
+     *         otherwise
      */
     public boolean csConsistNeedsSeperateAddress();
 
     /**
-     * Get an ArrayList object containing the string representation of the
-     * consist addresses we know about.
+     * Get a list of known consist addresses.
+     *
+     * @return list of addresses
      */
-    public ArrayList<DccLocoAddress> getConsistList();
+    public ArrayList<LocoAddress> getConsistList();
 
     /**
      * Translate Error Codes relieved by a consistListener into Strings
+     *
+     * @param errorCode the code
+     * @return the description
      */
     public String decodeErrorCode(int errorCode);
 

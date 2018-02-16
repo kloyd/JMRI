@@ -1,4 +1,3 @@
-// LongAddrVariableValue.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.Color;
@@ -9,6 +8,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
+import javax.annotation.Nonnull;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.text.Document;
@@ -18,17 +18,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Extends VariableValue to represent a NMRA long address
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002, 2016
  *
  */
 public class LongAddrVariableValue extends VariableValue
         implements ActionListener, PropertyChangeListener, FocusListener {
 
-    public LongAddrVariableValue(String name, String comment, String cvName,
+    public LongAddrVariableValue(@Nonnull String name, @Nonnull String comment, @Nonnull String cvName,
             boolean readOnly, boolean infoOnly, boolean writeOnly, boolean opsOnly,
-            String cvNum, String mask, int minVal, int maxVal,
-            HashMap<String, CvValue> v, JLabel status, String stdname, CvValue mHighCV) {
+            @Nonnull String cvNum, @Nonnull String mask, int minVal, int maxVal,
+            @Nonnull HashMap<String, CvValue> v, @Nonnull JLabel status, 
+            @Nonnull String stdname, @Nonnull CvValue mHighCV) {
         super(name, comment, cvName, readOnly, infoOnly, writeOnly, opsOnly, cvNum, mask, v, status, stdname);
         _maxVal = maxVal;
         _minVal = minVal;
@@ -44,28 +44,28 @@ public class LongAddrVariableValue extends VariableValue
         cv.setState(CvValue.FROMFILE);
 
         highCV = mHighCV;
-        if (highCV == null) {
-            log.error("High CV not found in LongAddrVariableValue ctor");
-        }
         highCV.addPropertyChangeListener(this);
         highCV.setState(CvValue.FROMFILE);
     }
 
     CvValue highCV;
 
+    @Override
     public CvValue[] usesCVs() {
         return new CvValue[]{
             _cvMap.get(getCvNum()),
-            _cvMap.get(highCV)};
+            highCV};
     }
 
     /**
      * Provide a user-readable description of the CVs accessed by this variable.
      */
+    @Override
     public String getCvDescription() {
         return "CV" + getCvNum() + " & CV" + (highCV.number());
     }
 
+    @Override
     public void setToolTipText(String t) {
         super.setToolTipText(t);   // do default stuff
         _value.setToolTipText(t);  // set our value
@@ -75,6 +75,7 @@ public class LongAddrVariableValue extends VariableValue
     int _maxVal;
     int _minVal;
 
+    @Override
     public Object rangeVal() {
         return "Long address";
     }
@@ -95,6 +96,7 @@ public class LongAddrVariableValue extends VariableValue
         }
     }
 
+    @Override
     void updatedTextField() {
         if (log.isDebugEnabled()) {
             log.debug("actionPerformed");
@@ -123,6 +125,7 @@ public class LongAddrVariableValue extends VariableValue
     /**
      * ActionListener implementations
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("actionPerformed");
@@ -135,6 +138,7 @@ public class LongAddrVariableValue extends VariableValue
     /**
      * FocusListener implementations
      */
+    @Override
     public void focusGained(FocusEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("focusGained");
@@ -142,6 +146,7 @@ public class LongAddrVariableValue extends VariableValue
         enterField();
     }
 
+    @Override
     public void focusLost(FocusEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("focusLost");
@@ -151,22 +156,27 @@ public class LongAddrVariableValue extends VariableValue
 
     // to complete this class, fill in the routines to handle "Value" parameter
     // and to read/write/hear parameter changes.
+    @Override
     public String getValueString() {
         return _value.getText();
     }
 
+    @Override
     public void setIntValue(int i) {
         setValue(i);
     }
 
+    @Override
     public int getIntValue() {
         return Integer.valueOf(_value.getText()).intValue();
     }
 
+    @Override
     public Object getValueObject() {
         return Integer.valueOf(_value.getText());
     }
 
+    @Override
     public Component getCommonRep() {
         if (getReadOnly()) {
             JLabel r = new JLabel(_value.getText());
@@ -197,6 +207,7 @@ public class LongAddrVariableValue extends VariableValue
     Color _defaultColor;
 
     // implement an abstract member to set colors
+    @Override
     void setColor(Color c) {
         if (c != null) {
             _value.setBackground(c);
@@ -206,6 +217,7 @@ public class LongAddrVariableValue extends VariableValue
         // prop.firePropertyChange("Value", null, null);
     }
 
+    @Override
     public Component getNewRep(String format) {
         return updateRepresentation(new VarTextField(_value.getDocument(), _value.getText(), 5, this));
     }
@@ -219,48 +231,56 @@ public class LongAddrVariableValue extends VariableValue
     /**
      * Notify the connected CVs of a state change from above
      *
-     * @param state
      */
+    @Override
     public void setCvState(int state) {
         (_cvMap.get(getCvNum())).setState(state);
     }
 
+    @Override
     public boolean isChanged() {
         CvValue cv1 = _cvMap.get(getCvNum());
         CvValue cv2 = highCV;
         return (considerChanged(cv1) || considerChanged(cv2));
     }
 
+    @Override
     public void setToRead(boolean state) {
         _cvMap.get(getCvNum()).setToRead(state);
         highCV.setToRead(state);
     }
 
+    @Override
     public boolean isToRead() {
         return _cvMap.get(getCvNum()).isToRead() || highCV.isToRead();
     }
 
+    @Override
     public void setToWrite(boolean state) {
         _cvMap.get(getCvNum()).setToWrite(state);
         highCV.setToWrite(state);
     }
 
+    @Override
     public boolean isToWrite() {
         return _cvMap.get(getCvNum()).isToWrite() || highCV.isToWrite();
     }
 
+    @Override
     public void readChanges() {
         if (isChanged()) {
             readAll();
         }
     }
 
+    @Override
     public void writeChanges() {
         if (isChanged()) {
             writeAll();
         }
     }
 
+    @Override
     public void readAll() {
         if (log.isDebugEnabled()) {
             log.debug("longAddr read() invoked");
@@ -277,6 +297,7 @@ public class LongAddrVariableValue extends VariableValue
         (_cvMap.get(getCvNum())).read(_status);
     }
 
+    @Override
     public void writeAll() {
         if (log.isDebugEnabled()) {
             log.debug("write() invoked");
@@ -297,7 +318,8 @@ public class LongAddrVariableValue extends VariableValue
     }
 
     // handle incoming parameter notification
-    public void propertyChange(java.beans.PropertyChangeEvent e) {
+    @Override
+    public void propertyChange(@Nonnull java.beans.PropertyChangeEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("property changed event - name: "
                     + e.getPropertyName());
@@ -393,15 +415,9 @@ public class LongAddrVariableValue extends VariableValue
     /* Internal class extends a JTextField so that its color is consistent with
      * an underlying variable
      *
-     * @author			Bob Jacobsen   Copyright (C) 2001
-     * @version
+     * @author   Bob Jacobsen   Copyright (C) 2001
      */
     public class VarTextField extends JTextField {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = -5489064948676750746L;
 
         VarTextField(Document doc, String text, int col, LongAddrVariableValue var) {
             super(doc, text, col);
@@ -410,11 +426,13 @@ public class LongAddrVariableValue extends VariableValue
             setBackground(_var._value.getBackground());
             // listen for changes to ourself
             addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     thisActionPerformed(e);
                 }
             });
             addFocusListener(new java.awt.event.FocusListener() {
+                @Override
                 public void focusGained(FocusEvent e) {
                     if (log.isDebugEnabled()) {
                         log.debug("focusGained");
@@ -422,6 +440,7 @@ public class LongAddrVariableValue extends VariableValue
                     enterField();
                 }
 
+                @Override
                 public void focusLost(FocusEvent e) {
                     if (log.isDebugEnabled()) {
                         log.debug("focusLost");
@@ -431,6 +450,7 @@ public class LongAddrVariableValue extends VariableValue
             });
             // listen for changes to original state
             _var.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+                @Override
                 public void propertyChange(java.beans.PropertyChangeEvent e) {
                     originalPropertyChanged(e);
                 }
@@ -454,6 +474,7 @@ public class LongAddrVariableValue extends VariableValue
     }
 
     // clean up connections when done
+    @Override
     public void dispose() {
         if (log.isDebugEnabled()) {
             log.debug("dispose");
@@ -469,6 +490,6 @@ public class LongAddrVariableValue extends VariableValue
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(LongAddrVariableValue.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LongAddrVariableValue.class);
 
 }

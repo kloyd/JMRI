@@ -1,23 +1,20 @@
-// QualifierAdderTest.java
 package jmri.jmrit.symbolicprog;
 
 import java.util.HashMap;
 import javax.swing.JLabel;
 import jmri.progdebugger.ProgDebugger;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.jdom2.DocType;
 import org.jdom2.Document;
 import org.jdom2.Element;
+import org.junit.Assert;
 
 /**
  *
  * @author	Bob Jacobsen, Copyright 2014
- * @version $Revision$
  */
 public class QualifierAdderTest extends TestCase {
 
@@ -44,9 +41,11 @@ public class QualifierAdderTest extends TestCase {
             super(watchedVal, value, relation);
         }
 
+        @Override
         public void setWatchedAvailable(boolean t) {
         }
 
+        @Override
         public boolean currentAvailableState() {
             return true;
         }
@@ -63,10 +62,12 @@ public class QualifierAdderTest extends TestCase {
      */
     protected QualifierAdder processModifierElements(final Element e, final VariableValue v) {
         QualifierAdder qa = new QualifierAdder() {
+            @Override
             protected Qualifier createQualifier(VariableValue var, String relation, String value) {
                 return new ValueQualifier(v, var, Integer.parseInt(value), relation);
             }
 
+            @Override
             protected void addListener(java.beans.PropertyChangeListener qc) {
                 v.addPropertyChangeListener(qc);
             }
@@ -259,7 +260,7 @@ public class QualifierAdderTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", QualifierAdderTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests, including others in the package
@@ -268,9 +269,8 @@ public class QualifierAdderTest extends TestCase {
         return suite;
     }
 
-    static Logger log = LoggerFactory.getLogger(QualifierAdderTest.class.getName());
-
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
         apps.tests.Log4JFixture.setUp();
 
@@ -279,8 +279,7 @@ public class QualifierAdderTest extends TestCase {
         model = new VariableTableModel(
                 new JLabel(""),
                 new String[]{"Name", "Value"},
-                cvtable,
-                new IndexedCvTableModel(new JLabel(""), p)
+                cvtable
         );
 
         // create a JDOM tree with just some elements
@@ -330,8 +329,9 @@ public class QualifierAdderTest extends TestCase {
         v3 = model.findVar("three");
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

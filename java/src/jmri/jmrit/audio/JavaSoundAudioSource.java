@@ -1,4 +1,3 @@
-// JavaSoundAudioSource.java
 package jmri.jmrit.audio;
 
 import javax.sound.sampled.Clip;
@@ -33,7 +32,6 @@ import org.slf4j.LoggerFactory;
  * <p>
  *
  * @author Matthew Harris copyright (c) 2009
- * @version $Revision$
  */
 public class JavaSoundAudioSource extends AbstractAudioSource {
 
@@ -45,7 +43,7 @@ public class JavaSoundAudioSource extends AbstractAudioSource {
     /**
      * Reference to current active AudioListener
      */
-    private AudioListener activeAudioListener = InstanceManager.audioManagerInstance().getActiveAudioFactory().getActiveAudioListener();
+    private AudioListener activeAudioListener = InstanceManager.getDefault(jmri.AudioManager.class).getActiveAudioFactory().getActiveAudioListener();
 
     /**
      * True if we've been initialised
@@ -192,6 +190,14 @@ public class JavaSoundAudioSource extends AbstractAudioSource {
     }
 
     @Override
+    public void setOffset(long offset) {
+        super.setOffset(offset);
+        if (initialised && isBound() && audioChannel != null) {
+            this.clip.setFramePosition((int) offset);
+        }
+    }
+
+    @Override
     public int getState() {
         boolean old = jsState;
         jsState = (this.clip != null ? this.clip.isActive() : false);
@@ -308,7 +314,7 @@ public class JavaSoundAudioSource extends AbstractAudioSource {
     }
 
     @Override
-    protected void cleanUp() {
+    protected void cleanup() {
         if (initialised && isBound()) {
             this.clip.stop();
             this.clip.close();
@@ -365,7 +371,7 @@ public class JavaSoundAudioSource extends AbstractAudioSource {
         // Default value to start with (used for no distance attenuation)
         float currentGain = 1.0f;
 
-        if (InstanceManager.audioManagerInstance().getActiveAudioFactory().isDistanceAttenuated()) {
+        if (InstanceManager.getDefault(jmri.AudioManager.class).getActiveAudioFactory().isDistanceAttenuated()) {
             // Calculate gain of this source using clamped inverse distance
             // attenuation model
 
@@ -418,7 +424,7 @@ public class JavaSoundAudioSource extends AbstractAudioSource {
         }
     }
 
-    private static final Logger log = LoggerFactory.getLogger(JavaSoundAudioSource.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(JavaSoundAudioSource.class);
 
     private static class JavaSoundAudioChannel {
 
@@ -567,8 +573,4 @@ public class JavaSoundAudioSource extends AbstractAudioSource {
             }
         }
     }
-
-    private static final long serialVersionUID = 1L;
 }
-
-/* $(#)JavaSoundAudioSource.java */

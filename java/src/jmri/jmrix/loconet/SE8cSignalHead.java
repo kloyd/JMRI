@@ -1,4 +1,3 @@
-// SE8cSignalHead.java
 package jmri.jmrix.loconet;
 
 import jmri.implementation.DefaultSignalHead;
@@ -33,25 +32,19 @@ import org.slf4j.LoggerFactory;
  * algorithm or these message formats outside of JMRI, please contact Digitrax
  * Inc for separate permission.
  *
- * @author	Bob Jacobsen Copyright (C) 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002
  */
 public class SE8cSignalHead extends DefaultSignalHead implements LocoNetListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6855220608807175722L;
-
     public SE8cSignalHead(int pNumber, String userName) {
         // create systemname
-        super("LH" + pNumber, userName);
+        super("LH" + pNumber, userName); // NOI18N
         init(pNumber);
     }
 
     public SE8cSignalHead(int pNumber) {
         // create systemname
-        super("LH" + pNumber);
+        super("LH" + pNumber); // NOI18N
         init(pNumber);
     }
 
@@ -70,11 +63,13 @@ public class SE8cSignalHead extends DefaultSignalHead implements LocoNetListener
         return mNumber;
     }
 
+    @Override
     public String getSystemName() {
-        return "LH" + getNumber();
+        return "LH" + getNumber(); // NOI18N
     }
 
     // Handle a request to change state by sending a LocoNet command
+    @Override
     protected void updateOutput() {
         // send SWREQ for close
         LocoNetMessage l = new LocoNetMessage(4);
@@ -138,10 +133,11 @@ public class SE8cSignalHead extends DefaultSignalHead implements LocoNetListener
 
     // implementing classes will typically have a function/listener to get
     // updates from the layout, which will then call
-    //		public void firePropertyChange(String propertyName,
-    //						Object oldValue,
-    //						Object newValue)
+    //  public void firePropertyChange(String propertyName,
+    //      Object oldValue,
+    //      Object newValue)
     // _once_ if anything has changed state (or set the commanded state directly)
+    @Override
     public void message(LocoNetMessage l) {
         int oldAppearance = mAppearance;
         // parse message type
@@ -228,10 +224,11 @@ public class SE8cSignalHead extends DefaultSignalHead implements LocoNetListener
         }
         // reach here if the state has updated
         if (oldAppearance != mAppearance) {
-            firePropertyChange("Appearance", Integer.valueOf(oldAppearance), Integer.valueOf(mAppearance));
+            firePropertyChange("Appearance", Integer.valueOf(oldAppearance), Integer.valueOf(mAppearance)); // NOI18N
         }
     }
 
+    @Override
     public void dispose() {
         tc.removeLocoNetListener(~0, this);
     }
@@ -248,9 +245,6 @@ public class SE8cSignalHead extends DefaultSignalHead implements LocoNetListener
         // the "+ 1" in the following converts to throttle-visible numbering
         return (((a2 & 0x0f) * 128) + (a1 & 0x7f) + 1) == mNumber + 1;
     }
-    static Logger log = LoggerFactory.getLogger(SE8cSignalHead.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SE8cSignalHead.class);
 
 }
-
-
-/* @(#)SE8cSignalHead.java */

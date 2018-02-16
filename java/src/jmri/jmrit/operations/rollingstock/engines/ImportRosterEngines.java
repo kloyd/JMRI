@@ -1,10 +1,10 @@
-// ImportRosterEngines.java
 package jmri.jmrit.operations.rollingstock.engines;
 
 import java.text.MessageFormat;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import jmri.InstanceManager;
 import jmri.jmrit.operations.setup.Control;
 import jmri.jmrit.roster.Roster;
 import jmri.jmrit.roster.RosterEntry;
@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ImportRosterEngines extends Thread {
 
-    EngineManager manager = EngineManager.instance();
+    EngineManager manager = InstanceManager.getDefault(EngineManager.class);
     private static String defaultEngineLength = Bundle.getMessage("engineDefaultLength");
     private static String defaultEngineType = Bundle.getMessage("engineDefaultType");
     private static String defaultEngineHp = Bundle.getMessage("engineDefaultHp");
@@ -28,6 +28,7 @@ public class ImportRosterEngines extends Thread {
     javax.swing.JLabel textId = new javax.swing.JLabel();
 
     // we use a thread so the status frame will work!
+    @Override
     public void run() {
 
         // create a status frame
@@ -47,7 +48,7 @@ public class ImportRosterEngines extends Thread {
         // Now get engines from the JMRI roster 
         int enginesAdded = 0;
 
-        List<RosterEntry> engines = Roster.instance().matchingList(null, null, null, null, null, null, null);
+        List<RosterEntry> engines = Roster.getDefault().matchingList(null, null, null, null, null, null, null);
 
         for (RosterEntry re : engines) {
             // add engines that have a road name and number
@@ -103,6 +104,6 @@ public class ImportRosterEngines extends Thread {
         }
     }
 
-    static Logger log = LoggerFactory
-            .getLogger(ImportRosterEngines.class.getName());
+    private final static Logger log = LoggerFactory
+            .getLogger(ImportRosterEngines.class);
 }

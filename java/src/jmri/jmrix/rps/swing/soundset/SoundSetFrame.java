@@ -1,23 +1,20 @@
-// SoundSetFrame.java
 package jmri.jmrix.rps.swing.soundset;
 
 import javax.swing.BoxLayout;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * Frame for controlling sound-speed calculation for RPS system.
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
  */
 public class SoundSetFrame extends jmri.util.JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 6079518509404555599L;
+    RpsSystemConnectionMemo memo = null;
 
-    public SoundSetFrame() {
+    public SoundSetFrame(RpsSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
         setTitle(title());
     }
 
@@ -27,6 +24,7 @@ public class SoundSetFrame extends jmri.util.JmriJFrame {
 
     SoundSetPane pane;
 
+    @Override
     public void dispose() {
         if (pane != null) {
             pane.dispose();
@@ -35,6 +33,7 @@ public class SoundSetFrame extends jmri.util.JmriJFrame {
         super.dispose();
     }
 
+    @Override
     public void initComponents() {
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 

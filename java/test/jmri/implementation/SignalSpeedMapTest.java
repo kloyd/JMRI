@@ -1,21 +1,19 @@
-// SignalSpeedMapTest.java
 package jmri.implementation;
 
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the SignalSpeedMap class
  *
  * @author Bob Jacobsen Copyright (C) 2015
- * @version $Revision$
  */
 public class SignalSpeedMapTest extends TestCase {
 
-    public void testLoadMap() {
-        Assert.assertNotNull(SignalSpeedMap.getMap());
+    public void testLoadDefaultMap() {
+        Assert.assertNotNull(jmri.InstanceManager.getDefault(SignalSpeedMap.class));
     }
     
     static final String[] speeds = new String[]{
@@ -32,7 +30,7 @@ public class SignalSpeedMapTest extends TestCase {
         "Stop"
     };
 
-    SignalSpeedMap map = SignalSpeedMap.getMap();
+    SignalSpeedMap map = new SignalSpeedMap();
     
     /**
      * To avoid breaking signal systems, speed definitions should
@@ -104,15 +102,13 @@ public class SignalSpeedMapTest extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        jmri.util.JUnitUtil.resetInstanceManager();
-        super.tearDown();
-        apps.tests.Log4JFixture.tearDown();
+        jmri.util.JUnitUtil.tearDown();
     }
 
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {SignalSpeedMapTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

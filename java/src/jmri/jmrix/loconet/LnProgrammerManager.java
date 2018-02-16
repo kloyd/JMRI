@@ -1,19 +1,17 @@
-/* LnProgrammerManager.java */
 package jmri.jmrix.loconet;
 
+import java.util.ArrayList;
+import java.util.List;
 import jmri.AddressedProgrammer;
 import jmri.ProgrammingMode;
 import jmri.managers.DefaultProgrammerManager;
 
-import java.util.*;
-
 /**
  * Extend DefaultProgrammerManager to provide ops mode programmers on LocoNet
  *
- * @see jmri.ProgrammerManager
- * @author	Bob Jacobsen Copyright (C) 2002
- * @version	$Revision$
- */
+ * @see jmri.managers.DefaultProgrammerManager
+ * @author Bob Jacobsen Copyright (C) 2002
+  */
 public class LnProgrammerManager extends DefaultProgrammerManager {
 
     //private Programmer mProgrammer;
@@ -31,14 +29,17 @@ public class LnProgrammerManager extends DefaultProgrammerManager {
      *
      * @return true
      */
+    @Override
     public boolean isAddressedModePossible() {
         return true;
     }
 
+    @Override
     public AddressedProgrammer getAddressedProgrammer(boolean pLongAddress, int pAddress) {
         return new LnOpsModeProgrammer(mSlotManager, memo, pAddress, pLongAddress);
     }
 
+    @Override
     public AddressedProgrammer reserveAddressedProgrammer(boolean pLongAddress, int pAddress) {
         return null;
     }
@@ -54,13 +55,10 @@ public class LnProgrammerManager extends DefaultProgrammerManager {
     @Override
     public List<ProgrammingMode> getDefaultModes() {
         List<ProgrammingMode> ret = new ArrayList<ProgrammingMode>();
-        ret.add(DefaultProgrammerManager.OPSBYTEMODE);
+        ret.add(ProgrammingMode.OPSBYTEMODE);
         ret.add(LOCONETSV2MODE);
         ret.add(LOCONETSV1MODE); // the show in interface in order listed here
         return ret;
     }
 
 }
-
-
-/* @(#)DefaultProgrammerManager.java */

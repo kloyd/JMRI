@@ -3,8 +3,6 @@ package jmri.jmrix.loconet.loconetovertcp.configurexml;
 import jmri.jmrix.configurexml.AbstractNetworkConnectionConfigXml;
 import jmri.jmrix.loconet.loconetovertcp.ConnectionConfig;
 import jmri.jmrix.loconet.loconetovertcp.LnTcpDriverAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistance of layout connections by persistening the
@@ -18,7 +16,6 @@ import org.slf4j.LoggerFactory;
  * attribute in the XML.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003
- * @version $Revision$
  */
 public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
 
@@ -26,10 +23,12 @@ public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
         super();
     }
 
+    @Override
     protected void getInstance() {
         adapter = new LnTcpDriverAdapter();
     }
 
+    @Override
     protected void getInstance(Object object) {
         adapter = ((ConnectionConfig) object).getAdapter();
     }
@@ -38,8 +37,5 @@ public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

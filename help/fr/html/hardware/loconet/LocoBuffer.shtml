@@ -1,34 +1,25 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<!-- $Id$ -->
-<!-- Updated  by Blorec Herv&#233; 2013-09-13-->
+<!-- Updated  by Blorec Herv&#233; 2017-01-29-->
 <html lang="fr">
 <head>
- <TITLE>
-      JMRI Hardware Guide: Connecting a LocoBuffer to LocoNet
- </TITLE>
-    <META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
-    <META content="Bob Jacobsen" name=Author>
-    <META name="keywords" content="Digitrax Chief DCS Command Station MS-100 LocoBuffer java model railroad JMRI install windows">
+ <title>JMRI Hardware Support - LocoBuffer to LocoNet&reg;</title>
+    <meta name="Author" content="Bob Jacobsen">
+    <meta name="keywords" content="Digitrax Chief DCS Command Station MS-100 LocoBuffer java model railroad JMRI install windows">
 
 <!-- Style -->
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-<LINK REL="stylesheet" TYPE="text/css" HREF="/css/default.css"
-	MEDIA="screen">
-<LINK REL="stylesheet" TYPE="text/css" HREF="/css/print.css"
-	MEDIA="print">
-<LINK REL="icon" HREF="/images/jmri.ico" TYPE="image/png">
-<LINK REL="home" TITLE="Home" HREF="/">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" href="/css/default.css" media="screen">
+<link rel="stylesheet" type="text/css" href="/css/print.css" media="print">
+<link rel="icon" href="/images/jmri.ico" type="image/png">
+<link rel="home" title="Home" href="/">
 <!-- /Style -->
-</HEAD>
+</head>
 
-<BODY>
+<body>
 <!--#include virtual="/Header" -->
   <div class="nomenu" id="mBody">
-    <div id="mainContent">
-
-      <h1> 
-     Guide Mat&#233;riel JMRI: Connecter un LocoBuffer &#224; LocoNet&reg;
-      </h1>
+<div id="mainContent">
+      <h1> Support Mat&#233;riel JMRI: Connecter un LocoBuffer &#224; LocoNet&reg; </h1>
 
 
 <p>
@@ -90,8 +81,8 @@ pas &#234;tre un probl&#232;me pour vous. </p>
 
 	  <p>Certaines versions de Windows, en particulier Win2000, ne peut pas g&#233;rer
  la liaison LocoBuffer correctement. Vous verrez 
-DecoderPro ou JmriDemo &#234;tre incapable de communiquer avec la
-centrale de commande, m&#234;me si vous pouvez voir le trafic avec la LocoNet sur le moniteur
+ DecoderPro ou PanelPro &#234;tre incapable de communiquer avec la
+ centrale de commande, m&#234;me si vous pouvez voir le trafic avec la LocoNet sur le moniteur
 LocoNet . Pour r&#233;soudre ce probl&#232;me, essayez d'ouvrir les pr&#233;f&#233;rences et 
 s&#233;lectionnez l'option "aucun contr&#244;le de flux", cliquez sur Enregistrer, puis quittez et
 red&#233;marrer le programme. Notez que ce probl&#232;me est sp&#233;cifique &#224;
@@ -117,8 +108,6 @@ est d&#233;j&#224; connect&#233;e
  
 <p>LocoNet&reg; est une marque d&#233;pos&#233;e de <a href="http://www.digitrax.com">Digitrax, Inc.</a></p>
     </div>
-  </div>	  
-
-<!--#include virtual="/Footer" -->
+  </div><!--#include virtual="/Footer" -->
 </body>
 </html>

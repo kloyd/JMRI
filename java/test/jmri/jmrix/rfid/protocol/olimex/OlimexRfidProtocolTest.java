@@ -4,8 +4,6 @@ import jmri.jmrix.AbstractMRReply;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tests for the OlimexRfidProtocol class
@@ -116,7 +114,7 @@ public class OlimexRfidProtocolTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", OlimexRfidProtocolTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -126,16 +124,16 @@ public class OlimexRfidProtocolTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() throws Exception {
         apps.tests.Log4JFixture.setUp();
         super.setUp();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         super.tearDown();
         apps.tests.Log4JFixture.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(OlimexRfidProtocolTest.class.getName());
 
 }

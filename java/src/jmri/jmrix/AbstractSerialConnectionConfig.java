@@ -1,7 +1,6 @@
-// AbstractSerialConnectionConfig.java
 package jmri.jmrix;
 
-import gnu.io.CommPortIdentifier;
+import apps.startup.StartupActionModelUtil;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -11,10 +10,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Vector;
@@ -25,18 +22,18 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
+import jmri.InstanceManager;
 import jmri.util.PortNameMapper;
 import jmri.util.PortNameMapper.SerialPortFriendlyName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import purejavacomm.CommPortIdentifier;
 
 /**
  * Abstract base class for common implementation of the ConnectionConfig
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2003
- * @version	$Revision$
  */
-//
 abstract public class AbstractSerialConnectionConfig extends AbstractConnectionConfig {
 
     /**
@@ -59,7 +56,7 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
     }
 
     /**
-     * Ctor for a functional object with no prexisting adapter. Expect that the
+     * Ctor for a functional object with no preexisting adapter. Expect that the
      * subclass setInstance() will fill the adapter member.
      */
     public AbstractSerialConnectionConfig() {
@@ -92,8 +89,8 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (!adapter.getSystemConnectionMemo().setSystemPrefix(systemPrefixField.getText())) {
-                        JOptionPane.showMessageDialog(null, "System Prefix " + systemPrefixField.getText() + " is already assigned");
-                        systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+                        JOptionPane.showMessageDialog(null, Bundle.getMessage("ConnectionPrefixDialog", systemPrefixField.getText()));
+                        systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
                     }
                 }
             });
@@ -101,8 +98,8 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
                 @Override
                 public void focusLost(FocusEvent e) {
                     if (!adapter.getSystemConnectionMemo().setSystemPrefix(systemPrefixField.getText())) {
-                        JOptionPane.showMessageDialog(null, "System Prefix " + systemPrefixField.getText() + " is already assigned");
-                        systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+                        JOptionPane.showMessageDialog(null, Bundle.getMessage("ConnectionPrefixDialog", systemPrefixField.getText()));
+                        systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
                     }
                 }
 
@@ -114,7 +111,7 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (!adapter.getSystemConnectionMemo().setUserName(connectionNameField.getText())) {
-                        JOptionPane.showMessageDialog(null, "Connection Name " + connectionNameField.getText() + " is already assigned");
+                        JOptionPane.showMessageDialog(null, Bundle.getMessage("ConnectionNameDialog", connectionNameField.getText()));
                         connectionNameField.setText(adapter.getSystemConnectionMemo().getUserName());
                     }
                 }
@@ -123,7 +120,7 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
                 @Override
                 public void focusLost(FocusEvent e) {
                     if (!adapter.getSystemConnectionMemo().setUserName(connectionNameField.getText())) {
-                        JOptionPane.showMessageDialog(null, "Connection Name " + connectionNameField.getText() + " is already assigned");
+                        JOptionPane.showMessageDialog(null, Bundle.getMessage("ConnectionNameDialog", connectionNameField.getText()));
                         connectionNameField.setText(adapter.getSystemConnectionMemo().getUserName());
                     }
                 }
@@ -148,11 +145,8 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
         for (String i : options.keySet()) {
             final String item = i;
             if (options.get(i).getComponent() instanceof JComboBox) {
-                ((JComboBox<?>) options.get(i).getComponent()).addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        adapter.setOptionState(item, options.get(item).getItem());
-                    }
+                ((JComboBox<?>) options.get(i).getComponent()).addActionListener((ActionEvent e) -> {
+                    adapter.setOptionState(item, options.get(item).getItem());
                 });
             }
         }
@@ -169,15 +163,15 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
         }
 
         if (adapter.getSystemConnectionMemo() != null && !adapter.getSystemConnectionMemo().setSystemPrefix(systemPrefixField.getText())) {
-            systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+            systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
             connectionNameField.setText(adapter.getSystemConnectionMemo().getUserName());
         }
     }
 
     jmri.UserPreferencesManager p = jmri.InstanceManager.getDefault(jmri.UserPreferencesManager.class);
-    protected JComboBox<String> portBox = new JComboBox<String>();
+    protected JComboBox<String> portBox = new JComboBox<>();
     protected JLabel portBoxLabel;
-    protected JComboBox<String> baudBox = new JComboBox<String>();
+    protected JComboBox<String> baudBox = new JComboBox<>();
     protected JLabel baudBoxLabel;
     protected String[] baudList;
     protected jmri.jmrix.SerialPortAdapter adapter = null;
@@ -219,10 +213,12 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
             Vector<String> v2 = getPortNames();
             if (v2.equals(originalList)) {
                 log.debug("List of valid Ports has not changed, therefore we will not refresh the port list");
+                // but we will insist on setting the current value into the port
+                adapter.setPort(PortNameMapper.getPortFromName((String) portBox.getSelectedItem()));
                 return;
             }
             log.debug("List of valid Ports has been changed, therefore we will refresh the port list");
-            v = new Vector<String>();
+            v = new Vector<>();
             v.setSize(v2.size());
             Collections.copy(v, v2);
         }
@@ -235,7 +231,7 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
         /* as we make amendments to the list of port in vector v, we keep a copy of it before
          modification, this copy is then used to validate against any changes in the port lists.
          */
-        originalList = new Vector<String>();
+        originalList = new Vector<>();
         originalList.setSize(v.size());
         Collections.copy(originalList, v);
         if (portBox.getActionListeners().length > 0) {
@@ -245,10 +241,10 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
         log.debug("getting fresh list of available Serial Ports");
 
         if (v.isEmpty()) {
-            v.add(0, rb.getString("noPortsFound"));
+            v.add(0, Bundle.getMessage("noPortsFound"));
         }
         String portName = adapter.getCurrentPortName();
-        if (portName != null && !portName.equals(rb.getString("noneSelected")) && !portName.equals(rb.getString("noPortsFound"))) {
+        if (portName != null && !portName.equals(Bundle.getMessage("noneSelected")) && !portName.equals(Bundle.getMessage("noPortsFound"))) {
             if (!v.contains(portName)) {
                 v.add(0, portName);
                 invalidPort = portName;
@@ -258,31 +254,38 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
             }
         } else {
             if (!v.contains(portName)) {
-                v.add(0, rb.getString("noneSelected"));
+                v.add(0, Bundle.getMessage("noneSelected"));
             } else if (p.getComboBoxLastSelection(adapter.getClass().getName() + ".port") == null) {
-                v.add(0, rb.getString("noneSelected"));
+                v.add(0, Bundle.getMessage("noneSelected"));
             }
         }
         updateSerialPortNames(portName, portBox, v);
-        if (portName == null || portName.equals(rb.getString("noneSelected")) || portName.equals(rb.getString("noPortsFound"))) {
+
+        // If there's no name selected, select one that seems most likely
+        boolean didSetName = false;
+        if (portName == null || portName.equals(Bundle.getMessage("noneSelected")) || portName.equals(Bundle.getMessage("noPortsFound"))) {
             for (int i = 0; i < portBox.getItemCount(); i++) {
-                outerloop:
                 for (String friendlyName : getPortFriendlyNames()) {
                     if ((portBox.getItemAt(i)).contains(friendlyName)) {
                         portBox.setSelectedIndex(i);
                         adapter.setPort(PortNameMapper.getPortFromName(portBox.getItemAt(i)));
-                        break outerloop;
+                        didSetName = true;
+                        break;
                     }
                 }
             }
-        }
-
-        portBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String port = PortNameMapper.getPortFromName((String) portBox.getSelectedItem());
-                adapter.setPort(port);
+            // if didn't set name, don't leave it hanging
+            if (!didSetName) {
+                portBox.setSelectedIndex(0);
             }
+        }
+        // finally, insist on synchronization of selected port name with underlying port
+        adapter.setPort(PortNameMapper.getPortFromName((String) portBox.getSelectedItem()));
+
+        // add a listener for later changes
+        portBox.addActionListener((ActionEvent e) -> {
+            String port = PortNameMapper.getPortFromName((String) portBox.getSelectedItem());
+            adapter.setPort(port);
         });
     }
 
@@ -296,16 +299,17 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
         if (!init) {
             //Build up list of options
             String[] optionsAvailable = adapter.getOptions();
-            options = new Hashtable<String, Option>();
+            options.clear();
             for (String i : optionsAvailable) {
-                JComboBox<String> opt = new JComboBox<String>(adapter.getOptionChoices(i));
+                JComboBox<String> opt = new JComboBox<>(adapter.getOptionChoices(i));
                 opt.setSelectedItem(adapter.getOptionState(i));
                 // check that it worked
                 if (!adapter.getOptionState(i).equals(opt.getSelectedItem())) {
                     // no, set 1st option choice
                     opt.setSelectedIndex(0);
-                    adapter.setOptionState(i, (String) opt.getSelectedItem());
+                    // log before setting new value to show old value
                     log.warn("Loading found invalid value for option {}, found \"{}\", setting to \"{}\"", i, adapter.getOptionState(i), opt.getSelectedItem());
+                    adapter.setOptionState(i, (String) opt.getSelectedItem());
                 }
                 options.put(i, new Option(adapter.getOptionDisplayName(i), opt, adapter.isOptionAdvanced(i)));
             }
@@ -324,14 +328,14 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
                 }
             }
         } catch (java.lang.UnsatisfiedLinkError e1) {
-            log.error("UnsatisfiedLinkError - the gnu.io library has not been installed properly");
+            log.error("UnsatisfiedLinkError - the serial library has not been installed properly");
             log.error("java.library.path=" + System.getProperty("java.library.path", "<unknown>"));
             javax.swing.JOptionPane.showMessageDialog(null, "Failed to load comm library.\nYou have to fix that before setting preferences.");
             return;
         }
 
         if (adapter.getSystemConnectionMemo() != null) {
-            systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+            systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
             connectionNameField.setText(adapter.getSystemConnectionMemo().getUserName());
             NUMOPTIONS = NUMOPTIONS + 2;
         }
@@ -357,28 +361,24 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
         }
 
         if (baudList.length > 1) {
-            baudBox.setToolTipText("Must match the baud rate setting of your hardware");
+            baudBox.setToolTipText(Bundle.getMessage("TipBaudRateMatch"));
             baudBox.setEnabled(true);
         } else {
-            baudBox.setToolTipText("The baud rate is fixed for this protocol");
+            baudBox.setToolTipText(Bundle.getMessage("TipBaudRateFixed"));
             baudBox.setEnabled(false);
         }
 
         NUMOPTIONS = NUMOPTIONS + options.size();
 
-        portBoxLabel = new JLabel("Serial port: ");
+        portBoxLabel = new JLabel(Bundle.getMessage("SerialPortLabel"));
 
-        baudBoxLabel = new JLabel("Baud rate:");
+        baudBoxLabel = new JLabel(Bundle.getMessage("BaudRateLabel"));
         baudBox.setSelectedItem(adapter.getCurrentBaudRate());
         showAdvanced.setFont(showAdvanced.getFont().deriveFont(9f));
         showAdvanced.setForeground(Color.blue);
-        showAdvanced.addItemListener(
-                new ItemListener() {
-                    @Override
-                    public void itemStateChanged(ItemEvent e) {
-                        showAdvancedItems();
-                    }
-                });
+        showAdvanced.addItemListener((ItemEvent e) -> {
+            showAdvancedItems();
+        });
         showAdvancedItems();
         init = false;       // need to reload action listeners
         checkInitDone();
@@ -548,11 +548,6 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
     class ComboBoxRenderer extends JLabel
             implements ListCellRenderer<String> {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 3617752100442828216L;
-
         public ComboBoxRenderer() {
             setHorizontalAlignment(LEFT);
             setVerticalAlignment(CENTER);
@@ -571,7 +566,7 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
                 boolean isSelected,
                 boolean cellHasFocus) {
 
-            String displayName = name.toString();
+            String displayName = name;
             setOpaque(index > -1);
             setForeground(Color.black);
             list.setSelectionForeground(Color.black);
@@ -594,6 +589,15 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
         }
     }
 
+    /**
+     * Handle friendly port names. Note that this
+     * changes the selection in portCombo, so
+     * that should be tracked after this returns.
+     *
+     * @param portName The currently-selected port name
+     * @param portCombo The combo box that's displaying the available ports
+     * @param portList The list of valid (unfriendly) port names
+     */
     @SuppressWarnings("UseOfObsoleteCollectionType")
     protected synchronized static void updateSerialPortNames(String portName, JComboBox<String> portCombo, Vector<String> portList) {
         for (Entry<String, SerialPortFriendlyName> en : PortNameMapper.getPortNameMap().entrySet()) {
@@ -612,19 +616,18 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
                 portCombo.setSelectedIndex(i);
             }
         }
-
     }
 
     @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
     protected Vector<String> getPortNames() {
         //reloadDriver(); // Refresh the list of communication ports
         // first, check that the comm package can be opened and ports seen
-        Vector<String> portNameVector = new Vector<String>();
+        Vector<String> portNameVector = new Vector<>();
         Enumeration<CommPortIdentifier> portIDs = CommPortIdentifier.getPortIdentifiers();
         // find the names of suitable ports
         while (portIDs.hasMoreElements()) {
             CommPortIdentifier id = portIDs.nextElement();
-            // filter out line printers 
+            // filter out line printers
             if (id.getPortType() != CommPortIdentifier.PORT_PARALLEL) // accumulate the names in a vector
             {
                 portNameVector.addElement(id.getName());
@@ -645,8 +648,7 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
 
     /**
      * This is purely here for systems that do not implement the
-     * SystemConnectionMemo Acela, CAN BUS, CMRI, Grapevine, QSI, Zimo & RPS and
-     * can be removed one they have been migrated
+     * SystemConnectionMemo and can be removed once they have been migrated.
      *
      * @return Resource bundle for action model
      */
@@ -655,38 +657,39 @@ abstract public class AbstractSerialConnectionConfig extends AbstractConnectionC
     }
 
     protected final void addToActionList() {
-        apps.CreateButtonModel bm = jmri.InstanceManager.getDefault(apps.CreateButtonModel.class);
-        ResourceBundle rb = getActionModelResourceBundle();
-        if (rb == null || bm == null) {
+        StartupActionModelUtil util = InstanceManager.getNullableDefault(StartupActionModelUtil.class);
+        ResourceBundle bundle = getActionModelResourceBundle();
+        if (bundle == null || util == null) {
             return;
         }
-        Enumeration<String> e = rb.getKeys();
+        Enumeration<String> e = bundle.getKeys();
         while (e.hasMoreElements()) {
             String key = e.nextElement();
             try {
-                bm.addAction(key, rb.getString(key));
+                util.addAction(key, bundle.getString(key));
             } catch (ClassNotFoundException ex) {
-                log.error("Did not find class " + key);
+                log.error("Did not find class \"{}\"", key);
             }
         }
     }
 
     protected void removeFromActionList() {
-        apps.CreateButtonModel bm = jmri.InstanceManager.getDefault(apps.CreateButtonModel.class);
-        ResourceBundle rb = getActionModelResourceBundle();
-        if (rb == null || bm == null) {
+        StartupActionModelUtil util = InstanceManager.getNullableDefault(StartupActionModelUtil.class);
+        ResourceBundle bundle = getActionModelResourceBundle();
+        if (bundle == null || util == null) {
             return;
         }
-        Enumeration<String> e = rb.getKeys();
+        Enumeration<String> e = bundle.getKeys();
         while (e.hasMoreElements()) {
             String key = e.nextElement();
             try {
-                bm.removeAction(key);
+                util.removeAction(key);
             } catch (ClassNotFoundException ex) {
-                log.error("Did not find class " + key);
+                log.error("Did not find class \"{}\"", key);
             }
         }
     }
 
-    final static protected Logger log = LoggerFactory.getLogger(AbstractSerialConnectionConfig.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractSerialConnectionConfig.class);
+
 }

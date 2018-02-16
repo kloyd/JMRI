@@ -1,4 +1,3 @@
-// SerialLight.java
 package jmri.jmrix.grapevine;
 
 import jmri.implementation.AbstractLight;
@@ -13,22 +12,19 @@ import org.slf4j.LoggerFactory;
  *
  * @author Dave Duchamp Copyright (C) 2004
  * @author Bob Jacobsen Copyright (C) 2006, 2007, 2008
- * @version $Revision$
  */
 public class SerialLight extends AbstractLight {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -1633282673542762421L;
+    private GrapevineSystemConnectionMemo memo = null;
 
     /**
      * Create a Light object, with only system name.
      * <P>
      * 'systemName' was previously validated in SerialLightManager
      */
-    public SerialLight(String systemName) {
+    public SerialLight(String systemName,GrapevineSystemConnectionMemo _memo) {
         super(systemName);
+        memo = _memo;
         // Initialize the Light
         initializeLight(systemName);
     }
@@ -38,8 +34,9 @@ public class SerialLight extends AbstractLight {
      * <P>
      * 'systemName' was previously validated in SerialLightManager
      */
-    public SerialLight(String systemName, String userName) {
+    public SerialLight(String systemName, String userName,GrapevineSystemConnectionMemo _memo) {
         super(systemName, userName);
+        memo = _memo;
         initializeLight(systemName);
     }
 
@@ -71,8 +68,9 @@ public class SerialLight extends AbstractLight {
      * SerialNode), a Transmit packet will be sent before this Node is next
      * polled.
      */
+    @Override
     protected void doNewState(int oldState, int newState) {
-        SerialNode mNode = SerialAddress.getNodeFromSystemName(getSystemName());
+        SerialNode mNode = SerialAddress.getNodeFromSystemName(getSystemName(),memo.getTrafficController());
         if (mNode != null) {
             if (newState == ON) {
                 sendMessage(true);
@@ -85,7 +83,7 @@ public class SerialLight extends AbstractLight {
     }
 
     protected void sendMessage(boolean on) {
-        SerialNode tNode = SerialAddress.getNodeFromSystemName(getSystemName());
+        SerialNode tNode = SerialAddress.getNodeFromSystemName(getSystemName(),memo.getTrafficController());
         if (tNode == null) {
             // node does not exist, ignore call
             log.error("Can't find node for " + getSystemName() + ", command ignored");
@@ -117,7 +115,5 @@ public class SerialLight extends AbstractLight {
         SerialTrafficController.instance().sendSerialMessage(m, null);
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialLight.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialLight.class);
 }
-
-/* @(#)SerialLight.java */

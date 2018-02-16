@@ -1,19 +1,19 @@
-// RosterTableModelTest.java
 package jmri.jmrit.roster.swing;
 
+import jmri.InstanceManager;
 import jmri.jmrit.roster.Roster;
 import jmri.jmrit.roster.RosterEntry;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.jdom2.Element;
+import org.junit.Assert;
 
 /**
  * Tests for the roster.swing.RosterTableModel class.
  *
  * @author	Bob Jacobsen Copyright (C) 2009
- * @version $Revision$
  */
 public class RosterTableModelTest extends TestCase {
 
@@ -56,11 +56,13 @@ public class RosterTableModelTest extends TestCase {
     static int NENTRIES = 3;
     static int NKEYS = 4;
 
+    @Override
     public void setUp() {
         apps.tests.Log4JFixture.setUp();
 
         // Create empty test instance
-        Roster.installNullInstance();
+        InstanceManager.reset(Roster.class);
+        InstanceManager.setDefault(Roster.class, new Roster());
 
         // first entry
         Element e;
@@ -85,10 +87,11 @@ public class RosterTableModelTest extends TestCase {
                 ); // end create element
 
         r = new RosterEntry(e) {
+            @Override
             protected void warnShortLong(String s) {
             }
         };
-        Roster.instance().addEntry(r);
+        Roster.getDefault().addEntry(r);
         r.putAttribute("key a", "value 1");
 
         e = new org.jdom2.Element("locomotive")
@@ -109,10 +112,11 @@ public class RosterTableModelTest extends TestCase {
                 ); // end create element
 
         r = new RosterEntry(e) {
+            @Override
             protected void warnShortLong(String s) {
             }
         };
-        Roster.instance().addEntry(r);
+        Roster.getDefault().addEntry(r);
         r.putAttribute("key a", "value 11");
         r.putAttribute("key b", "value 12");
         r.putAttribute("key c", "value 13");
@@ -136,10 +140,11 @@ public class RosterTableModelTest extends TestCase {
                 ); // end create element
 
         r = new RosterEntry(e) {
+            @Override
             protected void warnShortLong(String s) {
             }
         };
-        Roster.instance().addEntry(r);
+        Roster.getDefault().addEntry(r);
 
     }
 
@@ -151,7 +156,7 @@ public class RosterTableModelTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", RosterTableModelTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -161,8 +166,9 @@ public class RosterTableModelTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

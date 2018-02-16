@@ -1,4 +1,3 @@
-// PrintDecoderListAction.java
 package jmri.jmrit.decoderdefn;
 
 import java.awt.Frame;
@@ -7,6 +6,7 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import jmri.InstanceManager;
 import jmri.Version;
 import jmri.util.FileUtil;
 import jmri.util.davidflanagan.HardcopyWriter;
@@ -19,16 +19,10 @@ import org.slf4j.LoggerFactory;
  * This uses the older style printing, for compatibility with Java 1.1.8 in
  * Macintosh MRJ
  *
- * @author	Bob Jacobsen Copyright (C) 2003
+ * @author Bob Jacobsen Copyright (C) 2003
  * @author Dennis Miller Copyright (C) 2005
- * @version $Revision$
  */
 public class PrintDecoderListAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4693793673785831632L;
 
     public PrintDecoderListAction(String actionName, Frame frame, boolean preview) {
         super(actionName);
@@ -45,6 +39,7 @@ public class PrintDecoderListAction extends AbstractAction {
      */
     boolean isPreview;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         // obtain a HardcopyWriter to do this
@@ -65,7 +60,7 @@ public class PrintDecoderListAction extends AbstractAction {
         String lastMfg = "";
         String lastFamily = "";
 
-        DecoderIndexFile f = DecoderIndexFile.instance();
+        DecoderIndexFile f = InstanceManager.getDefault(DecoderIndexFile.class);
         List<DecoderFile> l = f.matchingDecoderList(null, null, null, null, null, null); // take all
         int i = -1;
         log.debug("Roster list size: " + l.size());
@@ -116,5 +111,5 @@ public class PrintDecoderListAction extends AbstractAction {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(PrintDecoderListAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PrintDecoderListAction.class);
 }

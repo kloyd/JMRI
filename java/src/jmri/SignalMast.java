@@ -1,31 +1,28 @@
-// SignalMast.java
 package jmri;
 
 import java.util.Vector;
+import javax.annotation.Nonnull;
 
 /**
  * Represent a signal mast. A signal mast is one or more signal heads that are
  * treated as a single signal. (Imagine several heads attached to a single mast,
  * though other implementations are possible)
  * <P>
- * A mast presents an Aspect, as that's a composite of the appearance of the
+ * A mast presents an Aspect, as that's a composite of the appearance(s) of the
  * entire signal.
  * <P>
  * This class has three bound parameters:
  * <DL>
- * <DT>aspect<DD>The specific aspect being shown.
+ * <DT>Aspect<DD>The specific aspect being shown.
  * <p>
  * Aspects are named by a user defined String name.
- *
- * <DT>lit<DD>Whether the mast's lamps are lit or left dark.
- * <P>
+ * <DT>Lit<DD>Whether the mast's lamps are lit or left dark.
  * This differs from the DARK color defined for the appearance parameter, in
  * that it's independent of that. Lit is intended to allow you to extinquish a
  * signal mast for approach lighting, while still allowing it's color to be set
  * to a definite value for e.g. display on a panel or evaluation in higher level
  * logic.
- *
- * <DT>held<DD>Whether the mast's lamps should be forced to a specific aspect,
+ * <DT>Held<DD>Whether the mast's lamps should be forced to a specific aspect,
  * e.g. Stop, in higher-level logic.
  * <P>
  * For use in signaling systems, this is a convenient way of storing whether a
@@ -47,26 +44,33 @@ import java.util.Vector;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  *
- * @author	Bob Jacobsen Copyright (C) 2002, 2008
- * @author	Pete Cressman Copyright (C) 2009
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002, 2008
+ * @author Pete Cressman Copyright (C) 2009
  */
-public interface SignalMast extends NamedBean {
+public interface SignalMast extends NamedBean {  // to eventually be Signal
 
     /**
      * Set aspect to a valid name in the current signal system definition.
      *
+     * @param aspect the new aspect shown
      * @throws IllegalArgumentException if not a valid aspect name
      */
     public void setAspect(String aspect);
 
     /**
-     * Get current aspect name. This is a bound property.
+     * Get current aspect name. Changes to this property can be listened to
+     * using the property {@literal Aspect}.
      *
-     * @return null if not yet set
+     * @return the current aspect or null if not set
      */
     public String getAspect();
 
+    /**
+     * Get an alphabetically sorted list of valid aspects that have not been disabled.
+     *
+     * @return sorted list of valid aspects; may be empty
+     */
+    @Nonnull
     public Vector<String> getValidAspects();
 
     public SignalSystem getSignalSystem();
@@ -74,17 +78,22 @@ public interface SignalMast extends NamedBean {
     public SignalAppearanceMap getAppearanceMap();
 
     /**
-     * Lit is a bound parameter. It controls whether the signal mast's lamps are
-     * lit or left dark.
+     * Get if signal mast is lit or dark. Changes to this property can be
+     * listened to using the property {@literal Lit}.
+     *
+     * @return true if lit; false if dark
      */
     public boolean getLit();
 
     public void setLit(boolean newLit);
 
     /**
-     * Held is a bound parameter. It controls what mechanisms can control the
-     * mast's appearance. The actual semantics are defined by those external
-     * mechanisms.
+     * Get the held state of the signal mast. It controls what mechanisms can
+     * control the mast's appearance. The actual semantics are defined by those
+     * external mechanisms. Changes to this property can be listened to using
+     * the property {@literal Held}.
+     *
+     * @return true if held; false otherwise
      */
     public boolean getHeld();
 
@@ -103,4 +112,3 @@ public interface SignalMast extends NamedBean {
 
     public boolean allowUnLit();
 }
-/* @(#)SignalMast.java */

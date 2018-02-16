@@ -1,34 +1,32 @@
-// SerialPacketGenAction.java
 package jmri.jmrix.grapevine.packetgen;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jmri.jmrix.grapevine.GrapevineSystemConnectionMemo;
 
 /**
  * Swing action to create and register a SerialPacketGenFrame object
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2007
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2007
  */
 public class SerialPacketGenAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5604356646388522597L;
+    private GrapevineSystemConnectionMemo memo = null;
 
-    public SerialPacketGenAction(String s) {
+    public SerialPacketGenAction(String s,GrapevineSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public SerialPacketGenAction() {
-        this("Send Grapevine message");
+    public SerialPacketGenAction(GrapevineSystemConnectionMemo _memo) {
+        this("Send Grapevine message",_memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        SerialPacketGenFrame f = new SerialPacketGenFrame();
+        SerialPacketGenFrame f = new SerialPacketGenFrame(memo);
         try {
             f.initComponents();
         } catch (Exception ex) {
@@ -36,8 +34,5 @@ public class SerialPacketGenAction extends AbstractAction {
         }
         f.setVisible(true);
     }
-    static Logger log = LoggerFactory.getLogger(SerialPacketGenAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialPacketGenAction.class);
 }
-
-
-/* @(#)SerialPacketGenAction.java */

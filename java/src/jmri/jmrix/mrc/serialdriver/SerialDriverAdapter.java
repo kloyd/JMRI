@@ -1,17 +1,19 @@
-// SerialDriverAdapter.java
 package jmri.jmrix.mrc.serialdriver;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import jmri.jmrix.mrc.MrcPacketizer;
 import jmri.jmrix.mrc.MrcPortController;
 import jmri.jmrix.mrc.MrcSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import purejavacomm.CommPortIdentifier;
+import purejavacomm.NoSuchPortException;
+import purejavacomm.PortInUseException;
+import purejavacomm.SerialPort;
+import purejavacomm.UnsupportedCommOperationException;
 
 /**
  * Implements SerialPortAdapter for the MRC system. This connects an MRC command
@@ -21,8 +23,7 @@ import org.slf4j.LoggerFactory;
  * The current implementation only handles the 9,600 baud rate, and does not use
  * any other options at configuration time.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002
  */
 public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix.SerialPortAdapter {
 
@@ -30,7 +31,7 @@ public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix
 
     public SerialDriverAdapter() {
         super(new MrcSystemConnectionMemo());
-        setManufacturer(jmri.jmrix.DCCManufacturerList.MRC);
+        setManufacturer(jmri.jmrix.mrc.MrcConnectionTypeList.MRC);
         options.put("CabAddress", new Option("Cab Address:", validOption1, false)); //IN18N
     }
 
@@ -49,17 +50,13 @@ public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix
             // try to set it for comunication via SerialDriver
             try {
                 activeSerialPort.setSerialPortParams(currentBaudNumber(getCurrentBaudRate()), SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_ODD);
-            } catch (gnu.io.UnsupportedCommOperationException e) {
+            } catch (UnsupportedCommOperationException e) {
                 log.error("Cannot set serial parameters on port " + portName + ": " + e.getMessage());//IN18N
                 return "Cannot set serial parameters on port " + portName + ": " + e.getMessage();//IN18N
             }
 
-            // set RTS high, DTR high
-            activeSerialPort.setRTS(true);		// not connected in some serial ports and adapters
-            activeSerialPort.setDTR(true);		// pin 1 in DIN8; on main connector, this is DTR
-
             // disable flow control; hardware lines used for signaling, XON/XOFF might appear in data
-            activeSerialPort.setFlowControlMode(0);
+            configureLeadsAndFlowControl(activeSerialPort, 0);
 
             // set timeout
             // activeSerialPort.enableReceiveTimeout(1000);
@@ -70,12 +67,7 @@ public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix
             serialStream = activeSerialPort.getInputStream();
 
             // purge contents, if any
-            int count = serialStream.available();
-            log.debug("input stream shows " + count + " bytes available");//IN18N
-            while (count > 0) {
-                serialStream.skip(count);
-                count = serialStream.available();
-            }
+            purgeStream(serialStream);
 
             // report status?
             if (log.isInfoEnabled()) {
@@ -91,11 +83,10 @@ public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix
 
             opened = true;
 
-        } catch (gnu.io.NoSuchPortException p) {
+        } catch (NoSuchPortException p) {
             return handlePortNotFound(p, portName, log);
-        } catch (Exception ex) {
-            log.error("Unexpected exception while opening port " + portName + " trace follows: " + ex);//IN18N
-            ex.printStackTrace();
+        } catch (IOException ex) {
+            log.error("Unexpected exception while opening port {}", portName, ex);
             return "Unexpected error while opening port " + portName + ": " + ex;//IN18N
         }
 
@@ -119,7 +110,6 @@ public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix
         this.getSystemConnectionMemo().configureManagers();
 
         packets.startThreads();
-        jmri.jmrix.mrc.ActiveFlag.setActive();
     }
 
     // base class methods for the MrcPortController interface
@@ -162,6 +152,7 @@ public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix
     /**
      * Return array of valid baud rates as integers.
      */
+    @Override
     public int[] validBaudNumber() {
         return new int[]{38400};
     }
@@ -172,6 +163,6 @@ public class SerialDriverAdapter extends MrcPortController implements jmri.jmrix
 
     protected String[] validOption1 = new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"};//IN18N
 
-    static Logger log = LoggerFactory.getLogger(SerialDriverAdapter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialDriverAdapter.class);
 
 }

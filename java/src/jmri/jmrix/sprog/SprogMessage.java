@@ -1,19 +1,16 @@
-// SprogMessage.java
 package jmri.jmrix.sprog;
 
 import jmri.ProgrammingMode;
 import jmri.jmrix.sprog.SprogConstants.SprogState;
-import jmri.managers.DefaultProgrammerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Encodes a message to an SPROG command station.
- * <P>
+ * Encode a message to an SPROG command station.
+ * <p>
  * The {@link SprogReply} class handles the response from the command station.
  *
  * @author	Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
  */
 public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
 
@@ -33,6 +30,27 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
     // Longest boot message is 256bytes each preceded by DLE + 2xSTX + ETX
     public static final int MAXSIZE = 515;
 
+    private static int msgId = 0;
+    protected int _id = -1;
+    
+    /**
+     * Get next message id
+     * 
+     * For modules that need to match their own message/reply pairs in strict sequence, e.g., 
+     * SprogCommandStation, return a unique message id. The id wraps at a suitably large
+     * value.
+     * 
+     * @return the message id
+     */
+    protected synchronized int newMsgId() {
+        msgId = (msgId+1)%65536;
+        return msgId;
+    }
+    
+    public int getId() {
+        return _id;
+    }
+    
     // create a new one
     public SprogMessage(int i) {
         if (i < 1) {
@@ -40,11 +58,12 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
         }
         _nDataChars = i;
         _dataChars = new int[i];
+        _id = newMsgId();
     }
 
     /**
-     * Creates a new SprogMessage containing a byte array to represent a packet
-     * to output
+     * Create a new SprogMessage containing a byte array to represent a packet
+     * to output.
      *
      * @param packet The contents of the packet
      */
@@ -67,7 +86,7 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
                 this.setElement(i++, s.charAt(1));
             }
         }
-
+        _id = newMsgId();
     }
 
     // from String
@@ -77,6 +96,7 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
         for (int i = 0; i < _nDataChars; i++) {
             _dataChars[i] = s.charAt(i);
         }
+        _id = newMsgId();
     }
 
     // copy one
@@ -91,12 +111,12 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
         for (int i = 0; i < _nDataChars; i++) {
             _dataChars[i] = m._dataChars[i];
         }
+        // Copy has a unique id
+        _id = newMsgId();
     }
 
+    @Override
     public void setElement(int n, int v) {
-        if (!SprogTrafficController.instance().isSIIBootMode()) {
-            v &= 0x7f;
-        }
         _dataChars[n] = v;
     }
 
@@ -212,9 +232,15 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
     }
 
     // display format
-    public String toString() {
+    @Override
+    public String toString(){
+       // default to not SIIBootMode being false.
+       return this.toString(false);
+    }
+
+    public String toString(boolean isSIIBootMode) {
         StringBuffer buf = new StringBuffer();
-        if (!SprogTrafficController.instance().isSIIBootMode()) {
+        if (!isSIIBootMode) {
             for (int i = 0; i < _nDataChars; i++) {
                 buf.append((char) _dataChars[i]);
             }
@@ -231,7 +257,7 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
 
     /**
      * Get formatted message for direct output to stream - this is the final
-     * format of the message as a byte array
+     * format of the message as a byte array.
      *
      * @param sprogState a SprogState variable representing the current state of
      *                   the Sprog
@@ -249,7 +275,11 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
         byte msg[] = new byte[len + cr];
 
         for (int i = 0; i < len; i++) {
-            msg[i] = (byte) this.getElement(i);
+            if (sprogState != SprogState.SIIBOOTMODE) {
+               msg[i] = (byte) ( this.getElement(i) & 0x7f);
+            } else {
+               msg[i] = (byte) ( this.getElement(i));
+            }
         }
         if (sprogState != SprogState.SIIBOOTMODE) {
             msg[len] = 0x0d;
@@ -279,6 +309,9 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
         return m;
     }
 
+    // [AC] 23/01/17 This was never actually required by a SPROG. Was copied
+    // from some other interface type. No longer used by SprogProgrammer
+    @Deprecated
     static public SprogMessage getProgMode() {
         SprogMessage m = new SprogMessage(1);
         m.setOpCode('P');
@@ -287,6 +320,9 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
 
     // [AC] 11/09/2002 Leave SPROG in programmer mode. Don't want to go
     // to booster mode as this would power up the track.
+    // [AC] 23/01/17 This was never actually required by a SPROG. Was copied
+    // from some other interface type. No longer used by SprogProgrammer
+    @Deprecated
     static public SprogMessage getExitProgMode() {
         SprogMessage m = new SprogMessage(1);
         m.setOpCode(' ');
@@ -307,7 +343,7 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
      */
     static public SprogMessage getReadCV(int cv, ProgrammingMode mode) {
         SprogMessage m = new SprogMessage(6);
-        if (mode == DefaultProgrammerManager.PAGEMODE) {
+        if (mode == ProgrammingMode.PAGEMODE) {
             m.setOpCode('V');
         } else { // Bit direct mode
             m.setOpCode('C');
@@ -319,7 +355,7 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
 
     static public SprogMessage getWriteCV(int cv, int val, ProgrammingMode mode) {
         SprogMessage m = new SprogMessage(10);
-        if (mode == DefaultProgrammerManager.PAGEMODE) {
+        if (mode == ProgrammingMode.PAGEMODE) {
             m.setOpCode('V');
         } else { // Bit direct mode
             m.setOpCode('C');
@@ -358,7 +394,7 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
     }
 
     /**
-     * Get a message containing a DCC packet
+     * Get a message containing a DCC packet.
      *
      * @param bytes byte[]
      * @return SprogMessage
@@ -537,8 +573,6 @@ public class SprogMessage extends jmri.jmrix.AbstractMRMessage {
         return s;
     }
 
-    static Logger log = LoggerFactory.getLogger(SprogMessage.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SprogMessage.class);
 
 }
-
-/* @(#)SprogMessage.java */

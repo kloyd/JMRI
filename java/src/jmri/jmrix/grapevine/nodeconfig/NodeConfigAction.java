@@ -1,34 +1,32 @@
-// NodeConfigAction.java
 package jmri.jmrix.grapevine.nodeconfig;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jmri.jmrix.grapevine.GrapevineSystemConnectionMemo;
 
 /**
  * Swing action to create and register a NodeConfigFrame object
  *
- * @author	Bob Jacobsen Copyright (C) 2006
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2006
  */
 public class NodeConfigAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4741020402241406039L;
+    private GrapevineSystemConnectionMemo memo = null;
 
-    public NodeConfigAction(String s) {
+    public NodeConfigAction(String s,GrapevineSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public NodeConfigAction() {
-        this("Configure Grapevine Nodes");
+    public NodeConfigAction(GrapevineSystemConnectionMemo _memo) {
+        this(Bundle.getMessage("WindowTitle"),_memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        NodeConfigFrame f = new NodeConfigFrame();
+        NodeConfigFrame f = new NodeConfigFrame(memo);
         try {
             f.initComponents();
         } catch (Exception ex) {
@@ -37,8 +35,7 @@ public class NodeConfigAction extends AbstractAction {
         f.setLocation(100, 30);
         f.setVisible(true);
     }
-    static Logger log = LoggerFactory.getLogger(NodeConfigAction.class.getName());
+
+    private final static Logger log = LoggerFactory.getLogger(NodeConfigAction.class);
+
 }
-
-
-/* @(#)NodeConfigAction.java */

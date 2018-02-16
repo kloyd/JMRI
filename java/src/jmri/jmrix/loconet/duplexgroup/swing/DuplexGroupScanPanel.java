@@ -1,4 +1,3 @@
-// DuplexGroupScanPanel.java
 package jmri.jmrix.loconet.duplexgroup.swing;
 
 import java.awt.BasicStroke;
@@ -29,18 +28,13 @@ import org.slf4j.LoggerFactory;
  * clarity, only the term UR92 is used herein.
  *
  * @author B. Milhaupt Copyright 2010, 2011
- * @version	$Revision: 1.0 $
  */
 public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         implements LocoNetListener, javax.swing.event.ChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2574511937558247304L;
     DuplexChannelInfo dci[] = new DuplexChannelInfo[LnDplxGrpInfoImplConstants.DPLX_MAX_CH - LnDplxGrpInfoImplConstants.DPLX_MIN_CH + 1];
     private javax.swing.Timer tmr;
-    private static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.loconet.duplexgroup.DuplexGroupScan");
+    private static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.loconet.duplexgroup.swing.DuplexGroupScan");
     DuplexGroupScanPanel safe;
 
     private final static int DEFAULT_SCAN_COUNT = 25;
@@ -62,8 +56,11 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
     int previousGroupChannel;
 //    Dimension channelTextSize;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void initComponents() throws Exception {
+    public void initComponents() {
         int i;
         int j;
         int minWindowWidth = 0;
@@ -90,7 +87,7 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         p = new JPanel();
-        graphicArea = new duplexGroupChannelScanGuiCanvas();
+        graphicArea = new DuplexGroupChannelScanGuiCanvas();
         p.add(graphicArea);
         add(p);
 
@@ -130,7 +127,7 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         p = new JPanel();
         // Apply a rigid area with a width that is wide enough to display the longest status message
         try {
-            minWindowWidth = Integer.parseInt(rb.getString("MinimumWidthForWIndow"), 10);
+            minWindowWidth = Integer.parseInt(rb.getString("MinimumWidthForWindow"), 10);
         } catch (Exception e) {
             minWindowWidth = 400;
         }
@@ -139,6 +136,7 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         add(p);
 
         scanLoopButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 if (scanLoopButton.getText().equals(rb.getString("ButtonScanChannelsStop"))) {
                     scanLoopStopButtonActionPerformed();
@@ -150,6 +148,7 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         });
 
         clearButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 scanLoopStopButtonActionPerformed();
                 clearButtonActionPerformed();
@@ -170,16 +169,25 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getHelpTarget() {
-        return "package.jmri.jmrix.loconet.DuplexGroupSetup.DuplexGroupScanPanel";
-    }
+        return "package.jmri.jmrix.loconet.DuplexGroupSetup.DuplexGroupScanPanel"; // NOI18N
+    } // NOI18N
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getTitle() {
         return rb.getString("Title");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initComponents(LocoNetSystemConnectionMemo memo) {
         super.initComponents(memo);
@@ -212,9 +220,8 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
      * currently displayed in the GUI. If the received information does not
      * match, a message is displayed on the status line in the GUI, else nothing
      * is displayed in the GUI status line.
-     * <p>
-     * @param m
      */
+    @Override
     public void message(LocoNetMessage m) {
         if (stopRequested == true) {
             return;
@@ -254,7 +261,6 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
      * attached IPL-capable equipment, check to see if it reports a UR92 device
      * as attached. If so, increment count of UR92 devices. Else ignore.
      *
-     * @param m
      * @return true if message is an IPL device report indicating a UR92
      *         present, else return false.
      */
@@ -356,10 +362,10 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
 
     private void updateScanLoopCountStatus(int current, int total) {
         String countStatus = rb.getString("StatusCurrentLoopCounter");
-        String begin = countStatus.substring(0, countStatus.indexOf("%count"));
+        String begin = countStatus.substring(0, countStatus.indexOf("%count")); // NOI18N
 
-        String middle = countStatus.substring(begin.length() + 6, countStatus.indexOf("%loops"));
-        String end = countStatus.substring(countStatus.indexOf("%loops") + 6);
+        String middle = countStatus.substring(begin.length() + 6, countStatus.indexOf("%loops")); // NOI18N
+        String end = countStatus.substring(countStatus.indexOf("%loops") + 6); // NOI18N
         countStatus = begin + Integer.toString(current) + middle + Integer.toString(total) + end;
         grStatusValue.setText(countStatus);
     }
@@ -383,6 +389,7 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         updateScanLoopCountStatus(loopNum, whenToStop);
 
         tmr = new javax.swing.Timer(scanLoopDelay, new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 tmr.stop();
                 if (stopRequested == true) {
@@ -474,6 +481,7 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
 
         if (waitingForPreviousGroupChannel == false) {
             exitTmr = new javax.swing.Timer(200, new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (memo.getLnTrafficController() != null) {
                         memo.getLnTrafficController().removeLocoNetListener(~0, safe);
@@ -495,8 +503,9 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         super.dispose();
     }
 
-    static Logger log = LoggerFactory.getLogger(DuplexGroupScanPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DuplexGroupScanPanel.class);
 
+    @Override
     public void stateChanged(javax.swing.event.ChangeEvent e) {
         graphicArea.repaint();
     }
@@ -508,14 +517,10 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         graphicArea.repaint();
     }
 
-    private duplexGroupChannelScanGuiCanvas graphicArea;
+    private DuplexGroupChannelScanGuiCanvas graphicArea;
 
-    private class duplexGroupChannelScanGuiCanvas extends java.awt.Canvas {
+    private class DuplexGroupChannelScanGuiCanvas extends java.awt.Canvas {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 3311247866128360812L;
         private int barWidth = 7;
         private int barSpace = barWidth + 8;
         private int barOffset = (barSpace - barWidth) / 2;
@@ -541,7 +546,7 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         private final java.awt.Color averageLineColor = java.awt.Color.GREEN;
         private final java.awt.Color lowerLimitLineColor = java.awt.Color.LIGHT_GRAY;
 
-        public duplexGroupChannelScanGuiCanvas() {
+        public DuplexGroupChannelScanGuiCanvas() {
             super();
             setBackground(backgroundColor);
             setForeground(foregroundColor);
@@ -551,22 +556,20 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
             int textHeight = 0;
             int textWidth = 0;
 
-            if (signalBarsFont != null) {
-                // get metrics from the graphics
-                java.awt.FontMetrics metrics = getFontMetrics(signalBarsFont);
-                // get the height of a line of text in this font and render context
-                textHeight = metrics.getHeight();
-                // get the advance of my text in this font and render context
-                textWidth = metrics.stringWidth("38");  // representative (but not accurate) example text string
-                // calculate the size of a box to hold the text with some padding.
-                channelTextSize = new Dimension(textWidth + HORIZ_PADDING, textHeight + VERT_PADDING);
-                requiredMinWindowWidth = channelCount * channelTextSize.width;
-                requiredMinWindowHeight += (2 * channelTextSize.height);
-                baseline += channelTextSize.height;
-                barSpace = channelTextSize.width;
-                barWidth = textWidth;
-                barOffset = (barSpace - barWidth) / 2;
-            }
+            // get metrics from the graphics
+            java.awt.FontMetrics metrics = getFontMetrics(signalBarsFont);
+            // get the height of a line of text in this font and render context
+            textHeight = metrics.getHeight();
+            // get the advance of my text in this font and render context
+            textWidth = metrics.stringWidth("38");  // representative (but not accurate) example text string // NOI18N
+            // calculate the size of a box to hold the text with some padding.
+            channelTextSize = new Dimension(textWidth + HORIZ_PADDING, textHeight + VERT_PADDING);
+            requiredMinWindowWidth = channelCount * channelTextSize.width;
+            requiredMinWindowHeight += (2 * channelTextSize.height);
+            baseline += channelTextSize.height;
+            barSpace = channelTextSize.width;
+            barWidth = textWidth;
+            barOffset = (barSpace - barWidth) / 2;
             textWidth = 0;
             setSize(requiredMinWindowWidth, requiredMinWindowHeight);
         }
@@ -600,7 +603,12 @@ public class DuplexGroupScanPanel extends jmri.jmrix.loconet.swing.LnPanel
         public void paint(java.awt.Graphics g) {
             int channelIndex;
             java.awt.Graphics2D g2;
-            g2 = (java.awt.Graphics2D) g;
+            if (g instanceof java.awt.Graphics2D) {
+                g2 = (java.awt.Graphics2D) g;
+            } else {
+                log.error("paint() cannot cast object g to Graphics2D.  Aborting paint().");
+                return;
+            }
             for (int i = 11; i <= 26; ++i) {
                 g2.drawString(Integer.toString(i), (i - 11) * channelTextSize.width, channelTextSize.height);
                 g2.drawString(Integer.toString(i), (i - 11) * channelTextSize.width, requiredMinWindowHeight - 1);

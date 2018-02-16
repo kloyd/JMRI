@@ -1,23 +1,20 @@
-// CbusProgrammerTest.java
 package jmri.jmrix.can.cbus;
 
 import jmri.ProgListener;
+import jmri.ProgrammingMode;
 import jmri.jmrix.can.CanReply;
 import jmri.jmrix.can.TestTrafficController;
 import jmri.jmrix.can.TrafficControllerScaffold;
-import jmri.managers.DefaultProgrammerManager;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * Tests for the jmri.jmrix.can.cbus.CbusProgrammer class.
  *
  * @author	Bob Jacobsen Copyright 2008
- * @version $Revision$
  */
 public class CbusProgrammerTest extends TestCase {
 
@@ -32,7 +29,7 @@ public class CbusProgrammerTest extends TestCase {
         CbusProgrammer p = new CbusProgrammer(10, new TestTrafficController());
 
         try {
-            p.setMode(DefaultProgrammerManager.PAGEMODE);
+            p.setMode(ProgrammingMode.PAGEMODE);
         } catch (IllegalArgumentException e) {
             return;
         }
@@ -50,6 +47,7 @@ public class CbusProgrammerTest extends TestCase {
     int rcvdStatus;
 
     ProgListener testListener = new ProgListener() {
+        @Override
         public void programmingOpReply(int value, int status) {
             reply = true;
             rcvdValue = value;
@@ -69,7 +67,7 @@ public class CbusProgrammerTest extends TestCase {
 
         Assert.assertEquals("listeners", 0, tc.numListeners());
         Assert.assertEquals("sent count", 1, tc.outbound.size());
-        Assert.assertEquals("content 1", "96 00 03 04 05",
+        Assert.assertEquals("content 1", "[78] 96 00 03 04 05",
                 tc.outbound.get(0).toString());
 
         // no reply from CAN and listener replies immediately,
@@ -90,7 +88,7 @@ public class CbusProgrammerTest extends TestCase {
 
         Assert.assertEquals("listeners", 0, tc.numListeners());
         Assert.assertEquals("sent count", 1, tc.outbound.size());
-        Assert.assertEquals("content 1", "71 00 03 04",
+        Assert.assertEquals("content 1", "[78] 71 00 03 04",
                 tc.outbound.get(0).toString());
         Assert.assertTrue("listener not invoked", !reply);
 
@@ -112,7 +110,7 @@ public class CbusProgrammerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {CbusProgrammerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -121,15 +119,15 @@ public class CbusProgrammerTest extends TestCase {
         return suite;
     }
 
-    static Logger log = LoggerFactory.getLogger(CbusProgrammerTest.class.getName());
-
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

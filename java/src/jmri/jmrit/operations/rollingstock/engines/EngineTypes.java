@@ -1,19 +1,16 @@
-// EngineTypes.java
 package jmri.jmrit.operations.rollingstock.engines;
 
+import jmri.InstanceManager;
+import jmri.InstanceManagerAutoDefault;
 import jmri.jmrit.operations.rollingstock.RollingStockAttribute;
-import jmri.jmrit.operations.setup.Control;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Represents the types of engines a railroad can have.
  *
  * @author Daniel Boudreau Copyright (C) 2008, 2014
- * @version $Revision$
  */
-public class EngineTypes extends RollingStockAttribute {
+public class EngineTypes extends RollingStockAttribute implements InstanceManagerAutoDefault {
 
     private static final String TYPES = Bundle.getMessage("engineDefaultTypes");
 
@@ -25,33 +22,29 @@ public class EngineTypes extends RollingStockAttribute {
     }
 
     /**
-     * record the single instance *
+     * Get the default instance of this class.
+     *
+     * @return the default instance of this class
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
      */
-    private static EngineTypes _instance = null;
-
+    @Deprecated
     public static synchronized EngineTypes instance() {
-        if (_instance == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("EngineTypes creating instance");
-            }
-            // create and load
-            _instance = new EngineTypes();
-        }
-        if (Control.showInstance) {
-            log.debug("EngineTypes returns instance {}", _instance);
-        }
-        return _instance;
+        return InstanceManager.getDefault(EngineTypes.class);
     }
 
+    @Override
     protected String getDefaultNames() {
         return TYPES;
     }
 
+    @Override
     public void addName(String type) {
         super.addName(type);
         setDirtyAndFirePropertyChange(ENGINETYPES_CHANGED_PROPERTY, null, type);
     }
 
+    @Override
     public void deleteName(String type) {
         super.deleteName(type);
         setDirtyAndFirePropertyChange(ENGINETYPES_CHANGED_PROPERTY, type, null);
@@ -67,6 +60,7 @@ public class EngineTypes extends RollingStockAttribute {
     /**
      * Create an XML element to represent this Entry. This member has to remain
      * synchronized with the detailed DTD in operations-engines.dtd.
+     * @param root The common Element for operations-engines.dtd.
      *
      */
     public void store(Element root) {
@@ -79,10 +73,10 @@ public class EngineTypes extends RollingStockAttribute {
 
     protected void setDirtyAndFirePropertyChange(String p, Object old, Object n) {
         // Set dirty
-        EngineManagerXml.instance().setDirty(true);
+        InstanceManager.getDefault(EngineManagerXml.class).setDirty(true);
         super.firePropertyChange(p, old, n);
     }
 
-    static Logger log = LoggerFactory.getLogger(EngineTypes.class.getName());
+//    private final static Logger log = LoggerFactory.getLogger(EngineTypes.class);
 
 }

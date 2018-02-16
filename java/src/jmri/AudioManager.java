@@ -1,7 +1,8 @@
-// AudioManager.java
 package jmri;
 
 import java.util.List;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import jmri.jmrit.audio.AudioFactory;
 
 /**
@@ -10,20 +11,19 @@ import jmri.jmrit.audio.AudioFactory;
  * Audo objects are obtained from an AudioManager, which in turn is generally
  * located from the InstanceManager. A typical call sequence might be:
  * <PRE>
- * Audio audio = InstanceManager.audioManagerInstance().provideAudio("myAudio");
+ * Audio audio = InstanceManager.getDefault(jmri.AudioManager.class).provideAudio("myAudio");
  * </PRE>
  * <P>
  * Each Audio has two names. The "user" name is entirely free form, and can be
  * used for any purpose. The "system" name is provided by the system-specific
  * implementations, if any, and provides a unique mapping to the layout control
- * system (e.g. LocoNet, NCE, etc) and address within that system. Note that
+ * system (for example LocoNet or NCE) and address within that system. Note that
  * most (all?) layout systems don't have anything corresponding to this, in
  * which case the "Internal" Audio objects are still available with names like
  * IAS23.
  * <P>
  * Much of the book-keeping is implemented in the AbstractAudioManager class,
  * which can form the basis for a system-specific implementation.
- *
  * <hr>
  * This file is part of JMRI.
  * <P>
@@ -36,9 +36,8 @@ import jmri.jmrit.audio.AudioFactory;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  * @author Matthew Harris Copyright (c) 2009
- * @version $Revision$
  */
-public interface AudioManager extends Manager {
+public interface AudioManager extends Manager<Audio> {
 
     /**
      * Define the maximum number of AudioListener objects that can be created
@@ -61,29 +60,33 @@ public interface AudioManager extends Manager {
      * new Audio. Otherwise, the makeSystemName method will attempt to turn it
      * into a valid system name.
      *
-     * @param name
+     * @param name User name or system name to match, or which can be promoted
+     *             to system name
      * @return Never null under normal circumstances
      * @throws AudioException if error occurs during creation
      */
-    public Audio provideAudio(String name) throws AudioException;
+    @Nonnull
+    public Audio provideAudio(@Nonnull String name) throws AudioException;
 
     /**
      * Locate via user name, then system name if needed. If that fails, return
      * null
      *
-     * @param name
+     * @param name User name or system name to match
      * @return null if no match found
      */
-    public Audio getAudio(String name);
+    @CheckForNull
+    public Audio getAudio(@Nonnull String name);
 
     /**
      * Locate an instance based on a system name. Returns null if no instance
      * already exists.
      *
-     * @param systemName Audio object system name (e.g. IAS1, IAB4)
+     * @param systemName Audio object system name (such as IAS1 or IAB4)
      * @return requested Audio object or null if none exists
      */
-    public Audio getBySystemName(String systemName);
+    @CheckForNull
+    public Audio getBySystemName(@Nonnull String systemName);
 
     /**
      * Locate an instance based on a user name. Returns null if no instance
@@ -92,7 +95,8 @@ public interface AudioManager extends Manager {
      * @param userName Audio object user name
      * @return requested Audio object or null if none exists
      */
-    public Audio getByUserName(String userName);
+    @CheckForNull
+    public Audio getByUserName(@Nonnull String userName);
 
     /**
      * Return an instance with the specified system and user names. Note that
@@ -116,12 +120,13 @@ public interface AudioManager extends Manager {
      * except to issue warnings. This will mostly happen if you're creating
      * Audio objects when you should be looking them up.
      *
-     * @param systemName Audio object system name (e.g. IAS1, IAB4)
+     * @param systemName Audio object system name (such as IAS1 or IAB4)
      * @param userName   Audio object user name
      * @return requested Audio object (never null)
      * @throws AudioException if error occurs during creation
      */
-    public Audio newAudio(String systemName, String userName) throws AudioException;
+    @Nonnull
+    public Audio newAudio(@Nonnull String systemName, String userName) throws AudioException;
 
     /**
      * Returns the currently active AudioFactory object.
@@ -131,6 +136,7 @@ public interface AudioManager extends Manager {
      *
      * @return current active AudioFactory object
      */
+    @CheckForNull
     public AudioFactory getActiveAudioFactory();
 
     /**
@@ -139,6 +145,7 @@ public interface AudioManager extends Manager {
      * @return List of all Audio objects' system names
      */
     @Override
+    @Nonnull
     public List<String> getSystemNameList();
 
     /**
@@ -147,6 +154,7 @@ public interface AudioManager extends Manager {
      * @param subType sub-type to retrieve
      * @return List of specified Audio sub-type objects' system names.
      */
+    @Nonnull
     public List<String> getSystemNameList(char subType);
 
     /**
@@ -157,8 +165,6 @@ public interface AudioManager extends Manager {
     /**
      * Perform any clean-up operations
      */
-    public void cleanUp();
+    public void cleanup();
 
 }
-
-/* $(#)AudioManager.java */

@@ -2,24 +2,18 @@ package jmri.jmrit.throttle;
 
 import java.awt.Color;
 import jmri.DccThrottle;
+import jmri.InstanceManager;
 import jmri.LocoAddress;
 import jmri.jmrit.roster.RosterEntry;
 import jmri.util.swing.ResizableImagePanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BackgroundPanel extends ResizableImagePanel implements AddressListener {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4774584990257220648L;
 
     public BackgroundPanel() {
         super();
         setBackground(Color.GRAY);
         setRespectAspectRatio(true);
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isResizingWindow()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isResizingWindow()) {
             setResizingContainer(true);
         }
     }
@@ -30,6 +24,7 @@ public class BackgroundPanel extends ResizableImagePanel implements AddressListe
         this.addressPanel = addressPanel;
     }
 
+    @Override
     public void notifyAddressThrottleFound(DccThrottle t) {
         RosterEntry rosterEntry = null;
         if (addressPanel != null) {
@@ -49,22 +44,25 @@ public class BackgroundPanel extends ResizableImagePanel implements AddressListe
         }
     }
 
+    @Override
     public void notifyAddressReleased(LocoAddress la) {
         setImagePath(null);
         setVisible(false);
     }
 
+    @Override
     public void notifyAddressChosen(LocoAddress l) {
     }
 
+    @Override
     public void notifyConsistAddressChosen(int newAddress, boolean isLong) {
     }
 
+    @Override
     public void notifyConsistAddressReleased(int address, boolean isLong) {
     }
 
+    @Override
     public void notifyConsistAddressThrottleFound(DccThrottle throttle) {
     }
-
-    static Logger log = LoggerFactory.getLogger(BackgroundPanel.class.getName());
 }

@@ -3,10 +3,11 @@ package jmri.jmrix;
 import java.util.List;
 import jmri.ProgListener;
 import jmri.ProgrammingMode;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the AbstractProgrammer class
@@ -14,43 +15,65 @@ import junit.framework.TestSuite;
  * Copyright: Copyright (c) 2002</p>
  *
  * @author Bob Jacobsen
- * @version $Revision$
  */
 public class AbstractProgrammerTest extends TestCase {
 
-    public AbstractProgrammerTest(String s) {
-        super(s);
+    AbstractProgrammer abstractprogrammer;
+
+    public void testDefault() {
+        Assert.assertEquals("Check Default", ProgrammingMode.DIRECTMODE,
+                abstractprogrammer.getMode());        
     }
+    
+    public void testDefaultViaBestMode() {
+        // Programmer implementation that uses getBestMode for setting default
+        abstractprogrammer = new AbstractProgrammer() {
 
-    protected void setUp() {
-    }
-
-    protected void tearDown() {
-    }
-
-    public void testRegisterFromCV() {
-        AbstractProgrammer abstractprogrammer = new AbstractProgrammer() {
-            public void writeCV(int i, int j, ProgListener l) {
-            }
-
-            public void confirmCV(int i, int j, ProgListener l) {
-            }
-
-            public void readCV(int i, ProgListener l) {
-            }
-
+            @Override
             public List<ProgrammingMode> getSupportedModes() {
-                return null;
+                java.util.ArrayList<ProgrammingMode> retval = new java.util.ArrayList<ProgrammingMode>();
+                
+                retval.add(ProgrammingMode.DIRECTMODE);
+                retval.add(ProgrammingMode.PAGEMODE);
+                retval.add(ProgrammingMode.REGISTERMODE);
+
+                return retval;
             }
 
-            public void timeout() {
-            }
-
-            public boolean getCanRead() {
-                return true;
-            }
+            @Override
+            public ProgrammingMode getBestMode() { return ProgrammingMode.REGISTERMODE; }
+            
+            @Override
+            public void writeCV(int i, int j, ProgListener l) {}
+            @Override
+            public void confirmCV(String i, int j, ProgListener l) {}
+            @Override
+            public void readCV(int i, ProgListener l) {}
+            @Override
+            public void timeout() {}
+            @Override
+            public boolean getCanRead() { return true;}
         };
 
+        Assert.assertEquals("Check Default", ProgrammingMode.REGISTERMODE,
+                abstractprogrammer.getMode());        
+    }
+    
+    public void testSetGetMode() {
+        abstractprogrammer.setMode(ProgrammingMode.REGISTERMODE);
+        Assert.assertEquals("Check mode matches set", ProgrammingMode.REGISTERMODE,
+                abstractprogrammer.getMode());        
+    }
+    
+    public void testSetModeNull() {
+        try {
+            abstractprogrammer.setMode(null);
+        } catch (IllegalArgumentException e) { return;  /* OK */ }
+        
+        Assert.fail("should not have setMode(null)");        
+    }
+    
+    public void testRegisterFromCV() {
         int cv1 = -1;
 
         try {
@@ -81,14 +104,62 @@ public class AbstractProgrammerTest extends TestCase {
                 abstractprogrammer.registerFromCV(cv1); // should assert
                 Assert.fail("did not throw as expected for cv = " + cv1);
             } catch (Exception e) {
+                jmri.util.JUnitAppender.assertWarnMessage("Unhandled register from cv:  "+cv1);
             }
         }
+    }
+
+    // from here down is testing infrastructure
+    public AbstractProgrammerTest(String s) {
+        super(s);
+    }
+
+    // Main entry point
+    static public void main(String[] args) {
+        String[] testCaseName = {AbstractProgrammerTest.class.getName()};
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
     public static Test suite() {
         TestSuite suite = new TestSuite(AbstractProgrammerTest.class);
         return suite;
+    }
+
+    // The minimal setup for log4J
+    @Override
+    protected void setUp() {
+        apps.tests.Log4JFixture.setUp();
+
+        abstractprogrammer = new AbstractProgrammer() {
+
+            @Override
+            public List<ProgrammingMode> getSupportedModes() {
+                java.util.ArrayList<ProgrammingMode> retval = new java.util.ArrayList<ProgrammingMode>();
+                
+                retval.add(ProgrammingMode.DIRECTMODE);
+                retval.add(ProgrammingMode.PAGEMODE);
+                retval.add(ProgrammingMode.REGISTERMODE);
+
+                return retval;
+            }
+
+            @Override
+            public void writeCV(int i, int j, ProgListener l) {}
+            @Override
+            public void confirmCV(String i, int j, ProgListener l) {}
+            @Override
+            public void readCV(int i, ProgListener l) {}
+            @Override
+            public void timeout() {}
+            @Override
+            public boolean getCanRead() { return true;}
+        };
+    }
+
+    @Override
+    protected void tearDown() {
+        JUnitUtil.tearDown();
     }
 
 }

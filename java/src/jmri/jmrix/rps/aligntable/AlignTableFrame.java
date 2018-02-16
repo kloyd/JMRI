@@ -1,10 +1,10 @@
-// AlignTableFrame.java
 package jmri.jmrix.rps.aligntable;
 
 import java.awt.Container;
 import java.util.ResourceBundle;
 import javax.swing.BoxLayout;
 import javax.swing.JDialog;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * Frame for user configuration of RPS alignment.
@@ -14,21 +14,19 @@ import javax.swing.JDialog;
  * @see AlignTableAction
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
  */
 public class AlignTableFrame extends jmri.util.JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -1010732755062965677L;
+    RpsSystemConnectionMemo memo = null;
+
     ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.rps.aligntable.AlignTableBundle");
 
     /**
      * Constructor method
      */
-    public AlignTableFrame() {
+    public AlignTableFrame(RpsSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
     }
 
     AlignTablePane p;
@@ -36,6 +34,7 @@ public class AlignTableFrame extends jmri.util.JmriJFrame {
     /**
      * Initialize the window
      */
+    @Override
     public void initComponents() {
         setTitle(rb.getString("WindowTitle"));
 
@@ -59,6 +58,7 @@ public class AlignTableFrame extends jmri.util.JmriJFrame {
         pack();
     }
 
+    @Override
     protected void storeValues() {
         p.storeDefault();
         setModifiedFlag(false);

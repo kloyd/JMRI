@@ -1,4 +1,3 @@
-// ExternalLinkContentViewerUI.java
 package jmri.util;
 
 import java.awt.Desktop;
@@ -21,16 +20,11 @@ import org.slf4j.LoggerFactory;
  * <P>
  * To use:
  * SwingHelpUtilities.setContentViewerUI("jmri.util.ExternalLinkContentViewerUI");
- * <P.
+ * <P>
  *
  * @since JMRI 2.5.3 (or perhaps later, please check CVS)
  */
 public class ExternalLinkContentViewerUI extends BasicContentViewerUI {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2831707586009813945L;
 
     public ExternalLinkContentViewerUI(JHelpContentViewer x) {
         super(x);
@@ -48,7 +42,7 @@ public class ExternalLinkContentViewerUI extends BasicContentViewerUI {
                 log.debug("event has URL {}", he.getURL());
                 URL u = he.getURL();
                 activateURL(u);
-            } catch (Throwable t) {
+            } catch (IOException | URISyntaxException t) {
                 log.error("Error processing request", t);
             }
         }
@@ -90,5 +84,5 @@ public class ExternalLinkContentViewerUI extends BasicContentViewerUI {
             }
         }
     }
-    static private Logger log = LoggerFactory.getLogger(ExternalLinkContentViewerUI.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ExternalLinkContentViewerUI.class);
 }

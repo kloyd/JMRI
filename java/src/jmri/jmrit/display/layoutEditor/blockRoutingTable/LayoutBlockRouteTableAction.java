@@ -1,22 +1,15 @@
 package jmri.jmrit.display.layoutEditor.blockRoutingTable;
 
 import java.awt.event.ActionEvent;
-import java.util.ResourceBundle;
 import javax.swing.AbstractAction;
 import jmri.jmrit.display.layoutEditor.LayoutBlock;
 
 /**
  * Swing action to create and register a Block Routing Table.
  * <P>
- * @author	Kevin Dickerson Copyright (C) 2011
- * @version	$Revision$
+ * @author Kevin Dickerson Copyright (C) 2011
  */
 public class LayoutBlockRouteTableAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2989828125582997520L;
 
     /**
      * Create an action with a specific title.
@@ -24,16 +17,15 @@ public class LayoutBlockRouteTableAction extends AbstractAction {
      * Note that the argument is the Action title, not the title of the
      * resulting frame. Perhaps this should be changed?
      *
-     * @param s
      */
-    public LayoutBlockRouteTableAction(String s, LayoutBlock lBlock) {
+    public LayoutBlockRouteTableAction(String s, LayoutBlock layoutBlock) {
         super(s);
-        this.lBlock = lBlock;
+        lBlock = layoutBlock;
     }
 
-    static final ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrit.display.layoutEditor.LayoutEditorBundle");
+    //static final ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrit.display.layoutEditor.LayoutEditorBundle");
 
-    LayoutBlock lBlock;
+    private LayoutBlock lBlock = null;
 
     LayoutBlockRouteTable m;
     //LayoutBlockNeighbourTable mn;
@@ -50,28 +42,23 @@ public class LayoutBlockRouteTableAction extends AbstractAction {
         createModel();
 
         // create the frame
-        f = new jmri.util.JmriJFrame() {
-
-            /**
-             *
-             */
-            private static final long serialVersionUID = -8814222912512779305L;
-        };
+        f = new jmri.util.JmriJFrame();
         f.add(m);
         setTitle();
         f.pack();
         f.setVisible(true);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         actionPerformed();
     }
 
     void setTitle() {
         if (lBlock != null) {
-            f.setTitle(rb.getString("BlockRoutingTableTitle") + " " + lBlock.getDisplayName());
+            f.setTitle(Bundle.getMessage("BlockRoutingTableTitle") + " " + lBlock.getDisplayName());
         } else {
-            f.setTitle(rb.getString("BlockRoutingTableTitleShort"));
+            f.setTitle(Bundle.getMessage("BlockRoutingTableTitleShort"));
         }
     }
 

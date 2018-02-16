@@ -1,17 +1,20 @@
-/* OlcbProgrammerManager.java */
 package jmri.jmrix.openlcb;
 
 import java.util.List;
-import jmri.*;
+import jmri.AddressedProgrammer;
+import jmri.GlobalProgrammerManager;
+import jmri.InstanceManager;
+import jmri.Programmer;
+import jmri.ProgrammingMode;
 
 /**
  * Get access to available {@link Programmer} objects.
  * <P>
  * Programmers come in two types:
  * <UL>
- * <LI>Global, previously Service Mode, e.g. on a programming track. Request
+ * <LI>Global, previously "Service Mode" or on a programming track. Request
  * these from an instance of {@link GlobalProgrammerManager}.
- * <LI>Addressed, previously Ops Mode, e.g. "programming on the main". Request
+ * <LI>Addressed, previously "Ops Mode" also known as "programming on the main". Request
  * these from an instance of this interface.
  * </UL>
  * You get a {@link Programmer} object from a ProgrammerManager, which in turn
@@ -33,7 +36,7 @@ import jmri.*;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  * @see jmri.Programmer
- * @author	Bob Jacobsen Copyright (C) 2015
+ * @author Bob Jacobsen Copyright (C) 2015
  * @since 4.1.1
  */
 public class OlcbProgrammerManager extends jmri.managers.DefaultProgrammerManager implements jmri.AddressedProgrammerManager {
@@ -56,6 +59,7 @@ public class OlcbProgrammerManager extends jmri.managers.DefaultProgrammerManage
      * @param pAddress     Specific decoder address to use.
      * @return null only if there isn't an Ops Mode Programmer in the system
      */
+    @Override
     public AddressedProgrammer getAddressedProgrammer(boolean pLongAddress, int pAddress) { return null; }
 
     /**
@@ -66,12 +70,14 @@ public class OlcbProgrammerManager extends jmri.managers.DefaultProgrammerManage
      * @param pAddress     Specific decoder address to use.
      * @return null if the address is in use by a reserved programmer
      */
+    @Override
     public AddressedProgrammer reserveAddressedProgrammer(boolean pLongAddress, int pAddress) { return null; }
 
     /**
      * Return access to an Addressed Mode Programmer, so that it can be used
      * elsewhere.
      */
+    @Override
     public void releaseAddressedProgrammer(AddressedProgrammer p) {}
 
     /**
@@ -80,6 +86,7 @@ public class OlcbProgrammerManager extends jmri.managers.DefaultProgrammerManage
      *
      * @return false if there's no chance of getting one
      */
+    @Override
     public boolean isAddressedModePossible() { return false; }
 
     /**
@@ -91,22 +98,22 @@ public class OlcbProgrammerManager extends jmri.managers.DefaultProgrammerManage
      * <p>
      * If the order is significant, earlier modes are better.
      */
-    public List<ProgrammingMode> getDefaultModes() { return null; }
+    @Override
+    public List<ProgrammingMode> getDefaultModes() { return new java.util.ArrayList<>(); }
 
     /**
      * Provides the human-readable representation for including
-     * ProgrammerManagers directly in e.g. JComboBoxes, so it should return a
+     * ProgrammerManagers directly in user interface components, so it should return a
      * user-provided name for this particular one.
      */
-    public String getUserName() { return null; }
+    @Override
+    public String getUserName() { return "OpenLCB"; }
 
     /**
      * toString() provides the human-readable representation for including
-     * ProgrammerManagers directly in e.g. JComboBoxes, so it should return a
+     * ProgrammerManagers directly in user interface components, so it should return a
      * user-provided name for this particular one.
      */
-    public String toString() { return null; }
+    @Override
+    public String toString() { return "OlcbProgrammerManager"; }
 }
-
-
-/* @(#)OlcbProgrammerManager.java */

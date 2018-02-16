@@ -1,4 +1,3 @@
-// LokProgImporter.java
 package jmri.jmrit.symbolicprog;
 
 import java.io.BufferedReader;
@@ -24,13 +23,12 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Alex Shepherd Copyright (C) 2003
- * @author	Dave Heap Copyright (C) 2014
- * @version	$Revision: 24747 $
+ * @author Alex Shepherd Copyright (C) 2003
+ * @author Dave Heap Copyright (C) 2014
  */
 public class LokProgImporter {
 
-    static Logger log = LoggerFactory.getLogger(LokProgImporter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LokProgImporter.class);
     private static final String INDEX_PREFIX = "Index:";
     private static final String INDEX_1 = "CV31=";
     private static final String INDEX_1_TERMINATOR = ",";
@@ -40,15 +38,15 @@ public class LokProgImporter {
     private static final String CV_SEPARATOR = " = ";
 
     public LokProgImporter(File file, CvTableModel cvModel) throws IOException {
-        try {
+        try (
+                FileReader fileReader = new FileReader(file);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+            ){
             CvValue cvObject;
             String CVindex = "";
             String line = null;
             String name = null;
             int value = 0;
-
-            FileReader fileReader = new FileReader(file);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
 
             while ((line = bufferedReader.readLine()) != null) {
                 if (line.startsWith(INDEX_PREFIX)) {

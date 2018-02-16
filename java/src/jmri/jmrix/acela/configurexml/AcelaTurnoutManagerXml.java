@@ -1,6 +1,5 @@
 package jmri.jmrix.acela.configurexml;
 
-import jmri.jmrix.acela.AcelaTurnoutManager;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * method here.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003
- * @version $Revision$
  */
 public class AcelaTurnoutManagerXml extends jmri.managers.configurexml.AbstractTurnoutManagerConfigXML {
 
@@ -20,21 +18,22 @@ public class AcelaTurnoutManagerXml extends jmri.managers.configurexml.AbstractT
         super();
     }
 
+    @Override
     public void setStoreElementClass(Element turnouts) {
         turnouts.setAttribute("class", "jmri.jmrix.acela.configurexml.AcelaTurnoutManagerXml");
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
 
     @Override
     public boolean load(Element shared, Element perNode) {
-        // create the master object
-        AcelaTurnoutManager.instance();
         // load individual turnouts
         return loadTurnouts(shared, perNode);
     }
 
-    static Logger log = LoggerFactory.getLogger(AcelaTurnoutManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AcelaTurnoutManagerXml.class);
+
 }

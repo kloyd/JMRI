@@ -1,4 +1,3 @@
-// ValueEditor.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.Component;
@@ -29,15 +28,10 @@ import org.slf4j.LoggerFactory;
  * focusListener to do that.
  * </UL>
  *
- * @author	Bob Jacobsen Copyright (C) 2001
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2001
  */
 public class ValueEditor extends JComboBox<Object> implements TableCellEditor, FocusListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 8132350187940404655L;
     protected transient Vector<CellEditorListener> listeners;
     protected transient String originalValue = null;
     protected Object mValue;
@@ -47,6 +41,7 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
         listeners = new Vector<CellEditorListener>();
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected,
             int row, int column) {
@@ -77,6 +72,7 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
     /**
      * FocusListener implementations
      */
+    @Override
     public void focusGained(FocusEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("focusGained");
@@ -87,6 +83,7 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
         }
     }
 
+    @Override
     public void focusLost(FocusEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("focusLost");
@@ -106,6 +103,7 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
     }
 
     // CellEditor methods
+    @Override
     public void cancelCellEditing() {
         if (log.isDebugEnabled()) {
             log.debug("cancelCellEditing");
@@ -114,6 +112,7 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
         fireEditingCanceled();
     }
 
+    @Override
     public Object getCellEditorValue() {
         if (log.isDebugEnabled()) {
             log.debug("getCellEditorValue with 'value' object of type " + mValue.getClass());
@@ -131,14 +130,17 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
         }
     }
 
+    @Override
     public boolean isCellEditable(EventObject eo) {
         return true;
     }
 
+    @Override
     public boolean shouldSelectCell(EventObject eo) {
         return true;
     }
 
+    @Override
     public boolean stopCellEditing() {
         if (log.isDebugEnabled()) {
             log.debug("stopCellEditing");
@@ -148,10 +150,12 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
         return true;
     }
 
+    @Override
     public void addCellEditorListener(CellEditorListener cel) {
         listeners.addElement(cel);
     }
 
+    @Override
     public void removeCellEditorListener(CellEditorListener cel) {
         listeners.removeElement(cel);
     }
@@ -185,5 +189,5 @@ public class ValueEditor extends JComboBox<Object> implements TableCellEditor, F
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(ValueEditor.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ValueEditor.class);
 }

@@ -1,14 +1,12 @@
-/**
- * Concrete subclass of TurnoutOperator for a turnout that has no feedback.
- *
- * @author	John Harper	Copyright 2005
- */
 package jmri.implementation;
 
 import jmri.TurnoutOperator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Concrete subclass of TurnoutOperator for a turnout that has no feedback.
+ *
+ * @author John Harper Copyright 2005
+ */
 public class NoFeedbackTurnoutOperator extends TurnoutOperator {
 
     long interval;
@@ -28,6 +26,7 @@ public class NoFeedbackTurnoutOperator extends TurnoutOperator {
      * current operator this throws TurnoutOperatorException which just
      * terminates the thread.
      */
+    @Override
     public void run() {
         try {
             operatorCheck();
@@ -45,6 +44,4 @@ public class NoFeedbackTurnoutOperator extends TurnoutOperator {
         } catch (TurnoutOperatorException e) {
         }
     }
-
-    static Logger log = LoggerFactory.getLogger(NoFeedbackTurnoutOperator.class.getName());
 }

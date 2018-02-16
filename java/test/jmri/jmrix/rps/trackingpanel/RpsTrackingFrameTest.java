@@ -1,26 +1,33 @@
-// RpsTrackingFrameTest.java
 package jmri.jmrix.rps.trackingpanel;
 
-import javax.swing.JFrame;
+import java.awt.GraphicsEnvironment;
 import javax.vecmath.Point3d;
+import jmri.InstanceManager;
+import jmri.jmrit.roster.RosterConfigManager;
 import jmri.jmrix.rps.Engine;
 import jmri.jmrix.rps.Measurement;
 import jmri.jmrix.rps.Reading;
 import jmri.jmrix.rps.Receiver;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * JUnit tests for the rps.RpsTrackingFrame class.
  *
  * @author	Bob Jacobsen Copyright 2008
- * @version	$Revision$
  */
-public class RpsTrackingFrameTest extends TestCase {
+public class RpsTrackingFrameTest {
 
+    private RpsSystemConnectionMemo memo = null;
+
+    @Test
     public void testShow() {
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         new Engine() {
             void reset() {
                 _instance = null;
@@ -30,7 +37,7 @@ public class RpsTrackingFrameTest extends TestCase {
         Engine.instance().setReceiver(1, new Receiver(new Point3d(12., 12., 0.)));
         Engine.instance().setReceiver(2, new Receiver(new Point3d(12., 12., 0.)));
 
-        RpsTrackingFrame f = new RpsTrackingFrame("Test RPS Tracking");
+        RpsTrackingFrame f = new RpsTrackingFrame("Test RPS Tracking",memo);
         f.initComponents();
         f.setVisible(true);
 
@@ -52,29 +59,18 @@ public class RpsTrackingFrameTest extends TestCase {
         m = new Measurement(loco, 5., 0., 0.0, 0.133, 5, "source");
         p.notify(m);
 
-//    }
-//  test order isn't guaranteed!
-//    public void testXFrameCreation() {
-        JFrame f2 = jmri.util.JmriJFrame.getFrame("Test RPS Tracking");
-        Assert.assertTrue("found frame", f2 != null);
-        f2.dispose();
+        Assert.assertNotNull("found frame", f);
+        f.dispose();
     }
 
-    // from here down is testing infrastructure
-    public RpsTrackingFrameTest(String s) {
-        super(s);
+    @Before
+    public void setUp() throws Exception {
+        JUnitUtil.setUp();
+        memo = new RpsSystemConnectionMemo();
+        InstanceManager.setDefault(RosterConfigManager.class, new RosterConfigManager());
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {RpsTrackingFrameTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(RpsTrackingFrameTest.class);
-        return suite;
-    }
+    @After
+    public void tearDown() throws Exception {        JUnitUtil.tearDown();    }
 
 }

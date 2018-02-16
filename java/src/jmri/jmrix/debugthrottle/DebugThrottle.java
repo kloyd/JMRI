@@ -1,5 +1,6 @@
 package jmri.jmrix.debugthrottle;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jmri.DccLocoAddress;
 import jmri.LocoAddress;
 import jmri.jmrix.AbstractThrottle;
@@ -10,8 +11,7 @@ import org.slf4j.LoggerFactory;
 /**
  * An implementation of DccThrottle for debugging use.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  */
 public class DebugThrottle extends AbstractThrottle {
 
@@ -20,6 +20,8 @@ public class DebugThrottle extends AbstractThrottle {
      */
     public DebugThrottle(DccLocoAddress address, SystemConnectionMemo memo) {
         super(memo);
+
+        log.debug("DebugThrottle constructor called for address {}", address);
 
         // cache settings. It would be better to read the
         // actual state, but I don't know how to do this
@@ -45,10 +47,12 @@ public class DebugThrottle extends AbstractThrottle {
 
     DccLocoAddress address;
 
+    @Override
     public LocoAddress getLocoAddress() {
         return address;
     }
 
+    @Override
     public String toString() {
         return getLocoAddress().toString();
     }
@@ -56,31 +60,45 @@ public class DebugThrottle extends AbstractThrottle {
     /**
      * Send the message to set the state of functions F0, F1, F2, F3, F4
      */
+    @Override
     protected void sendFunctionGroup1() {
+        log.debug("sendFunctionGroup1 called for address {}, dir={},F0={},F1={},F2={},F3={},F4={}",
+                this.address,
+                (this.isForward ? "FWD":"REV"),
+                (this.f0 ? "On":"Off"),
+                (this.f1 ? "On":"Off"),
+                (this.f2 ? "On":"Off"),
+                (this.f3 ? "On":"Off"),
+                (this.f4 ? "On":"Off"));
     }
 
     /**
      * Send the message to set the state of functions F5, F6, F7, F8
      */
+    @Override
     protected void sendFunctionGroup2() {
-
+        log.debug("sendFunctionGroup2() called");
     }
 
     /**
      * Send the message to set the state of functions F9, F10, F11, F12
      */
+    @Override
     protected void sendFunctionGroup3() {
+        log.debug("sendFunctionGroup3() called");
     }
 
     /**
-     * Set the speed & direction
+     * Set the speed {@literal &} direction
      * <P>
      * This intentionally skips the emergency stop value of 1.
      *
      * @param speed Number from 0 to 1; less than zero is emergency stop
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "FE_FLOATING_POINT_EQUALITY") // OK to compare floating point, notify on any change
+    @SuppressFBWarnings(value = "FE_FLOATING_POINT_EQUALITY") // OK to compare floating point, notify on any change
+    @Override
     public void setSpeedSetting(float speed) {
+        log.debug("setSpeedSetting: float speed: {} for address {}", speed, this.address);
         float oldSpeed = this.speedSetting;
         if (speed > 1.0) {
             log.warn("Speed was set too high: " + speed);
@@ -92,21 +110,24 @@ public class DebugThrottle extends AbstractThrottle {
         record(speed);
     }
 
+    @Override
     public void setIsForward(boolean forward) {
-        boolean old = isForward;
-        isForward = forward;
-        setSpeedSetting(speedSetting);  // send the command
-        if (old != isForward) {
-            notifyPropertyChangeListener("IsForward", old, isForward);
+        log.debug("setIsForward({}) called for address {}, was {}", forward, this.address, this.isForward);
+        boolean old = this.isForward;
+        this.isForward = forward;
+        sendFunctionGroup1();  // send the command
+        if (old != this.isForward) {
+            notifyPropertyChangeListener("IsForward", old, this.isForward);
         }
     }
 
+    @Override
     protected void throttleDispose() {
-        log.debug("throttleDispose() called");
+        log.debug("throttleDispose() called for address {}", this.address);
         finishRecord();
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(DebugThrottle.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DebugThrottle.class);
 
 }

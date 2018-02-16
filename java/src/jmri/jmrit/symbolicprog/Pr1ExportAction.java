@@ -1,4 +1,3 @@
-// Pr1ExportAction.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.event.ActionEvent;
@@ -18,15 +17,9 @@ import org.slf4j.LoggerFactory;
  * Note that this format is somewhat different from the PR1WIN format, and it's
  * not clear they will interoperate.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2014
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003, 2014
  */
 public class Pr1ExportAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5194604129231328181L;
 
     /**
      * Create the action
@@ -51,6 +44,7 @@ public class Pr1ExportAction extends AbstractAction {
      */
     CvTableModel mModel;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         if (fileChooser == null) {
@@ -85,5 +79,5 @@ public class Pr1ExportAction extends AbstractAction {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(Pr1ExportAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Pr1ExportAction.class);
 }

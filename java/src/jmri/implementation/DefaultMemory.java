@@ -1,18 +1,11 @@
-// DefaultMemory.java
 package jmri.implementation;
 
 /**
  * Concrete implementation of the Reporter interface for the Internal system.
  *
- * @author	Bob Jacobsen Copyright (C) 2004
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2004
  */
 public class DefaultMemory extends AbstractMemory {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 8101816552143434940L;
 
     public DefaultMemory(String systemName) {
         super(systemName);
@@ -32,6 +25,7 @@ public class DefaultMemory extends AbstractMemory {
      * If the current value can be reduced to an integer, that is returned,
      * otherwise a value of -1 is returned.
      */
+    @Override
     public int getState() {
         try {
             return Integer.valueOf(getValue().toString()).intValue();
@@ -42,9 +36,8 @@ public class DefaultMemory extends AbstractMemory {
         }
     }
 
+    @Override
     public void setState(int s) {
         setValue("" + s);
     }
 }
-
-/* @(#)DefaultMemory.java */

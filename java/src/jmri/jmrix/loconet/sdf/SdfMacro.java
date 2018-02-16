@@ -1,4 +1,3 @@
-// SdfMacro.java
 package jmri.jmrix.loconet.sdf;
 
 import java.util.ArrayList;
@@ -31,8 +30,7 @@ import org.slf4j.LoggerFactory;
  * be notified of changes in the SdfBuffer, acccessed by reference during
  * editing (to avoid another dependency), but that's a project for another day)
  *
- * @author	Bob Jacobsen Copyright (C) 2007
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2007
  */
 public abstract class SdfMacro implements SdfConstants {
 
@@ -58,6 +56,7 @@ public abstract class SdfMacro implements SdfConstants {
      *
      * @return newline-terminated string; never null
      */
+    @Override
     abstract public String toString();
 
     /**
@@ -93,6 +92,8 @@ public abstract class SdfMacro implements SdfConstants {
 
     /**
      * Total length, including contained instructions
+     *
+     * @return length of all parts
      */
     public int totalLength() {
         int result = length();
@@ -115,6 +116,8 @@ public abstract class SdfMacro implements SdfConstants {
      * <P>
      * This provides a default implementation for children, but each subclass
      * needs to store it's own data with setAtIndexAndInc()
+     *
+     * @param buffer load with all children
      */
     public void loadByteArray(SdfBuffer buffer) {
         List<SdfMacro> l = getChildren();
@@ -171,12 +174,9 @@ public abstract class SdfMacro implements SdfConstants {
         } else // generics
         if ((m = FourByteMacro.match(buff)) != null) {
             return m;
-        } else if ((m = TwoByteMacro.match(buff)) != null) {
-            return m;
+        } else  { // only case left is TwoByteMacro, which has to match
+            return TwoByteMacro.match(buff);
         }
-
-        log.warn("dropped through");
-        return null;
     }
 
     /**
@@ -196,23 +196,18 @@ public abstract class SdfMacro implements SdfConstants {
      *               corresponding label is returned
      * @return "+" separated list of labels, or "&lt;ERROR&gt;" if none matched
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION")
-    // Only used occasionally, so inefficient String processing not really a problem
-    // though it would be good to fix it if you're working in this area
     String decodeFlags(int input, int[] values, int[] masks, String[] labels) {
         String[] names = jmri.util.StringUtil.getNamesFromStateMasked(input, values, masks, labels);
-        if (names == null) {
-            return "<ERROR>"; // unexpected case, internal error, should also log?
-        } else if (names.length == 0) {
+        if (names.length == 0) {
             return labels[labels.length - 1];  // last name is non-of-above special case
         } else if (names.length == 1) {
             return names[0];
         }
-        String output = names[0];
+        StringBuilder output = new StringBuilder(names[0]);
         for (int i = 1; i < names.length; i++) {
-            output += "+" + names[i];
+            output.append("+").append(names[i]);
         }
-        return output;
+        return output.toString();
     }
 
     String decodeState(int input, int[] values, String[] labels) {
@@ -223,7 +218,6 @@ public abstract class SdfMacro implements SdfConstants {
         return val;
     }
 
-    private static Logger log = LoggerFactory.getLogger(SdfMacro.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SdfMacro.class);
 
 }
-/* @(#)SdfMacro.java */

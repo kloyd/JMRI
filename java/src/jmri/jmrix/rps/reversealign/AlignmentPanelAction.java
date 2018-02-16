@@ -1,31 +1,29 @@
-// AlignmentPanelAction.java
 package jmri.jmrix.rps.reversealign;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.BoxLayout;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * Swing action to create and register a RpsTrackingFrame object
  *
  * @author	Bob Jacobsen Copyright (C) 2006
- * @version $Revision$
  */
 public class AlignmentPanelAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8498519485972403715L;
+    RpsSystemConnectionMemo memo = null;
 
-    public AlignmentPanelAction(String s) {
+    public AlignmentPanelAction(String s,RpsSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public AlignmentPanelAction() {
-        this("RPS Alignment Tool");
+    public AlignmentPanelAction(RpsSystemConnectionMemo _memo) {
+        this("RPS Alignment Tool",_memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         jmri.util.JmriJFrame f = new jmri.util.JmriJFrame("RPS Alignment");
 
@@ -33,7 +31,7 @@ public class AlignmentPanelAction extends AbstractAction {
 
         f.addHelpMenu("package.jmri.jmrix.rps.reversealign.AlignmentPanel", true);
 
-        panel = new AlignmentPanel();
+        panel = new AlignmentPanel(memo);
         panel.initComponents();
         f.getContentPane().add(panel);
         f.pack();
@@ -43,6 +41,3 @@ public class AlignmentPanelAction extends AbstractAction {
     AlignmentPanel panel;
 
 }
-
-
-/* @(#)AlignmentPanelAction.java */

@@ -1,10 +1,8 @@
-// NceMacroGenPanel.java
 package jmri.jmrix.nce.macro;
 
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.util.ResourceBundle;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -17,28 +15,20 @@ import jmri.jmrix.nce.NceTrafficController;
 /**
  * Pane for user input of Nce macros
  *
- * @author	Bob Jacobsen Copyright (C) 2001
+ * @author Bob Jacobsen Copyright (C) 2001
  * @author Dan Boudreau Copyright (C) 2007 Cloned into a Panel by
  * @author kcameron
- * @version $Revision$
  *
  */
 public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements jmri.jmrix.nce.NceListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6258879427292297607L;
-
-    ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.nce.macro.NceMacroBundle");
-
     private static final int REPLY_LEN = 1;
 
     // member declarations
-    javax.swing.JLabel jLabel1 = new javax.swing.JLabel(rb.getString("Macro"));
-    javax.swing.JLabel macroText = new javax.swing.JLabel(rb.getString("Reply"));
+    javax.swing.JLabel jLabel1 = new javax.swing.JLabel(Bundle.getMessage("Macro"));
+    javax.swing.JLabel macroText = new javax.swing.JLabel(Bundle.getMessage("Reply"));
     javax.swing.JLabel macroReply = new javax.swing.JLabel();
-    javax.swing.JButton sendButton = new javax.swing.JButton(rb.getString("Send"));
+    javax.swing.JButton sendButton = new javax.swing.JButton(Bundle.getMessage("Send"));
     javax.swing.JTextField packetTextField = new javax.swing.JTextField(4);
 
     // for padding out panel
@@ -51,20 +41,28 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
         super();
     }
 
-    public void initContext(Object context) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initContext(Object context) {
         if (context instanceof NceSystemConnectionMemo) {
-            try {
-                initComponents((NceSystemConnectionMemo) context);
-            } catch (Exception e) {
-
-            }
+            initComponents((NceSystemConnectionMemo) context);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getHelpTarget() {
         return "package.jmri.jmrix.nce.macro.NceMacroEditFrame";
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getTitle() {
         StringBuilder x = new StringBuilder();
         if (memo != null) {
@@ -73,17 +71,21 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
             x.append("NCE_");
         }
         x.append(": ");
-        x.append(rb.getString("TitleNceMacroGen"));
+        x.append(Bundle.getMessage("TitleNceMacroGen"));
         return x.toString();
     }
 
-    public void initComponents(NceSystemConnectionMemo memo) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents(NceSystemConnectionMemo memo) {
         this.memo = memo;
         tc = memo.getNceTrafficController();
         // the following code sets the frame's initial state
 
         // set initial state
-        macroReply.setText(rb.getString("unknown"));
+        macroReply.setText(Bundle.getMessage("unknown"));
 
         // load tool tips
         sendButton.setToolTipText("Execute NCE macro");
@@ -104,6 +106,7 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
         addItem(sendButton, 0, 3);
 
         sendButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 sendButtonActionPerformed(e);
             }
@@ -118,10 +121,10 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
         if (m == null) {
             macroReply.setText("error");
             JOptionPane.showMessageDialog(this,
-                    rb.getString("EnterMacroNumber"), rb.getString("NceMacro"), JOptionPane.ERROR_MESSAGE);
+                    Bundle.getMessage("EnterMacroNumber"), Bundle.getMessage("NceMacro"), JOptionPane.ERROR_MESSAGE);
             return;
         }
-        macroReply.setText(rb.getString("waiting"));
+        macroReply.setText(Bundle.getMessage("waiting"));
         tc.sendNceMessage(m, this);
 
         // Unfortunately, the new command doesn't tell us if the macro is empty
@@ -130,22 +133,24 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
         tc.sendNceMessage(m2, this);
     }
 
+    @Override
     public void message(NceMessage m) {
     }  // ignore replies
 
+    @Override
     public void reply(NceReply r) {
         if (r.getNumDataElements() == REPLY_LEN) {
 
             int recChar = r.getElement(0);
             if (recChar == '!') {
-                macroReply.setText(rb.getString("okay"));
+                macroReply.setText(Bundle.getMessage("okay"));
             }
             if (recChar == '0') {
-                macroReply.setText(rb.getString("macroEmpty"));
+                macroReply.setText(Bundle.getMessage("macroEmpty"));
             }
 
         } else {
-            macroReply.setText(rb.getString("error"));
+            macroReply.setText(Bundle.getMessage("error"));
         }
     }
 
@@ -158,7 +163,7 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
             return null;
         }
 
-        if (macroNum < 0 | macroNum > 255) {
+        if (macroNum < 0 || macroNum > 255) {
             return null;
         }
 
@@ -168,11 +173,11 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
             // We need to send this version of macro command to cause turnout
             // state to change in NCE CS
             NceMessage m = new NceMessage(5);
-            m.setElement(0, NceBinaryCommand.ACC_CMD); 		// Macro cmd
-            m.setElement(1, 0x00); 		// addr_h
-            m.setElement(2, 0x01); 		// addr_l
-            m.setElement(3, 0x01); 		// Macro cmd
-            m.setElement(4, macroNum); 	// Macro #
+            m.setElement(0, NceBinaryCommand.ACC_CMD);   // Macro cmd
+            m.setElement(1, 0x00);   // addr_h
+            m.setElement(2, 0x01);   // addr_l
+            m.setElement(3, 0x01);   // Macro cmd
+            m.setElement(4, macroNum);  // Macro #
             m.setBinary(true);
             m.setReplyLen(REPLY_LEN);
             return m;
@@ -181,8 +186,8 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
 
             // NCE responds with okay (!) if macro exist, (0) if not
             NceMessage m = new NceMessage(2);
-            m.setElement(0, NceBinaryCommand.MACRO_CMD); 		// Macro cmd
-            m.setElement(1, macroNum); 	// Macro #
+            m.setElement(0, NceBinaryCommand.MACRO_CMD);   // Macro cmd
+            m.setElement(1, macroNum);  // Macro #
             m.setBinary(true);
             m.setReplyLen(REPLY_LEN);
             return m;
@@ -198,7 +203,7 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
             return null;
         }
 
-        if (macroNum < 0 | macroNum > 255) {
+        if (macroNum < 0 || macroNum > 255) {
             return null;
         }
 
@@ -224,11 +229,6 @@ public class NceMacroGenPanel extends jmri.jmrix.nce.swing.NcePanel implements j
      * Nested class to create one of these using old-style defaults
      */
     static public class Default extends jmri.jmrix.nce.swing.NceNamedPaneAction {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = 2833783324467310500L;
 
         public Default() {
             super("Open NCE Send Macro Window",

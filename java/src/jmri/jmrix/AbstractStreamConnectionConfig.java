@@ -1,4 +1,3 @@
-// AbstractStreamConnectionConfig.java
 package jmri.jmrix;
 
 import java.awt.Color;
@@ -10,7 +9,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Hashtable;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -19,24 +17,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Abstract base class for common implementation of the Stream Port 
- * ConnectionConfig 
+ * Abstract base class for common implementation of the Stream Port
+ * ConnectionConfig
  *
  * @author Kevin Dickerson Copyright (C) 2001, 2003
- * @version	$Revision$
  */
-//
 abstract public class AbstractStreamConnectionConfig extends AbstractConnectionConfig {
 
     /**
-     * Ctor for an object being created during load process Currently uses the
-     * serialportadapter, but this will change to a simulator port adapter in
-     * due course.
+     * Ctor for an object being created during load process.
      */
     public AbstractStreamConnectionConfig(jmri.jmrix.AbstractStreamPortController p) {
         adapter = p;
     }
 
+    @Override
     public jmri.jmrix.AbstractStreamPortController getAdapter() {
         return adapter;
     }
@@ -52,6 +47,7 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
     protected boolean init = false;
 
     @SuppressWarnings("unchecked")
+    @Override
     protected void checkInitDone() {
         if (log.isDebugEnabled()) {
             log.debug("init called for " + name());
@@ -62,25 +58,29 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
 
         if (adapter.getSystemConnectionMemo() != null) {
             systemPrefixField.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (!adapter.getSystemConnectionMemo().setSystemPrefix(systemPrefixField.getText())) {
                         JOptionPane.showMessageDialog(null, "System Prefix " + systemPrefixField.getText() + " is already assigned");
-                        systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+                        systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
                     }
                 }
             });
             systemPrefixField.addFocusListener(new FocusListener() {
+                @Override
                 public void focusLost(FocusEvent e) {
                     if (!adapter.getSystemConnectionMemo().setSystemPrefix(systemPrefixField.getText())) {
                         JOptionPane.showMessageDialog(null, "System Prefix " + systemPrefixField.getText() + " is already assigned");
-                        systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+                        systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
                     }
                 }
 
+                @Override
                 public void focusGained(FocusEvent e) {
                 }
             });
             connectionNameField.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (!adapter.getSystemConnectionMemo().setUserName(connectionNameField.getText())) {
                         JOptionPane.showMessageDialog(null, "Connection Name " + connectionNameField.getText() + " is already assigned");
@@ -89,6 +89,7 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
                 }
             });
             connectionNameField.addFocusListener(new FocusListener() {
+                @Override
                 public void focusLost(FocusEvent e) {
                     if (!adapter.getSystemConnectionMemo().setUserName(connectionNameField.getText())) {
                         JOptionPane.showMessageDialog(null, "Connection Name " + connectionNameField.getText() + " is already assigned");
@@ -96,6 +97,7 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
                     }
                 }
 
+                @Override
                 public void focusGained(FocusEvent e) {
                 }
             });
@@ -103,6 +105,7 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
                 final String item = i;
                 if (options.get(i).getComponent() instanceof JComboBox) {
                     ((JComboBox<?>) options.get(i).getComponent()).addActionListener(new ActionListener() {
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             adapter.setOptionState(item, options.get(item).getItem());
                         }
@@ -114,44 +117,46 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
         init = true;
     }
 
+    @Override
     public void updateAdapter() {
         for (String i : options.keySet()) {
             adapter.setOptionState(i, options.get(i).getItem());
         }
 
         if (!adapter.getSystemConnectionMemo().setSystemPrefix(systemPrefixField.getText())) {
-            systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+            systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
             connectionNameField.setText(adapter.getSystemConnectionMemo().getUserName());
         }
     }
 
     protected jmri.jmrix.AbstractStreamPortController adapter = null;
 
-    protected String systemPrefix;
-    protected String connectionName;
-
     /**
      * Load the adapter with an appropriate object
      * <i>unless</I> its already been set.
      */
+    @Override
     abstract protected void setInstance();
 
     /**
-     * Returns the port the stream is connected to which is "none";
+     * {@inheritDoc}
+     * <p>
+     * This implementation always returns the localized value for "none".
+     *
+     * @return the localized value for "none"
      */
+    @Override
     public String getInfo() {
-        return rb.getString("none");
+        return Bundle.getMessage("none");
     }
 
-    static java.util.ResourceBundle rb
-            = java.util.ResourceBundle.getBundle("jmri.jmrix.JmrixBundle");
-
+    @Override
     public void loadDetails(final JPanel details) {
         _details = details;
         setInstance();
         if (!init) {
             String[] optionsAvailable = adapter.getOptions();
-            options = new Hashtable<String, Option>();
+            options.clear();
             for (String i : optionsAvailable) {
                 JComboBox<String> opt = new JComboBox<String>(adapter.getOptionChoices(i));
                 opt.setSelectedItem(adapter.getOptionState(i));
@@ -159,32 +164,34 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
                 if (!adapter.getOptionState(i).equals(opt.getSelectedItem())) {
                     // no, set 1st option choice
                     opt.setSelectedIndex(0);
-                    adapter.setOptionState(i, (String) opt.getSelectedItem());
+                    // log before setting new value to show old value
                     log.warn("Loading found invalid value for option {}, found \"{}\", setting to \"{}\"", i, adapter.getOptionState(i), opt.getSelectedItem());
+                    adapter.setOptionState(i, (String) opt.getSelectedItem());
                 }
                 options.put(i, new Option(adapter.getOptionDisplayName(i), opt, adapter.isOptionAdvanced(i)));
             }
         }
 
         if (adapter.getSystemConnectionMemo() != null) {
-            systemPrefixField.setText(adapter.getSystemConnectionMemo().getSystemPrefix());
+            systemPrefixField.setValue(adapter.getSystemConnectionMemo().getSystemPrefix());
             connectionNameField.setText(adapter.getSystemConnectionMemo().getUserName());
         }
         NUMOPTIONS = NUMOPTIONS + options.size();
 
         showAdvanced.setFont(showAdvanced.getFont().deriveFont(9f));
         showAdvanced.setForeground(Color.blue);
-        showAdvanced.addItemListener(
-                new ItemListener() {
-                    public void itemStateChanged(ItemEvent e) {
-                        showAdvancedItems();
-                    }
-                });
+        showAdvanced.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                showAdvancedItems();
+            }
+        });
         showAdvancedItems();
-        init = false;		// need to reload action listeners
+        init = false;  // need to reload action listeners
         checkInitDone();
     }
 
+    @Override
     protected void showAdvancedItems() {
         _details.removeAll();
         cL.anchor = GridBagConstraints.WEST;
@@ -233,14 +240,17 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
         }
     }
 
+    @Override
     public String getManufacturer() {
         return adapter.getManufacturer();
     }
 
+    @Override
     public void setManufacturer(String manufacturer) {
         adapter.setManufacturer(manufacturer);
     }
 
+    @Override
     public String getConnectionName() {
         if (adapter.getSystemConnectionMemo() != null) {
             return adapter.getSystemConnectionMemo().getUserName();
@@ -249,6 +259,7 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
         }
     }
 
+    @Override
     public boolean getDisabled() {
         if (adapter == null) {
             return true;
@@ -256,6 +267,7 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
         return adapter.getDisabled();
     }
 
+    @Override
     public void setDisabled(boolean disabled) {
         adapter.setDisabled(disabled);
     }
@@ -269,5 +281,5 @@ abstract public class AbstractStreamConnectionConfig extends AbstractConnectionC
         }
     }
 
-    final static protected Logger log = LoggerFactory.getLogger(AbstractStreamConnectionConfig.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractStreamConnectionConfig.class);
 }

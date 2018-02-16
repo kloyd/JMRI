@@ -1,10 +1,9 @@
 package jmri.jmrix.direct;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jmri.DccLocoAddress;
 import jmri.LocoAddress;
 import jmri.jmrix.AbstractThrottle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of DccThrottle with code specific to a direct serial
@@ -14,16 +13,18 @@ import org.slf4j.LoggerFactory;
  * considered long addresses.
  * <P>
  *
- * @author	Bob Jacobsen Copyright (C) 2004
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2004
  */
 public class Throttle extends AbstractThrottle {
+
+    private jmri.CommandStation tcl = null;
 
     /**
      * Constructor.
      */
-    public Throttle(int address) {
+    public Throttle(int address,jmri.CommandStation tc) {
         super(null);
+        tcl = tc;
 
         // cache settings.
         this.speedSetting = 0;
@@ -50,43 +51,47 @@ public class Throttle extends AbstractThrottle {
     /**
      * Send the message to set the state of functions F0, F1, F2, F3, F4.
      */
+    @Override
     protected void sendFunctionGroup1() {
         byte[] result = jmri.NmraPacket.function0Through4Packet(address, (address >= 100),
                 getF0(), getF1(), getF2(), getF3(), getF4());
 
-        TrafficController.instance().sendPacket(result, 1);
+        tcl.sendPacket(result, 1);
     }
 
     /**
      * Send the message to set the state of functions F5, F6, F7, F8.
      */
+    @Override
     protected void sendFunctionGroup2() {
 
         byte[] result = jmri.NmraPacket.function5Through8Packet(address, (address >= 100),
                 getF5(), getF6(), getF7(), getF8());
 
-        TrafficController.instance().sendPacket(result, 1);
+        tcl.sendPacket(result, 1);
     }
 
     /**
      * Send the message to set the state of functions F9, F10, F11, F12.
      */
+    @Override
     protected void sendFunctionGroup3() {
 
         byte[] result = jmri.NmraPacket.function9Through12Packet(address, (address >= 100),
                 getF9(), getF10(), getF11(), getF12());
 
-        TrafficController.instance().sendPacket(result, 1);
+        tcl.sendPacket(result, 1);
     }
 
     /**
-     * Set the speed & direction.
+     * Set the speed {@literal &} direction.
      * <P>
      * This intentionally skips the emergency stop value of 1.
      *
      * @param speed Number from 0 to 1; less than zero is emergency stop
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "FE_FLOATING_POINT_EQUALITY") // OK to compare floating point
+    @SuppressFBWarnings(value = "FE_FLOATING_POINT_EQUALITY") // OK to compare floating point
+    @Override
     public void setSpeedSetting(float speed) {
         float oldSpeed = this.speedSetting;
         this.speedSetting = speed;
@@ -117,9 +122,10 @@ public class Throttle extends AbstractThrottle {
             notifyPropertyChangeListener("SpeedSetting", oldSpeed, this.speedSetting);
         }
         record(speed);
-        // TrafficController.instance().sendMessage(m, null);
+        // tcl.sendMessage(m, null);
     }
 
+    @Override
     public void setIsForward(boolean forward) {
         boolean old = isForward;
         isForward = forward;
@@ -129,16 +135,18 @@ public class Throttle extends AbstractThrottle {
         }
     }
 
+    @Override
     public LocoAddress getLocoAddress() {
-        log.error("getLocoAddress not fully implemented yet");
+        //log.error("getLocoAddress not fully implemented yet");
         return new DccLocoAddress(address, address > 100);   // always short address if <100
     }
 
+    @Override
     protected void throttleDispose() {
         finishRecord();
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(Throttle.class.getName());
+    // private final static Logger log = LoggerFactory.getLogger(Throttle.class);
 
 }

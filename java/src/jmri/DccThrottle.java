@@ -1,4 +1,3 @@
-// DccThottle.java
 package jmri;
 
 /**
@@ -15,8 +14,7 @@ package jmri;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001
  * @see Throttle
  */
 public interface DccThrottle extends Throttle {
@@ -51,6 +49,3 @@ public interface DccThrottle extends Throttle {
     // information on consisting  (how do we set consisting?)
     // register for notification
 }
-
-
-/* @(#)DccThottle.java */

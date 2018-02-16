@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="iso-8859-1"?>
 <!-- Copyright (C) Bob Jacobsen 2007 All rights reserved -->
 <!-- See the COPYING file for more information on licensing and appropriate use -->
-<!-- $Id$ -->
-
 
 <!-- This XSLT transform is used when a JMRI decoder definition -->
 <!-- file is displayed by a web browser -->
 
-<!-- This file is part of JMRI.  Copyright 2007-2013.                       -->
+<!-- This file is part of JMRI.  Copyright 2007-2016.                       -->
 <!--                                                                        -->
 <!-- JMRI is free software; you can redistribute it and/or modify it under  -->
 <!-- the terms of version 2 of the GNU General Public License as published  -->
@@ -21,7 +19,7 @@
  
 <xsl:stylesheet	version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:docbook="http://docbook.org/ns/docbook">
       <xsl:param name="JmriCopyrightYear">
-        2000 - 2015
+        2000 - 2016
       </xsl:param>
 
 <!-- Need to instruct the XSLT processor to use HTML output rules.
@@ -88,7 +86,7 @@
 JMRI software, including this file, is distributed under license. That
 license defines the terms under which you can use, modify and/or distribute
 it.  Please see our 
-<a href="http://jmri.sourceforge.net/Copyright.html">licensing page</a> 
+<a href="http://jmri.org/Copyright.html">licensing page</a> 
 for more information.
 </p>
 <hr/>
@@ -162,8 +160,8 @@ This page was produced by <a href="http://jmri.org">JMRI</a>.
 <P/>JMRI, DecoderPro, PanelPro, DispatcherPro and associated logos are our trademarks.
 <P/><A href="http://jmri.org/Copyright.html">Additional information on copyright, trademarks and licenses is linked here.</A>
 <P/>Site hosted by: <BR/>
-<A href="http://sourceforge.net"><IMG src="http://sourceforge.net/sflogo.php?group_id=26788&amp;type=1" width="88" height="31" border="0" alt="SourceForge Logo"/> </A> 
-
+    <a href="http://sourceforge.net/projects/jmri">
+    <img src="https://sourceforge.net/sflogo.php?type=13&amp;group_id=26788" border="0" alt="JMRI Model Railroad Interface at SourceForge.net"/></a>
   </body>
 </html>
 

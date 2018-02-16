@@ -1,10 +1,9 @@
-// ApplicationTest.java
 package jmri;
 
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * Tests for the Application class
  *
  * @author Matthew Harris Copyright (C) 2011
- * @version $Revision$
  */
 public class ApplicationTest extends TestCase {
 
@@ -48,7 +46,7 @@ public class ApplicationTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {ApplicationTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -61,13 +59,15 @@ public class ApplicationTest extends TestCase {
     @Override
     protected void setUp() {
         apps.tests.Log4JFixture.setUp();
+        jmri.util.JUnitUtil.resetApplication();
     }
 
     @Override
     protected void tearDown() {
+        jmri.util.JUnitUtil.resetApplication();
         apps.tests.Log4JFixture.tearDown();
     }
 
-    private static final Logger log = LoggerFactory.getLogger(ApplicationTest.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ApplicationTest.class);
 
 }

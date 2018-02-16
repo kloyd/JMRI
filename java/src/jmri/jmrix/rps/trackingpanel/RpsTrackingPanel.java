@@ -1,4 +1,3 @@
-// RpsTrackingPanel.java
 package jmri.jmrix.rps.trackingpanel;
 
 import java.awt.BasicStroke;
@@ -23,6 +22,7 @@ import jmri.jmrix.rps.MeasurementListener;
 import jmri.jmrix.rps.Model;
 import jmri.jmrix.rps.Receiver;
 import jmri.jmrix.rps.Region;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,18 +34,15 @@ import org.slf4j.LoggerFactory;
  * @see jmri.jmrix.rps.Measurement
  *
  * @author	Bob Jacobsen Copyright (C) 2006, 2008
- * @version $Revision$
  */
 public class RpsTrackingPanel extends javax.swing.JPanel
         implements MeasurementListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5705944161292948723L;
+    RpsSystemConnectionMemo memo = null;
 
-    public RpsTrackingPanel() {
+    public RpsTrackingPanel(RpsSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
         Distributor.instance().addMeasurementListener(this);
         setToolTipText("<no item>");  // activates ToolTip, sets default
     }
@@ -61,6 +58,7 @@ public class RpsTrackingPanel extends javax.swing.JPanel
      *
      * @return null if no object under mouse; this suppresses ToolTip
      */
+    @Override
     public String getToolTipText(MouseEvent e) {
         // get mouse coordinates
         try {
@@ -71,7 +69,7 @@ public class RpsTrackingPanel extends javax.swing.JPanel
                 MeasurementRep r = measurementRepList.get(i);
                 if (r.contains(userPt)) {
                     Measurement m = r.measurement;
-                    return "ID " + m.getID() + " at " + m.getX() + "," + m.getY();
+                    return "ID " + m.getId() + " at " + m.getX() + "," + m.getY();
                 }
             }
 
@@ -139,6 +137,7 @@ public class RpsTrackingPanel extends javax.swing.JPanel
     // current transform to graphics coordinates
     AffineTransform currentAT;
 
+    @Override
     public void paint(Graphics g) {
         // draw everything else
         super.paint(g);
@@ -213,8 +212,9 @@ public class RpsTrackingPanel extends javax.swing.JPanel
         return new Color(red, green, blue);
     }
 
+    @Override
     public void notify(Measurement m) {
-        String id = m.getID();
+        String id = m.getId();
         TransmitterStatus transmitter = transmitters.get(id);
         double xend = m.getX();
         double yend = m.getY();
@@ -224,7 +224,7 @@ public class RpsTrackingPanel extends javax.swing.JPanel
         if (transmitter == null) {
             // create Transmitter status with current measurement
             // so we can draw line next time
-            log.debug("create new TransmitterStatus for " + m.getID());
+            log.debug("create new TransmitterStatus for " + m.getId());
             transmitter = new TransmitterStatus();
             transmitter.measurement = m;
             transmitter.color = nextColor();
@@ -319,5 +319,5 @@ public class RpsTrackingPanel extends javax.swing.JPanel
         Shape rep2;
         Measurement measurement;
     }
-    static Logger log = LoggerFactory.getLogger(RpsTrackingPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RpsTrackingPanel.class);
 }

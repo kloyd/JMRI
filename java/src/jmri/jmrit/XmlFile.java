@@ -1,4 +1,3 @@
-// XmlFile.java
 package jmri.jmrit;
 
 import java.io.BufferedInputStream;
@@ -14,12 +13,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
+import javax.annotation.Nonnull;
 import javax.swing.JFileChooser;
 import jmri.util.FileUtil;
 import jmri.util.JmriLocalEntityResolver;
 import jmri.util.NoArchiveFileFilter;
 import org.jdom2.Comment;
+import org.jdom2.Content;
 import org.jdom2.DocType;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -42,9 +42,17 @@ import org.slf4j.LoggerFactory;
  * <p>
  * We implement this using our own EntityResolver, the
  * {@link jmri.util.JmriLocalEntityResolver} class.
+ * <p>
+ * When reading a file, validation is controlled heirarchically:
+ * <ul>
+ * <li>There's a global default
+ * <li>Which can be overridden on a particular XmlFile object
+ * <li>Finally, the static call to create a builder can be invoked with a
+ * validation specification.
+ * </ul>
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002, 2007, 2012, 2014
- * @version	$Revision$
+ *
+ * @author Bob Jacobsen Copyright (C) 2001, 2002, 2007, 2012, 2014
  */
 public abstract class XmlFile {
 
@@ -65,13 +73,38 @@ public abstract class XmlFile {
     public static final String xsltLocation = "/xml/XSLT/";
 
     /**
+     * Specify validation operations on input. The available choices are
+     * restricted to what the underlying SAX Xerces and JDOM implementations
+     * allow.
+     */
+    public enum Validate {
+        /**
+         * Don't validate input
+         */
+        None,
+        /**
+         * Require that the input specifies a Schema which validates
+         */
+        RequireSchema,
+        /**
+         * Validate against DTD if present (no DTD passes too)
+         */
+        CheckDtd,
+        /**
+         * Validate against DTD if present, else Schema must be present and
+         * valid
+         */
+        CheckDtdThenSchema
+    }
+
+    /**
      * Read the contents of an XML file from its filename. The name is expanded
      * by the {@link #findFile} routine. If the file is not found, attempts to
      * read the XML file from a JAR resource.
      *
      * @param name Filename, as needed by {@link #findFile}
-     * @throws org.jdom2.JDOMException
-     * @throws java.io.FileNotFoundException
+     * @throws org.jdom2.JDOMException       only when all methods have failed
+     * @throws java.io.FileNotFoundException if file not found
      * @return null if not found, else root element of located file
      */
     public Element rootFromName(String name) throws JDOMException, IOException {
@@ -100,7 +133,7 @@ public abstract class XmlFile {
      * Exceptions are only thrown when local recovery is impossible.
      *
      * @throws org.jdom2.JDOMException       only when all methods have failed
-     * @throws java.io.FileNotFoundException
+     * @throws java.io.FileNotFoundException if file not found
      * @param file File to be parsed. A FileNotFoundException is thrown if it
      *             doesn't exist.
      * @return root element from the file. This should never be null, as an
@@ -111,11 +144,8 @@ public abstract class XmlFile {
             log.debug("reading xml from file: " + file.getPath());
         }
 
-        FileInputStream fs = new FileInputStream(file);
-        try {
-            return getRoot(verify, fs);
-        } finally {
-            fs.close();
+        try (FileInputStream fs = new FileInputStream(file)) {
+            return getRoot(fs);
         }
     }
 
@@ -125,13 +155,13 @@ public abstract class XmlFile {
      * Exceptions are only thrown when local recovery is impossible.
      *
      * @throws org.jdom2.JDOMException       only when all methods have failed
-     * @throws java.io.FileNotFoundException
+     * @throws java.io.FileNotFoundException if file not found
      * @param stream InputStream to be parsed.
      * @return root element from the file. This should never be null, as an
      *         exception should be thrown if anything goes wrong.
      */
     public Element rootFromInputStream(InputStream stream) throws JDOMException, IOException {
-        return getRoot(verify, stream);
+        return getRoot(stream);
     }
 
     /**
@@ -140,7 +170,7 @@ public abstract class XmlFile {
      * Exceptions are only thrown when local recovery is impossible.
      *
      * @throws org.jdom2.JDOMException only when all methods have failed
-     * @throws FileNotFoundException
+     * @throws FileNotFoundException   if file not found
      * @param url URL locating the data file
      * @return root element from the file. This should never be null, as an
      *         exception should be thrown if anything goes wrong.
@@ -149,32 +179,54 @@ public abstract class XmlFile {
         if (log.isDebugEnabled()) {
             log.debug("reading xml from URL: " + url.toString());
         }
-        return getRoot(verify, url.openConnection().getInputStream());
+        return getRoot(url.openConnection().getInputStream());
     }
-    /**
-     * Specify a standard prefix for DTDs in new XML documents
-     */
-    static public final String dtdLocation = "/xml/DTD/";
 
     /**
      * Get the root element from an XML document in a stream.
      *
-     * @param verify true if the XML document should be validated against its
-     *               schema
      * @param stream input containing the XML document
      * @return the root element of the XML document
      * @throws org.jdom2.JDOMException if the XML document is invalid
      * @throws java.io.IOException     if the input cannot be read
      */
-    protected Element getRoot(boolean verify, InputStream stream) throws JDOMException, IOException {
-        if (log.isDebugEnabled()) {
-            log.debug("getRoot from stream");
-        }
-        SAXBuilder builder = getBuilder(verify);  // argument controls validation
+    protected Element getRoot(InputStream stream) throws JDOMException, IOException {
+        log.trace("getRoot from stream");
+
+        SAXBuilder builder = getBuilder(getValidate());
         Document doc = builder.build(new BufferedInputStream(stream));
         doc = processInstructions(doc);  // handle any process instructions
         // find root
         return doc.getRootElement();
+    }
+
+    /**
+     * While the various Deprecated methods are present, this provides a warning
+     * against their continued use. JMRI itself stopped using these with JMRI
+     * 4.7.2
+     */
+    protected static void warnDeprecated() {
+        if (warned) {
+            return;
+        }
+        log.warn("Deprecated XmlFile method was used, validation may be ignored; only mentioning once");
+        warned = true;
+    }
+    static protected boolean warned = false;
+
+    /**
+     * @deprecated 4.7.2 use setVerifySchema, setVerifyDTD methods
+     * @param verify true if the XML document should be validated (but this is
+     *               now ignored)
+     * @param stream input containing the XML document
+     * @return the root element of the XML document
+     * @throws org.jdom2.JDOMException if the XML document is invalid
+     * @throws java.io.IOException     if the input cannot be read
+     */
+    @Deprecated
+    protected Element getRoot(boolean verify, InputStream stream) throws JDOMException, IOException {
+        warnDeprecated();
+        return getRoot(stream);
     }
 
     /**
@@ -183,19 +235,23 @@ public abstract class XmlFile {
      * Runs through a BufferedReader for increased performance.
      *
      *
-     * @param verify true if the XML document should be validated against its
-     *               schema
-     * @param reader input containing the XML document
+     * @param verifySchema true if the XML document should be validated against
+     *                     its schema
+     * @param verifyDTD    true if the XML document should be validated against
+     *                     its DTD
+     * @param reader       input containing the XML document
      * @return the root element of the XML document
      * @throws org.jdom2.JDOMException if the XML document is invalid
      * @throws java.io.IOException     if the input cannot be read
      * @since 3.1.5
+     * @deprecated 4.7.2 use setVerifySchema, setVerifyDTD methods
      */
-    protected Element getRoot(boolean verify, InputStreamReader reader) throws JDOMException, IOException {
-        if (log.isDebugEnabled()) {
-            log.debug("getRoot from reader with encoding " + reader.getEncoding());
-        }
-        SAXBuilder builder = getBuilder(verify);  // argument controls validation
+    @Deprecated
+    protected Element getRoot(boolean verifySchema, boolean verifyDTD, InputStreamReader reader) throws JDOMException, IOException {
+        warnDeprecated();
+        log.trace("getRoot from reader with encoding {}", reader.getEncoding());
+
+        SAXBuilder builder = getBuilder(getValidate());  // argument controls validation
         Document doc = builder.build(new BufferedReader(reader));
         doc = processInstructions(doc);  // handle any process instructions
         // find root
@@ -203,9 +259,24 @@ public abstract class XmlFile {
     }
 
     /**
+     * @deprecated 4.7.2 use setVerifySchema, setVerifyDTD methods
+     * @param verify true if the XML document should be validated (but this is
+     *               now ignored)
+     * @param reader input containing the XML document
+     * @return the root element of the XML document
+     * @throws org.jdom2.JDOMException if the XML document is invalid
+     * @throws java.io.IOException     if the input cannot be read
+     */
+    @Deprecated
+    protected Element getRoot(boolean verify, InputStreamReader reader) throws JDOMException, IOException {
+        warnDeprecated();
+        return getRoot(verify, verify, reader);
+    }
+
+    /**
      * Write a File as XML.
      *
-     * @throws FileNotFoundException
+     * @throws FileNotFoundException if file not found
      * @param file File to be created.
      * @param doc  Document to be written out. This should never be null.
      */
@@ -215,15 +286,13 @@ public abstract class XmlFile {
             FileUtil.createDirectory(file.getParent());
         }
         // write the result to selected file
-        FileOutputStream o = new FileOutputStream(file);
-        try {
+        try (FileOutputStream o = new FileOutputStream(file)) {
             XMLOutputter fmt = new XMLOutputter();
             fmt.setFormat(Format.getPrettyFormat()
                     .setLineSeparator(System.getProperty("line.separator"))
                     .setTextMode(Format.TextMode.TRIM_FULL_WHITE));
             fmt.output(doc, o);
-        } finally {
-            o.close();
+            o.flush();
         }
     }
 
@@ -282,12 +351,10 @@ public abstract class XmlFile {
      *
      * @param name Element to print, should not be null
      */
-    @SuppressWarnings("unchecked")
-    static public void dumpElement(Element name) {
-        List<Element> l = name.getChildren();
-        for (Element l1 : l) {
-            System.out.println(" Element: " + l1.getName() + " ns: " + l1.getNamespace());
-        }
+    static public void dumpElement(@Nonnull Element name) {
+        name.getChildren().forEach((element) -> {
+            System.out.println(" Element: " + element.getName() + " ns: " + element.getNamespace());
+        });
     }
 
     /**
@@ -466,11 +533,12 @@ public abstract class XmlFile {
      *
      * JMRI only knows about certain ones; the others will be ignored.
      *
-     * @return the Document that results from the processing
+     * @param doc the document containing processing instructions
+     * @return the processed document
      */
     Document processInstructions(Document doc) {
         // this iterates over top level
-        for (Object c : doc.getContent()) { // type Content
+        for (Content c : doc.cloneContent()) {
             if (c instanceof ProcessingInstruction) {
                 try {
                     doc = processOneInstruction((ProcessingInstruction) c, doc);
@@ -488,7 +556,7 @@ public abstract class XmlFile {
     }
 
     Document processOneInstruction(ProcessingInstruction p, Document doc) throws org.jdom2.transform.XSLTransformException, org.jdom2.JDOMException, java.io.IOException {
-        log.debug("handling ", p);
+        log.trace("handling ", p);
 
         // check target
         String target = p.getTarget();
@@ -509,7 +577,7 @@ public abstract class XmlFile {
         }
 
         // read the XSLT transform into a Document to get XInclude done
-        SAXBuilder builder = getBuilder(false);  // argument controls validation
+        SAXBuilder builder = getBuilder(Validate.None);
         Document xdoc = builder.build(new BufferedInputStream(new FileInputStream(findFile(href))));
         org.jdom2.transform.XSLTransformer transformer = new org.jdom2.transform.XSLTransformer(xdoc);
         return transformer.transform(doc);
@@ -557,8 +625,7 @@ public abstract class XmlFile {
      */
     static public void addDefaultInfo(Element root) {
         String content = "Written by JMRI version " + jmri.Version.name()
-                + " on " + (new Date()).toString()
-                + " $Id$";
+                + " on " + (new Date()).toString();
         Comment comment = new Comment(content);
         root.addContent(comment);
     }
@@ -575,16 +642,68 @@ public abstract class XmlFile {
     static public String xmlDir() {
         return FileUtil.getProgramPath() + "xml" + File.separator;
     }
-    static boolean verify = false;
-    static boolean include = true;
 
-    static public boolean getVerify() {
-        return verify;
+    /**
+     * Whether to, by global default, validate the file being read. Public so it
+     * can be set by scripting and for debugging.
+     *
+     * @return the default level of validation to apply to a file
+     */
+    static public Validate getDefaultValidate() {
+        return defaultValidate;
     }
 
-    static public void setVerify(boolean v) {
-        verify = v;
+    static public void setDefaultValidate(Validate v) {
+        defaultValidate = v;
     }
+
+    static private Validate defaultValidate = Validate.None;
+
+    /**
+     * Whether to verify the DTD of this XML file when read.
+     *
+     * @return the level of validation to apply to a file
+     */
+    public Validate getValidate() {
+        return validate;
+    }
+
+    public void setValidate(Validate v) {
+        validate = v;
+    }
+
+    private Validate validate = defaultValidate;
+
+    /**
+     * Get the default standard location for DTDs in new XML documents. Public
+     * so it can be set by scripting and for debug.
+     *
+     * @return the default DTD location
+     */
+    static public String getDefaultDtdLocation() {
+        return defaultDtdLocation;
+    }
+
+    static public void setDefaultDtdLocation(String v) {
+        defaultDtdLocation = v;
+    }
+
+    static public String defaultDtdLocation = "/xml/DTD/";
+
+    /**
+     * Get the location for DTDs in this XML document.
+     *
+     * @return the DTD location
+     */
+    public String getDtdLocation() {
+        return dtdLocation;
+    }
+
+    public void setDtdLocation(String v) {
+        dtdLocation = v;
+    }
+
+    public String dtdLocation = defaultDtdLocation;
 
     /**
      * Provide a JFileChooser initialized to the default user location, and with
@@ -626,27 +745,54 @@ public abstract class XmlFile {
         return userFileChooser(filter, suffix1, null);
     }
 
+    /**
+     * @param verify true if validation should be attempted
+     * @return a SAX builder pre-configured to (not) validate XML
+     * @deprecated 4.7.2
+     */
+    @Deprecated
     public static SAXBuilder getBuilder(boolean verify) {
-        SAXBuilder builder = new SAXBuilder("org.apache.xerces.parsers.SAXParser", verify);  // argument controls validation
+        warnDeprecated();
+        if (verify) {
+            return getBuilder(Validate.CheckDtdThenSchema);
+        }
+        return getBuilder(Validate.None);
+    }
 
+    public static SAXBuilder getBuilder(Validate validate) {  // should really be a Verify enum
+        SAXBuilder builder;
+
+        boolean verifyDTD = (validate == Validate.CheckDtd) || (validate == Validate.CheckDtdThenSchema);
+        boolean verifySchema = (validate == Validate.RequireSchema) || (validate == Validate.CheckDtdThenSchema);
+
+        // old style 
+        builder = new SAXBuilder("org.apache.xerces.parsers.SAXParser", verifyDTD);  // argument controls DTD validation
+
+        // insert local resolver for includes, schema, DTDs
         builder.setEntityResolver(new JmriLocalEntityResolver());
+
+        // configure XInclude handling
         builder.setFeature("http://apache.org/xml/features/xinclude", true);
         builder.setFeature("http://apache.org/xml/features/xinclude/fixup-base-uris", false);
+
+        // only validate if grammar is available, making ABSENT OK
+        builder.setFeature("http://apache.org/xml/features/validation/dynamic", verifyDTD && !verifySchema);
+
+        // control Schema validation
+        builder.setFeature("http://apache.org/xml/features/validation/schema", verifySchema);
+        builder.setFeature("http://apache.org/xml/features/validation/schema-full-checking", verifySchema);
+
+        // if not validating DTD, just validate Schema
+        builder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", verifyDTD);
+        if (!verifyDTD) {
+            builder.setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", "http://www.w3.org/2001/XMLSchema");
+        }
+
+        // allow Java character encodings
         builder.setFeature("http://apache.org/xml/features/allow-java-encodings", true);
 
-        // for schema validation. Not needed for DTDs, so continue if not found now
-        try {
-            builder.setFeature("http://apache.org/xml/features/validation/schema", verify);
-            builder.setFeature("http://apache.org/xml/features/validation/schema-full-checking", verify);
-
-            // parse namespaces, including the noNamespaceSchema
-            builder.setFeature("http://xml.org/sax/features/namespaces", true);
-
-        } catch (Exception e) {
-            log.warn("Could not set schema validation feature: " + e);
-        }
         return builder;
     }
     // initialize logging
-    private static final Logger log = LoggerFactory.getLogger(XmlFile.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(XmlFile.class);
 }

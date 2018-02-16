@@ -1,4 +1,3 @@
-// Follower.java
 package jmri.jmrit.ussctc;
 
 import jmri.InstanceManager;
@@ -14,8 +13,7 @@ import jmri.implementation.DefaultRoute;
  * <P>
  *
  *
- * @author	Bob Jacobsen Copyright (C) 2007
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2007
  */
 public class Follower implements Constants {
 
@@ -46,7 +44,7 @@ public class Follower implements Constants {
         String nameT = namePrefix + "T" + nameDivider + output;
         String nameC = namePrefix + "C" + nameDivider + output;
 
-        RouteManager rm = InstanceManager.routeManagerInstance();
+        RouteManager rm = InstanceManager.getDefault(jmri.RouteManager.class);
 
         Route rt = rm.getBySystemName(nameT);
         // if an old one exists, remove it
@@ -99,7 +97,7 @@ public class Follower implements Constants {
         // find existing thrown route to get info
         String nameT = namePrefix + "T" + nameDivider + output;
 
-        RouteManager rm = InstanceManager.routeManagerInstance();
+        RouteManager rm = InstanceManager.getDefault(jmri.RouteManager.class);
         Route r = rm.getBySystemName(nameT);
         if (r == null) {
             throw new jmri.JmriException("Route does not exist");
@@ -137,5 +135,3 @@ public class Follower implements Constants {
     boolean invert;
 
 }
-
-/* @(#)Follower.java */

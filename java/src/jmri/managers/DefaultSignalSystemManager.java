@@ -1,4 +1,3 @@
-// DefaultSignalSystemManager.java
 package jmri.managers;
 
 import java.io.File;
@@ -27,9 +26,8 @@ import org.slf4j.LoggerFactory;
  *
  *
  * @author Bob Jacobsen Copyright (C) 2009
- * @version	$Revision$
  */
-public class DefaultSignalSystemManager extends AbstractManager
+public class DefaultSignalSystemManager extends AbstractManager<SignalSystem>
         implements SignalSystemManager, java.beans.PropertyChangeListener {
 
     public DefaultSignalSystemManager() {
@@ -40,6 +38,7 @@ public class DefaultSignalSystemManager extends AbstractManager
         load();
     }
 
+    @Override
     public int getXMLOrder() {
         return 65400;
     }
@@ -51,14 +50,17 @@ public class DefaultSignalSystemManager extends AbstractManager
     protected void registerSelf() {
     }
 
+    @Override
     public String getSystemPrefix() {
         return "I";
     }
 
+    @Override
     public char typeLetter() {
         return 'F';
     }
 
+    @Override
     public SignalSystem getSystem(String name) {
         SignalSystem t = getByUserName(name);
         if (t != null) {
@@ -68,12 +70,14 @@ public class DefaultSignalSystemManager extends AbstractManager
         return getBySystemName(name);
     }
 
+    @Override
     public SignalSystem getBySystemName(String key) {
-        return (SignalSystem) _tsys.get(key);
+        return _tsys.get(key);
     }
 
+    @Override
     public SignalSystem getByUserName(String key) {
-        return (SignalSystem) _tuser.get(key);
+        return _tuser.get(key);
     }
 
     void load() {
@@ -97,13 +101,15 @@ public class DefaultSignalSystemManager extends AbstractManager
         }
         if (signalDir != null) {
             File[] files = signalDir.listFiles();
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    // check that there's an aspects.xml file
-                    File aspects = new File(file.getPath() + File.separator + "aspects.xml");
-                    if (aspects.exists()) {
-                        log.debug("found system: " + file.getName());
-                        retval.add(file.getName());
+            if (files != null) { // null if not a directory
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        // check that there's an aspects.xml file
+                        File aspects = new File(file.getPath() + File.separator + "aspects.xml");
+                        if (aspects.exists()) {
+                            log.debug("found system: " + file.getName());
+                            retval.add(file.getName());
+                        }
                     }
                 }
             }
@@ -113,7 +119,9 @@ public class DefaultSignalSystemManager extends AbstractManager
             URL dir = FileUtil.findURL("signals", FileUtil.Location.USER, "resources", "xml");
             if (dir == null) {
                 try {
-                    (new File(FileUtil.getUserFilesPath(), "xml/signals")).mkdirs();
+                    if (!(new File(FileUtil.getUserFilesPath(), "xml/signals")).mkdirs()) {
+                        log.error("Error while creating xml/signals directory");
+                    }
                 } catch (Exception ex) {
                     log.error("Unable to create user's signals directory.", ex);
                 }
@@ -125,13 +133,15 @@ public class DefaultSignalSystemManager extends AbstractManager
         }
         if (signalDir != null) {
             File[] files = signalDir.listFiles();
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    // check that there's an aspects.xml file
-                    File aspects = new File(file.getPath() + File.separator + "aspects.xml");
-                    if ((aspects.exists()) && (!retval.contains(file.getName()))) {
-                        log.debug("found system: " + file.getName());
-                        retval.add(file.getName());
+            if (files != null) { // null if not a directory
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        // check that there's an aspects.xml file
+                        File aspects = new File(file.getPath() + File.separator + "aspects.xml");
+                        if ((aspects.exists()) && (!retval.contains(file.getName()))) {
+                            log.debug("found system: " + file.getName());
+                            retval.add(file.getName());
+                        }
                     }
                 }
             }
@@ -209,11 +219,23 @@ public class DefaultSignalSystemManager extends AbstractManager
                 try {
                     Class<?> cl;
                     Constructor<?> ctor;
-                    // create key object
-                    cl = Class.forName(e.getChild("key").getAttributeValue("class"));
-                    ctor = cl.getConstructor(new Class<?>[]{String.class});
-                    Object key = ctor.newInstance(new Object[]{e.getChild("key").getText()});
-
+                    
+                    // create key string
+                    String key = e.getChild("key").getText();
+                    
+                    // check for non-String key.  Warn&proceed if found.
+                    // Pre-JMRI 4.3, keys in NamedBean parameters could be Objects
+                    // constructed from Strings, similar to the value code below.
+                    if (! (
+                        e.getChild("key").getAttributeValue("class") == null
+                        || e.getChild("key").getAttributeValue("class").equals("")
+                        || e.getChild("key").getAttributeValue("class").equals("java.lang.String")
+                        )) {
+                        
+                        log.warn("SignalSystem {} property key of invalid non-String type {} not supported", 
+                            s.getSystemName(), e.getChild("key").getAttributeValue("class"));
+                    }
+                    
                     // create value object
                     Object value = null;
                     if (e.getChild("value") != null) {
@@ -224,7 +246,9 @@ public class DefaultSignalSystemManager extends AbstractManager
 
                     // store
                     s.setProperty(key, value);
-                } catch (Exception ex) {
+                } catch (ClassNotFoundException 
+                            | NoSuchMethodException | InstantiationException
+                            | IllegalAccessException | java.lang.reflect.InvocationTargetException ex) {
                     log.error("Error loading properties", ex);
                 }
             }
@@ -245,11 +269,10 @@ public class DefaultSignalSystemManager extends AbstractManager
     static class AspectFile extends XmlFile {
     }
 
+    @Override
     public String getBeanTypeHandled() {
         return Bundle.getMessage("BeanNameSignalSystem");
     }
 
-    static Logger log = LoggerFactory.getLogger(DefaultSignalSystemManager.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DefaultSignalSystemManager.class);
 }
-
-/* @(#)DefaultSignalSystemManager.java */

@@ -2,12 +2,13 @@
 package jmri.jmrit.operations.locations;
 
 import java.util.List;
+import jmri.InstanceManager;
 import jmri.jmrit.operations.OperationsTestCase;
 import jmri.jmrit.operations.OpsPropertyChangeListener;
 import jmri.jmrit.operations.rollingstock.cars.Car;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the Operations Pool class Last manually cross-checked on ?????
@@ -20,7 +21,6 @@ import junit.framework.TestSuite;
  *
  * @author Gregory Madsen Copyright (C) 2012, based on OperationsLocationTest
  * class
- * @version $Revision$
  */
 public class OperationsPoolTest extends OperationsTestCase {
 
@@ -361,6 +361,7 @@ public class OperationsPoolTest extends OperationsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        InstanceManager.getDefault(jmri.jmrit.operations.rollingstock.cars.CarTypes.class).addName("Boxcar");
     }
 
     public OperationsPoolTest(String s) {
@@ -370,7 +371,7 @@ public class OperationsPoolTest extends OperationsTestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", OperationsPoolTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

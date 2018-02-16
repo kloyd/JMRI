@@ -20,14 +20,8 @@ import javax.swing.JTextField;
  * A very specific dialog for editing the properties of a FunctionButton object.
  *
  * @author Paul Bender Copyright (C) 2005
- * @version $Revision$
  */
 public class ControlPanelPropertyEditor extends JDialog {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 9096645075332040546L;
 
     private ControlPanel control;
 
@@ -116,6 +110,7 @@ public class ControlPanelPropertyEditor extends JDialog {
 
         displaySlider.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         displaySlider.setSelected(true);
                         displaySteps.setSelected(false);
@@ -126,6 +121,7 @@ public class ControlPanelPropertyEditor extends JDialog {
 
         displaySteps.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         displaySlider.setSelected(false);
                         displaySteps.setSelected(true);
@@ -136,6 +132,7 @@ public class ControlPanelPropertyEditor extends JDialog {
 
         displaySliderContinuous.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         displaySlider.setSelected(false);
                         displaySteps.setSelected(false);
@@ -156,8 +153,9 @@ public class ControlPanelPropertyEditor extends JDialog {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 2, 4, 4));
 
-        JButton saveButton = new JButton(Bundle.getMessage("ButtonOk"));
+        JButton saveButton = new JButton(Bundle.getMessage("ButtonOK"));
         saveButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 saveProperties();
             }
@@ -165,6 +163,7 @@ public class ControlPanelPropertyEditor extends JDialog {
 
         JButton cancelButton = new JButton(Bundle.getMessage("ButtonCancel"));
         cancelButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 finishEdit();
             }

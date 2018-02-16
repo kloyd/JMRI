@@ -1,18 +1,17 @@
-// RegionTest.java
 package jmri.jmrix.rps;
 
 import javax.vecmath.Point3d;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the rps.Region class.
  *
  * @author	Bob Jacobsen Copyright 2007
- * @version	$Revision$
- */
+  */
 public class RegionTest extends TestCase {
 
     public void testCtors() {
@@ -131,7 +130,7 @@ public class RegionTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", RegionTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -141,12 +140,14 @@ public class RegionTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

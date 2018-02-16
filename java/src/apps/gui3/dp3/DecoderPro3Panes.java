@@ -1,4 +1,3 @@
-// DecoderPro3Panes.java
 package apps.gui3.dp3;
 
 import jmri.util.BusyGlassPane;
@@ -12,15 +11,12 @@ import jmri.util.BusyGlassPane;
 public class DecoderPro3Panes extends javax.swing.JPanel
         implements jmri.jmrit.symbolicprog.tabbedframe.PaneContainer {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 7909265900453394172L;
-
+    @Override
     public boolean isBusy() {
         return false;
     }
 
+    @Override
     public void paneFinished() {
     }
 
@@ -33,12 +29,15 @@ public class DecoderPro3Panes extends javax.swing.JPanel
      * @param enable Are reads possible? If false, so not enable the read
      *               buttons.
      */
+    @Override
     public void enableButtons(boolean enable) {
     }
 
+    @Override
     public void prepGlassPane(javax.swing.AbstractButton activeButton) {
     }
 
+    @Override
     public BusyGlassPane getBusyGlassPane() {
         return bgp;
     }

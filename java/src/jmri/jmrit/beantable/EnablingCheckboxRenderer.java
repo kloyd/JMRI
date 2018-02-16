@@ -13,14 +13,8 @@ import javax.swing.table.TableCellRenderer;
  * behavior more in line with user expectations.
  *
  * @author Bob Jacobsen
- * @version $Revision$
  */
 public class EnablingCheckboxRenderer extends JCheckBox implements TableCellRenderer {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 294261257192050582L;
 
     public EnablingCheckboxRenderer() {
         super();
@@ -41,6 +35,7 @@ public class EnablingCheckboxRenderer extends JCheckBox implements TableCellRend
      * @param column     the column number
      * @return the JCheckBox to display
      */
+    @Override
     public Component getTableCellRendererComponent(JTable table, java.lang.Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         setSelected(value != null && ((Boolean) value).booleanValue());
         setEnabled(table.isCellEditable(row, column));

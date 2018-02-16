@@ -3,14 +3,11 @@ package jmri.jmrit.display.controlPanelEditor.shape.configurexml;
 import jmri.jmrit.display.Editor;
 import jmri.jmrit.display.controlPanelEditor.shape.PositionableRoundRect;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle configuration for display.PositionableShape objects
  *
- * @author Pete Cressman Copyright: Copyright (c) 2012
- * @version $Revision: 1 $
+ * @author Pete Cressman Copyright (c) 2012
  */
 public class PositionableRoundRectXml extends PositionableShapeXml {
 
@@ -23,6 +20,7 @@ public class PositionableRoundRectXml extends PositionableShapeXml {
      * @param o Object to store, of type PositionableShape
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         PositionableRoundRect p = (PositionableRoundRect) o;
 
@@ -48,6 +46,7 @@ public class PositionableRoundRectXml extends PositionableShapeXml {
      * @param element Top level Element to unpack.
      * @param o       Editor as an Object
      */
+    @Override
     public void load(Element element, Object o) {
         // create the objects
         Editor ed = (Editor) o;
@@ -62,6 +61,4 @@ public class PositionableRoundRectXml extends PositionableShapeXml {
         // load individual item's option settings after editor has set its global settings
         loadCommonAttributes(ps, Editor.MARKERS, element);
     }
-
-    static Logger log = LoggerFactory.getLogger(PositionableRoundRectXml.class.getName());
 }

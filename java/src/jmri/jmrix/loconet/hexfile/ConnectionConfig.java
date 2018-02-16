@@ -1,4 +1,3 @@
-// ConnectionConfig.java
 package jmri.jmrix.loconet.hexfile;
 
 /**
@@ -6,8 +5,7 @@ package jmri.jmrix.loconet.hexfile;
  * hexfile emulator
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2003
- * @version	$Revision$
- */
+  */
 public class ConnectionConfig extends jmri.jmrix.AbstractSimulatorConnectionConfig {
 
     /**
@@ -19,19 +17,22 @@ public class ConnectionConfig extends jmri.jmrix.AbstractSimulatorConnectionConf
     }
 
     /**
-     * Ctor for a functional Swing object with no prexisting adapter
+     * Ctor for a functional Swing object with no preexisting adapter
      */
     public ConnectionConfig() {
         super();
     }
 
+    @Override
     public String name() {
-        return "LocoNet Simulator";
+        return "LocoNet Simulator"; // NOI18N
     }
 
+    @Override
     protected void setInstance() {
         if (adapter == null) {
             adapter = new LnHexFilePort();
         }
     }
+
 }

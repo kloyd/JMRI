@@ -1,4 +1,3 @@
-// PanelProPane.java
 package apps.PanelPro;
 
 import apps.Apps;
@@ -10,8 +9,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The JMRI main pane for creating control panels.
@@ -27,15 +24,9 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright 2003, 2014
- * @version $Revision$
+ * @author Bob Jacobsen Copyright 2003, 2014
  */
 public class PanelProPane extends apps.AppsLaunchPane {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5742354704602024439L;
 
     PanelProPane() {
         super();
@@ -44,23 +35,28 @@ public class PanelProPane extends apps.AppsLaunchPane {
     /**
      * Returns the ID for the window's help, which is application specific
      */
+    @Override
     protected String windowHelpID() {
         return "package.apps.PanelPro.PanelPro";
     }
 
+    @Override
     protected String logo() {
         return "resources/PanelPro.gif";
     }
 
+    @Override
     protected String line1() {
         return MessageFormat.format(Bundle.getMessage("PanelProVersionCredit"),
                 new Object[]{jmri.Version.name()});
     }
 
+    @Override
     protected String line2() {
         return "http://jmri.org/PanelPro ";
     }
 
+    @Override
     protected JPanel statusPanel() {
         JPanel j = new JPanel();
         j.setLayout(new BoxLayout(j, BoxLayout.Y_AXIS));
@@ -68,11 +64,7 @@ public class PanelProPane extends apps.AppsLaunchPane {
 
         // Buttons
         Action quit = new AbstractAction(Bundle.getMessage("MenuItemQuit")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -9134833676932931297L;
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Apps.handleQuit();
             }
@@ -92,6 +84,4 @@ public class PanelProPane extends apps.AppsLaunchPane {
 
         return j;
     }
-
-    static Logger log = LoggerFactory.getLogger(PanelProPane.class.getName());
 }

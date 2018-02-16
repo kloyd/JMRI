@@ -1,8 +1,8 @@
-// SystemConsoleConfigPanelXml.java
 package apps.configurexml;
 
 import apps.SystemConsoleConfigPanel;
 import apps.systemconsole.SystemConsolePreferencesManager;
+import jmri.ConfigureManager;
 import jmri.InstanceManager;
 import org.jdom2.Element;
 import org.slf4j.Logger;
@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Matthew Harris copyright (c) 2010
- * @version $Revision$
  * @see apps.SystemConsoleConfigPanel
  */
 public class SystemConsoleConfigPanelXml extends jmri.configurexml.AbstractXmlAdapter {
@@ -65,7 +64,7 @@ public class SystemConsoleConfigPanelXml extends jmri.configurexml.AbstractXmlAd
     }
 
     @Override
-    public boolean load(Element shared, Element perNode) throws Exception {
+    public boolean load(Element shared, Element perNode) {
         boolean result = true;
         String value;
         SystemConsolePreferencesManager manager = InstanceManager.getDefault(SystemConsolePreferencesManager.class);
@@ -98,7 +97,10 @@ public class SystemConsoleConfigPanelXml extends jmri.configurexml.AbstractXmlAd
 
         // As we've had a load request, register the system console with the
         // preference manager
-        jmri.InstanceManager.configureManagerInstance().registerPref(new SystemConsoleConfigPanel());
+        ConfigureManager cm = jmri.InstanceManager.getNullableDefault(jmri.ConfigureManager.class);
+        if (cm != null) {
+            cm.registerPref(new SystemConsoleConfigPanel());
+        }
 
         return result;
     }
@@ -114,6 +116,6 @@ public class SystemConsoleConfigPanelXml extends jmri.configurexml.AbstractXmlAd
         log.error("Unexpected call of load(Element, Object)");
     }
     // initialize logging
-    private static final Logger log = LoggerFactory.getLogger(SystemConsoleConfigPanelXml.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(SystemConsoleConfigPanelXml.class);
 
 }

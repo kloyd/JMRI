@@ -1,4 +1,3 @@
-// SetPhysicalLocationFrame.java
 package jmri.jmrit.beantable;
 
 import java.awt.Frame;
@@ -32,24 +31,18 @@ import org.slf4j.LoggerFactory;
  * @author Bob Jacobsen Copyright (C) 2001
  * @author Daniel Boudreau Copyright (C) 2010
  * @author Mark Underwood Copyright (C) 2011
- * @version $Revision: 18711 $
  */
 public class SetPhysicalLocationAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4814083186968429295L;
 
     Reporter _reporter;
 
     static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrit.beantable.JmritBeantablePhysicalLocationBundle");
 
     /**
-     * Constructor
+     * Constructor.
      *
-     * @param s
-     * @param reporter
+     * @param s title of the action
+     * @param reporter {@link Reporter} to use
      */
     public SetPhysicalLocationAction(String s, Reporter reporter) {
         super(s);
@@ -59,9 +52,9 @@ public class SetPhysicalLocationAction extends AbstractAction {
     SetPhysicalLocationFrame f = null;
 
     /**
-     * Action method
+     * Action method.
      *
-     * @param e
+     * @param e the associated {@link ActionEvent} that triggered this action
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -79,17 +72,12 @@ public class SetPhysicalLocationAction extends AbstractAction {
      * @author Bob Jacobsen Copyright (C) 2001
      * @author Daniel Boudreau Copyright (C) 2010
      * @author Mark Underwood Copyright (C) 2011
-     * @version $Revision: 20246 $
+     * 
      */
-    class SetPhysicalLocationFrame extends OperationsFrame {
+    private static class SetPhysicalLocationFrame extends OperationsFrame {
 
         /**
-         *
-         */
-        private static final long serialVersionUID = 6749008114407458542L;
-
-        /**
-         * Frame Constructor
+         * Frame Constructor.
          */
         public SetPhysicalLocationFrame(Reporter reporter) {
             super(rb.getString("MenuSetPhysicalLocation"), new SetPhysicalLocationPanel(reporter));
@@ -101,12 +89,7 @@ public class SetPhysicalLocationAction extends AbstractAction {
         }
     }
 
-    class SetPhysicalLocationPanel extends OperationsPanel {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = -5054495048362448275L;
+    private static class SetPhysicalLocationPanel extends OperationsPanel {
 
         Reporter _reporter;
 
@@ -118,8 +101,8 @@ public class SetPhysicalLocationAction extends AbstractAction {
         // text field
         // check boxes
         // major buttons
-        JButton saveButton = new JButton(rb.getString("Save"));
-        JButton closeButton = new JButton(rb.getString("Close"));
+        JButton saveButton = new JButton(Bundle.getMessage("ButtonSave"));
+        JButton closeButton = new JButton(Bundle.getMessage("ButtonClose"));
 
         // combo boxes
         JComboBox<String> reporterBox = getReporterComboBox();
@@ -175,10 +158,10 @@ public class SetPhysicalLocationAction extends AbstractAction {
         }
 
         /**
-         * Construct the combo box with the list of available Reporters
+         * Construct the combo box with the list of available Reporters.
          */
         protected JComboBox<String> getReporterComboBox() {
-            ReporterManager mgr = InstanceManager.reporterManagerInstance();
+            ReporterManager mgr = InstanceManager.getDefault(jmri.ReporterManager.class);
             String[] nameArray = mgr.getSystemNameArray();
             List<String> displayList = new ArrayList<>();
             for (String name : nameArray) {
@@ -200,7 +183,7 @@ public class SetPhysicalLocationAction extends AbstractAction {
         }
 
         /**
-         * Close button action
+         * Close button action.
          */
         public void closeButtonActionPerformed(ActionEvent ae) {
             JOptionPane.showMessageDialog(null,
@@ -211,7 +194,7 @@ public class SetPhysicalLocationAction extends AbstractAction {
         }
 
         /**
-         * Save button action -> save this Reporter's location
+         * Save button action -> save this Reporter's location.
          */
         public void saveButtonActionPerformed(ActionEvent ae) {
             // check to see if a location has been selected
@@ -235,17 +218,17 @@ public class SetPhysicalLocationAction extends AbstractAction {
         }
 
         /**
-         * Get a Reporter from its name in the combo box
+         * Get a Reporter from its name in the combo box.
          */
         private Reporter getReporterFromList() {
             String s = (String) reporterBox.getSelectedItem();
             // Since we don't have "getByDisplayName()" we need to do this in two steps
-            Reporter r = InstanceManager.reporterManagerInstance().getByDisplayName(s);
+            Reporter r = InstanceManager.getDefault(jmri.ReporterManager.class).getByDisplayName(s);
             return (r);
         }
 
         /**
-         * Combo box action
+         * Combo box action.
          */
         @Override
         public void comboBoxActionPerformed(ActionEvent ae) {
@@ -260,7 +243,7 @@ public class SetPhysicalLocationAction extends AbstractAction {
         }
 
         /**
-         * Spinner change event
+         * Spinner change event.
          */
         @Override
         public void spinnerChangeEvent(ChangeEvent ae) {
@@ -273,7 +256,7 @@ public class SetPhysicalLocationAction extends AbstractAction {
         }
 
         /**
-         * Reset spinners to zero
+         * Reset spinners to zero.
          */
         private void resetSpinners() {
             // Reset spinners to zero.
@@ -290,12 +273,12 @@ public class SetPhysicalLocationAction extends AbstractAction {
 
         // Unused. Carried over from SetTrainIconPosition or whatever it was
         // called...
-	/*
+ /*
          * private void spinnersEnable(boolean enable){
          * physicalLocation.setEnabled(enable); }
          */
         /**
-         * Write spinner values to a Reporter
+         * Write spinner values to a Reporter.
          */
         private void saveSpinnerValues(Reporter r) {
             log.debug("Save train icons coordinates for location " + r.getSystemName());
@@ -305,6 +288,5 @@ public class SetPhysicalLocationAction extends AbstractAction {
     }
 
     private static final Logger log = LoggerFactory.getLogger(SetPhysicalLocationAction.class);
-}
 
-/* @(#)SetPhysicalLocationAction.java */
+}

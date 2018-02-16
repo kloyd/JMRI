@@ -1,10 +1,10 @@
-// AlignTableAction.java
 package jmri.jmrix.rps.aligntable;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * Swing action to create and register a AlignTableFrame object.
@@ -15,29 +15,28 @@ import org.slf4j.LoggerFactory;
  * Note that we only allow one of these right now.
  *
  * @author	Bob Jacobsen Copyright (C) 2006, 2008
- * @version	$Revision$
  */
 public class AlignTableAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -1629850954178461422L;
+    RpsSystemConnectionMemo memo = null;
+
     static final java.util.ResourceBundle rb = java.util.ResourceBundle.getBundle("jmri.jmrix.rps.aligntable.AlignTableBundle");
 
-    public AlignTableAction(String s) {
+    public AlignTableAction(String s,RpsSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public AlignTableAction() {
-        this(rb.getString("WindowTitle"));
+    public AlignTableAction(RpsSystemConnectionMemo _memo) {
+        this(rb.getString("WindowTitle"),_memo);
     }
 
     AlignTableFrame f;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (f == null) {
-            f = new AlignTableFrame();
+            f = new AlignTableFrame(memo);
             try {
                 f.initComponents();
             } catch (Exception ex) {
@@ -47,8 +46,5 @@ public class AlignTableAction extends AbstractAction {
         }
         f.setVisible(true);
     }
-    static Logger log = LoggerFactory.getLogger(AlignTableAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AlignTableAction.class);
 }
-
-
-/* @(#)AlignTableAction.java */

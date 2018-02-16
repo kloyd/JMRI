@@ -1,4 +1,3 @@
-// AlignTableFrame.java
 package jmri.jmrix.rps.aligntable;
 
 import java.awt.Dimension;
@@ -15,12 +14,15 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SortOrder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableRowSorter;
 import javax.vecmath.Point3d;
 import jmri.jmrix.rps.Algorithms;
 import jmri.jmrix.rps.Engine;
 import jmri.jmrix.rps.Receiver;
+import jmri.swing.RowSorterUtil;
 import jmri.util.table.ButtonEditor;
 import jmri.util.table.ButtonRenderer;
 import org.slf4j.Logger;
@@ -30,14 +32,9 @@ import org.slf4j.LoggerFactory;
  * Pane for user management of RPS alignment.
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
  */
 public class AlignTablePane extends javax.swing.JPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3252695029810160130L;
     static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.rps.aligntable.AlignTableBundle");
 
     /**
@@ -60,7 +57,7 @@ public class AlignTablePane extends javax.swing.JPanel {
 
         alignModel = new AlignModel();
 
-        JTable alignTable = jmri.util.JTableUtil.sortableDataModel(alignModel);
+        JTable alignTable = new JTable(alignModel);
 
         // install a button renderer & editor
         ButtonRenderer buttonRenderer = new ButtonRenderer();
@@ -68,11 +65,8 @@ public class AlignTablePane extends javax.swing.JPanel {
         TableCellEditor buttonEditor = new ButtonEditor(new JButton());
         alignTable.setDefaultEditor(JButton.class, buttonEditor);
 
-        try {
-            jmri.util.com.sun.TableSorter tmodel = ((jmri.util.com.sun.TableSorter) alignTable.getModel());
-            tmodel.setSortingStatus(AlignTablePane.AlignModel.NUMCOL, jmri.util.com.sun.TableSorter.ASCENDING);
-        } catch (ClassCastException e3) {
-        }  // if not a sortable table model
+        TableRowSorter<AlignModel> sorter = new TableRowSorter<>(alignModel);
+        RowSorterUtil.setSortOrder(sorter, AlignModel.NUMCOL, SortOrder.ASCENDING);
         alignTable.setRowSelectionAllowed(false);
         alignTable.setPreferredScrollableViewportSize(new java.awt.Dimension(580, 80));
 
@@ -81,11 +75,8 @@ public class AlignTablePane extends javax.swing.JPanel {
 
         // status info on bottom
         JPanel p = new JPanel() {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -4581696245014783172L;
 
+            @Override
             public Dimension getMaximumSize() {
                 int height = getPreferredSize().height;
                 int width = super.getMaximumSize().width;
@@ -100,6 +91,7 @@ public class AlignTablePane extends javax.swing.JPanel {
 
         JButton b = new JButton(rb.getString("ButtonSet"));
         b.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 // set number of columns
                 Engine.instance().setMaxReceiverNumber(
@@ -115,11 +107,8 @@ public class AlignTablePane extends javax.swing.JPanel {
         add(p);
 
         p = new JPanel() {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -497747742857646038L;
 
+            @Override
             public Dimension getMaximumSize() {
                 int height = getPreferredSize().height;
                 int width = super.getMaximumSize().width;
@@ -141,6 +130,7 @@ public class AlignTablePane extends javax.swing.JPanel {
 
         b = new JButton(rb.getString("ButtonSet"));
         b.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 // set number of vsound, offset
                 Engine.instance().setOffset(
@@ -158,12 +148,8 @@ public class AlignTablePane extends javax.swing.JPanel {
 
         //
         add(loadStore = new jmri.jmrix.rps.swing.LoadStorePanel() {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 1028997540423874815L;
-
             // make sure we redisplay if changed
+            @Override
             public void load() {
                 super.load();
                 alignModel.fireTableStructureChanged();
@@ -171,6 +157,7 @@ public class AlignTablePane extends javax.swing.JPanel {
                 flag.setModifiedFlag(true);
             }
 
+            @Override
             public void storeDefault() {
                 super.storeDefault();
                 // no longer modified after storeDefault
@@ -180,6 +167,7 @@ public class AlignTablePane extends javax.swing.JPanel {
 
         // add sound listener
         Engine.instance().addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
             public void propertyChange(java.beans.PropertyChangeEvent e) {
                 if (e.getPropertyName().equals("vSound")) {
                     // update sound display
@@ -212,10 +200,6 @@ public class AlignTablePane extends javax.swing.JPanel {
      */
     public class AlignModel extends AbstractTableModel {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 7340607471756623080L;
         static private final int NUMCOL = 0;
         static private final int XCOL = 1;
         static private final int YCOL = 2;
@@ -230,14 +214,17 @@ public class AlignTablePane extends javax.swing.JPanel {
 
         static private final int LAST = MAXTIMECOL;
 
+        @Override
         public int getColumnCount() {
             return LAST + 1;
         }
 
+        @Override
         public int getRowCount() {
             return Engine.instance().getMaxReceiverNumber();
         }
 
+        @Override
         public String getColumnName(int c) {
             switch (c) {
                 case NUMCOL:
@@ -261,6 +248,7 @@ public class AlignTablePane extends javax.swing.JPanel {
             }
         }
 
+        @Override
         public Class<?> getColumnClass(int c) {
             if (c == XCOL || c == YCOL || c == ZCOL) {
                 return Double.class;
@@ -276,6 +264,7 @@ public class AlignTablePane extends javax.swing.JPanel {
             }
         }
 
+        @Override
         public boolean isCellEditable(int r, int c) {
             if (c == XCOL || c == YCOL || c == ZCOL || c == ACTIVECOL
                     || c == MINTIMECOL || c == MAXTIMECOL) {
@@ -285,6 +274,7 @@ public class AlignTablePane extends javax.swing.JPanel {
             }
         }
 
+        @Override
         public Object getValueAt(int r, int c) {
             // r is row number, from 0; receiver addresses start at 1
             Receiver rc;
@@ -338,6 +328,7 @@ public class AlignTablePane extends javax.swing.JPanel {
             }
         }
 
+        @Override
         public void setValueAt(Object val, int r, int c) {
             // r is row number, from 0
             Receiver rc;
@@ -411,6 +402,6 @@ public class AlignTablePane extends javax.swing.JPanel {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(AlignTablePane.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AlignTablePane.class);
 
 }

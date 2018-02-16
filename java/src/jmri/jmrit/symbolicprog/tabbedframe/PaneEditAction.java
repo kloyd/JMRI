@@ -1,4 +1,3 @@
-// PaneEditAction.java
 package jmri.jmrit.symbolicprog.tabbedframe;
 
 import java.awt.event.ActionEvent;
@@ -25,15 +24,9 @@ import org.slf4j.LoggerFactory;
  * type.
  *
  *
- * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2008
  */
 public class PaneEditAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6644018374123999540L;
     Object o1, o2, o3, o4;
 
     public PaneEditAction() {
@@ -45,6 +38,7 @@ public class PaneEditAction extends AbstractAction {
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         if (log.isDebugEnabled()) {
@@ -64,22 +58,16 @@ public class PaneEditAction extends AbstractAction {
 
         // known entry, no programmer
         JPanel pane1 = new KnownLocoSelPane(false) {  // not programming
-            /**
-             *
-             */
-            private static final long serialVersionUID = 5342530851054805325L;
 
+            @Override
             protected void startProgrammer(DecoderFile decoderFile, RosterEntry re,
                     String filename) {
                 String title = SymbolicProgBundle.getMessage("FrameEditEntryTitle");
                 JFrame p = new PaneProgFrame(decoderFile, re,
                         title, "programmers" + File.separator + filename + ".xml",
                         null, false) {
-                            /**
-                             *
-                             */
-                            private static final long serialVersionUID = 8759999350875150400L;
 
+                    @Override
                             protected JPanel getModePane() {
                                 return null;
                             }
@@ -101,8 +89,6 @@ public class PaneEditAction extends AbstractAction {
         f.setVisible(true);
     }
 
-    static Logger log = LoggerFactory.getLogger(PaneOpsProgAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PaneOpsProgAction.class);
 
 }
-
-/* @(#)PaneOpsProgAction.java */

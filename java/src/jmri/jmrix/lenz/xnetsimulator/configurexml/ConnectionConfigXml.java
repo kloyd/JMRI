@@ -1,12 +1,11 @@
 package jmri.jmrix.lenz.xnetsimulator.configurexml;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jmri.jmrix.SerialPortAdapter;
 import jmri.jmrix.configurexml.AbstractConnectionConfigXml;
 import jmri.jmrix.lenz.xnetsimulator.ConnectionConfig;
 import jmri.jmrix.lenz.xnetsimulator.XNetSimulatorAdapter;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistance of layout connections by persistening the
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003
  * @author Paul Bender Copyright: Copyright (c) 2009
- * @version $Revision$
  */
 public class ConnectionConfigXml extends AbstractConnectionConfigXml {
 
@@ -34,9 +32,9 @@ public class ConnectionConfigXml extends AbstractConnectionConfigXml {
      * A Simulator connection needs no extra information, so we reimplement the
      * superclass method to just write the necessary parts.
      *
-     * @param o
      * @return Formatted element containing no attributes except the class name
      */
+    @Override
     public Element store(Object o) {
         getInstance(o);
 
@@ -48,6 +46,7 @@ public class ConnectionConfigXml extends AbstractConnectionConfigXml {
         return e;
     }
 
+    @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "if adapter is not initialized already, it is initialized by the getInstance() call")
     @Override
     public boolean load(Element shared, Element perNode) {
         boolean result = true;
@@ -60,7 +59,7 @@ public class ConnectionConfigXml extends AbstractConnectionConfigXml {
         register();
 
         if (adapter.getDisabled()) {
-            unpackElement(shared);
+            unpackElement(shared, perNode);
             return result;
         }
 
@@ -69,6 +68,7 @@ public class ConnectionConfigXml extends AbstractConnectionConfigXml {
         return result;
     }
 
+    @Override
     protected void getInstance() {
         if (adapter == null) {
             adapter = new XNetSimulatorAdapter();
@@ -83,8 +83,5 @@ public class ConnectionConfigXml extends AbstractConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

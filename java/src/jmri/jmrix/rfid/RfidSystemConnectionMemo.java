@@ -1,4 +1,3 @@
-// RfidSystemConnectionMemo.java
 package jmri.jmrix.rfid;
 
 import java.util.ResourceBundle;
@@ -26,13 +25,12 @@ import jmri.jmrix.swing.ComponentFactory;
  *
  * @author Bob Jacobsen Copyright (C) 2010
  * @author Matthew Harris Copyright (C) 2011
- * @version $Revision$
  */
 public class RfidSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
 
     private RfidTrafficController rt;
-    private RfidSensorManager sensorManager;
-    private RfidReporterManager reporterManager;
+    protected RfidSensorManager sensorManager;
+    protected RfidReporterManager reporterManager;
     private RfidProtocol protocol;
 
     public RfidSystemConnectionMemo(RfidTrafficController rt) {
@@ -83,7 +81,7 @@ public class RfidSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
     }
 
     /**
-     * Tells which managers this provides by class
+     * Tells which managers this class provides.
      *
      * @param type manager type to check
      * @return true if provided
@@ -136,5 +134,3 @@ public class RfidSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
     }
 
 }
-
-/* @(#)RfidSystemConnectionMemo.java */

@@ -1,4 +1,3 @@
-// JmriFaceless.java
 package apps;
 
 /**
@@ -10,21 +9,19 @@ package apps;
  * all ui-related elements NOTE: JMRI "server" functions based on ui components
  * (such as JmriJFrames) may need to be modified to check isHeadless() and
  * adjust their behavior as needed.
- * <P>
- *
+ * <BR>
  * <hr>
  * This file is part of JMRI.
  * <P>
  * JMRI is free software; you can redistribute it and/or modify it under the
  * terms of version 2 of the GNU General Public License as published by the Free
  * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
+ * </P><P>
  * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- * @author	Steve Todd Copyright 2012
- * @version $Revision: 17977 $
+ * </P>
+ * @author Steve Todd Copyright 2012
  */
 public class JmriFaceless extends apps.AppsBase {
 
@@ -38,7 +35,7 @@ public class JmriFaceless extends apps.AppsBase {
         // Once the configServlet is usable, require the web server
         // WebServerManager.getWebServer().start();
         //start LocoNetOverTcp server if configured to autostart
-        jmri.jmrix.loconet.loconetovertcp.Server.getInstance();
+        jmri.jmrix.loconet.loconetovertcp.LnTcpServer.getDefault();
     }
 
     // Main entry point

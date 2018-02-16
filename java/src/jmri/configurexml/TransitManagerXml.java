@@ -1,4 +1,3 @@
-// TransitManagerXML.java
 package jmri.configurexml;
 
 import java.util.ArrayList;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Dave Duchamp Copyright (c) 2008
- * @version $Revision$
  */
 public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedBeanManagerConfigXML {
 
@@ -31,6 +29,7 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
      * @param o Object to store, of type TransitManager
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         Element transits = new Element("transits");
         setStoreElementClass(transits);
@@ -52,9 +51,15 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
                 } else {
                     log.debug("Transit system name is " + sname);
                     Transit x = tm.getBySystemName(sname);
-                    Element elem = new Element("transit")
-                            .setAttribute("systemName", sname);
+                    Element elem = new Element("transit");
+                    elem.addContent(new Element("systemName").addContent(sname));
 
+                    // As a work-around for backward compatibility, store systemName and username as attribute.
+                    // Remove this in e.g. JMRI 4.11.1 and then update all the loadref comparison files
+                    elem.setAttribute("systemName", sname);
+                    String uname = x.getUserName();
+                    if (uname!=null && !uname.equals("")) elem.setAttribute("userName", uname);
+                            
                     // store common part
                     storeCommon(x, elem);
 
@@ -74,6 +79,7 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
                             tsElem.setAttribute("sequence", Integer.toString(ts.getSequenceNumber()));
                             tsElem.setAttribute("direction", Integer.toString(ts.getDirection()));
                             tsElem.setAttribute("alternate", "" + (ts.isAlternate() ? "yes" : "no"));
+                            tsElem.setAttribute("safe", "" + (ts.isSafe() ? "yes" : "no"));
                             // save child transitsectionaction entries if any
                             ArrayList<TransitSectionAction> tsaList = ts.getTransitSectionActionList();
                             if (tsaList.size() > 0) {
@@ -115,6 +121,7 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
         transits.setAttribute("class", "jmri.configurexml.TransitManagerXml");
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -123,8 +130,8 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
      * Create a TransitManager object of the correct class, then register and
      * fill it.
      *
-     * @param sharedTransits Top level Element to unpack.
-     * @param perNodeTransits
+     * @param sharedTransits  Top level Element to unpack.
+     * @param perNodeTransits Per-node top level Element to unpack.
      * @return true if successful
      */
     @Override
@@ -139,8 +146,9 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
      * additional info needed for a specific Transit type, invoke this with the
      * parent of the set of Transit elements.
      *
-     * @param sharedTransits Element containing the Transit elements to load.
-     * @param perNodeTransits
+     * @param sharedTransits  Element containing the Transit elements to load.
+     * @param perNodeTransits Per-node Element containing the Transit elements
+     *                        to load.
      */
     @SuppressWarnings("null")
     public void loadTransits(Element sharedTransits, Element perNodeTransits) {
@@ -148,19 +156,12 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
         if (log.isDebugEnabled()) {
             log.debug("Found " + transitList.size() + " transits");
         }
-        TransitManager tm = InstanceManager.transitManagerInstance();
+        TransitManager tm = InstanceManager.getDefault(jmri.TransitManager.class);
 
         for (int i = 0; i < transitList.size(); i++) {
-            if (transitList.get(i).getAttribute("systemName") == null) {
-                log.warn("unexpected null in systemName " + transitList.get(i) + " "
-                        + transitList.get(i).getAttributes());
-                break;
-            }
-            String sysName = transitList.get(i).getAttribute("systemName").getValue();
-            String userName = null;
-            if (transitList.get(i).getAttribute("userName") != null) {
-                userName = transitList.get(i).getAttribute("userName").getValue();
-            }
+            String sysName = getSystemName(transitList.get(i));
+            String userName = getUserName(transitList.get(i));
+            
             Transit x = tm.createNewTransit(sysName, userName);
             if (x != null) {
                 // load common part
@@ -173,6 +174,7 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
                     int seq = 0;
                     int dir = Section.UNKNOWN;
                     boolean alt = false;
+                    boolean safe = false;
                     String sectionName = elem.getAttribute("sectionname").getValue();
                     if (sectionName.equals("null")) {
                         log.warn("When loading configuration - missing Section in Transit " + sysName);
@@ -186,49 +188,47 @@ public class TransitManagerXml extends jmri.managers.configurexml.AbstractNamedB
                     if (elem.getAttribute("alternate").getValue().equals("yes")) {
                         alt = true;
                     }
-                    TransitSection ts = new TransitSection(sectionName, seq, dir, alt);
-                    if (ts == null) {
-                        log.error("Trouble creation TransitSection for Transit - " + sysName);
-                    } else {
-                        x.addTransitSection(ts);
-                        // load transitsectionaction children, if any
-                        List<Element> transitTransitSectionActionList = transitTransitSectionList.get(n).
-                                getChildren("transitsectionaction");
-                        for (int m = 0; m < transitTransitSectionActionList.size(); m++) {
-                            Element elemx = transitTransitSectionActionList.get(m);
-                            int tWhen = 1;
-                            int tWhat = 1;
-                            int tWhenData = 0;
-                            String tWhenString = elemx.getAttribute("whenstring").getValue();
-                            int tWhatData1 = 0;
-                            int tWhatData2 = 0;
-                            String tWhatString = elemx.getAttribute("whatstring").getValue();
-                            try {
-                                tWhen = elemx.getAttribute("whencode").getIntValue();
-                                tWhat = elemx.getAttribute("whatcode").getIntValue();
-                                tWhenData = elemx.getAttribute("whendata").getIntValue();
-                                tWhatData1 = elemx.getAttribute("whatdata1").getIntValue();
-                                tWhatData2 = elemx.getAttribute("whatdata2").getIntValue();
-                            } catch (Exception e) {
-                                log.error("Data Conversion Exception when loading transit section action - " + e);
-                            }
-                            TransitSectionAction tsa = new TransitSectionAction(tWhen, tWhat, tWhenData,
-                                    tWhatData1, tWhatData2, tWhenString, tWhatString);
-                            if (tsa == null) {
-                                log.error("Trouble creating TransitSectionAction for Transit - " + sysName);
-                            } else {
-                                ts.addAction(tsa);
-                            }
+                    if (elem.getAttribute("safe") != null) {
+                        if (elem.getAttribute("safe").getValue().equals("yes")) {
+                            safe = true;
                         }
+                    }
+                    TransitSection ts = new TransitSection(sectionName, seq, dir, alt, safe);
+                    x.addTransitSection(ts);
+                    // load transitsectionaction children, if any
+                    List<Element> transitTransitSectionActionList = transitTransitSectionList.get(n).
+                            getChildren("transitsectionaction");
+                    for (int m = 0; m < transitTransitSectionActionList.size(); m++) {
+                        Element elemx = transitTransitSectionActionList.get(m);
+                        int tWhen = 1;
+                        int tWhat = 1;
+                        int tWhenData = 0;
+                        String tWhenString = elemx.getAttribute("whenstring").getValue();
+                        int tWhatData1 = 0;
+                        int tWhatData2 = 0;
+                        String tWhatString = elemx.getAttribute("whatstring").getValue();
+                        try {
+                            tWhen = elemx.getAttribute("whencode").getIntValue();
+                            tWhat = elemx.getAttribute("whatcode").getIntValue();
+                            tWhenData = elemx.getAttribute("whendata").getIntValue();
+                            tWhatData1 = elemx.getAttribute("whatdata1").getIntValue();
+                            tWhatData2 = elemx.getAttribute("whatdata2").getIntValue();
+                        } catch (Exception e) {
+                            log.error("Data Conversion Exception when loading transit section action - " + e);
+                        }
+                        TransitSectionAction tsa = new TransitSectionAction(tWhen, tWhat, tWhenData,
+                                tWhatData1, tWhatData2, tWhenString, tWhatString);
+                        ts.addAction(tsa);
                     }
                 }
             }
         }
     }
 
+    @Override
     public int loadOrder() {
-        return InstanceManager.transitManagerInstance().getXMLOrder();
+        return InstanceManager.getDefault(jmri.TransitManager.class).getXMLOrder();
     }
 
-    static Logger log = LoggerFactory.getLogger(TransitManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(TransitManagerXml.class);
 }

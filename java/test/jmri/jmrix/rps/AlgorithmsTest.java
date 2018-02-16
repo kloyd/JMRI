@@ -1,47 +1,34 @@
-// AlgorithmsTest.java
 package jmri.jmrix.rps;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * Test all the RPS algorithms.
  *
- * Separated from RpsTest to make it easy to run just the algorithms, not all
- * the package tests.
- *
- * @author Bob Jacobsen Copyright 2008
- * @version $Revision$
+ * @author Paul Bender Copyright (C) 2017	
  */
-public class AlgorithmsTest extends TestCase {
+public class AlgorithmsTest {
 
-    // from here down is testing infrastructure
-    public AlgorithmsTest(String s) {
-        super(s);
+    @Test
+    public void testCTor() {
+        Algorithms t = new Algorithms();
+        Assert.assertNotNull("exists",t);
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {AlgorithmsTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    // The minimal setup for log4J
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
     }
 
-    // test suite from all defined tests
-    public static Test suite() {
-        apps.tests.AllTest.initLogging();
-        TestSuite suite = new TestSuite("jmri.jmrix.rps.AlgorithmsTest");
-
-        suite.addTest(InitialAlgorithmTest.suite());
-
-        // suite.addTest(Ash1_0AlgorithmTest.suite());
-        // suite.addTest(Ash1_1AlgorithmTest.suite());
-        suite.addTest(Ash2_0AlgorithmTest.suite());
-        suite.addTest(Ash2_1AlgorithmTest.suite());
-        suite.addTest(Ash2_2AlgorithmTest.suite());
-
-        // suite.addTest(Analytic_AAlgorithmTest.suite());
-        return suite;
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
+
+    // private final static Logger log = LoggerFactory.getLogger(AlgorithmsTest.class);
 
 }

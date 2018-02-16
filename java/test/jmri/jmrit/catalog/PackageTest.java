@@ -4,33 +4,30 @@
  * Description:	tests for the jmri.jmrit.catalog package
  *
  * @author	Bob Jacobsen 2009
- * @version $Revision$
  */
 package jmri.jmrit.catalog;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-public class PackageTest extends TestCase {
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+    CatalogTreeFSTest.class,
+    CatalogTreeIndexTest.class,
+    ImageIndexEditorTest.class,     
+    BundleTest.class,
+    jmri.jmrit.catalog.configurexml.PackageTest.class,
+    CatalogPaneTest.class,
+    CatalogPanelTest.class,
+    CatalogTreeModelTest.class,
+    DefaultCatalogTreeManagerTest.class,
+    CatalogTreeNodeTest.class,
+    NamedIconTest.class,
+    DirectorySearcherTest.class,
+    CatalogTreeLeafTest.class,
+    DragJLabelTest.class,
+    PreviewDialogTest.class,
+})
 
-    // from here down is testing infrastructure
-    public PackageTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {PackageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite("jmri.jmrit.catalog");   // no tests in this class itself
-        suite.addTest(CatalogTreeFSTest.suite());
-        suite.addTest(CatalogTreeIndexTest.suite());
-        return suite;
-    }
-
+public class PackageTest {
 }

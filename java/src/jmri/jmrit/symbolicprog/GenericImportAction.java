@@ -1,4 +1,3 @@
-// GenericImportAction.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.event.ActionEvent;
@@ -13,15 +12,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Action to import the CV values from a LokProgrammer CV list file.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @author	Dave Heap Copyright (C) 2015
- * @version $Revision: 22821 $
+ * @author Bob Jacobsen Copyright (C) 2003
+ * @author Dave Heap Copyright (C) 2015
  */
 public class GenericImportAction extends AbstractAction {
 
-    /**
-     *
-     */
     CvTableModel mModel;
     JFrame mParent;
     JLabel mStatus;
@@ -43,6 +38,7 @@ public class GenericImportAction extends AbstractAction {
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         log.debug("start to import " + mActionName);
@@ -77,5 +73,5 @@ public class GenericImportAction extends AbstractAction {
         return false;
     }
     
-    static Logger log = LoggerFactory.getLogger(GenericImportAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(GenericImportAction.class);
 }

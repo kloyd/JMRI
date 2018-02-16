@@ -1,4 +1,3 @@
-// FollowerPanel.java
 package jmri.jmrit.ussctc;
 
 import java.awt.event.ActionEvent;
@@ -16,15 +15,10 @@ import org.slf4j.LoggerFactory;
  * User interface frame for creating and editing "Follower" logic on USS CTC
  * machines.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2007
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2007
  */
 public class FollowerPanel extends BasePanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4276657325541090103L;
     JTextField outputName;
     JTextField sensorName;
     JTextField vetoName;
@@ -82,6 +76,7 @@ public class FollowerPanel extends BasePanel {
 
         viewButton = new JButton(rb.getString("ButtonView"));
         viewButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 viewPressed();
             }
@@ -89,6 +84,7 @@ public class FollowerPanel extends BasePanel {
         p2xs.add(viewButton);
         addButton = new JButton(rb.getString("ButtonAddUpdate"));
         addButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addPressed();
             }
@@ -126,6 +122,6 @@ public class FollowerPanel extends BasePanel {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(FollowerPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(FollowerPanel.class);
 
 }

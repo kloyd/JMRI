@@ -1,4 +1,3 @@
-// DCCppPortControllerScaffold.java
 package jmri.jmrix.dccpp;
 
 import java.io.DataInputStream;
@@ -13,21 +12,24 @@ import java.io.PipedOutputStream;
  *
  * @author	Bob Jacobsen Copyright (C) 2006
  * @author	Mark Underwood Copyright (C) 2015
- * @version $Revision$
  */
 class DCCppPortControllerScaffold extends DCCppSimulatorPortController {
 
+    @Override
     public java.util.Vector<String> getPortNames() {
         return null;
     }
 
+    @Override
     public String openPort(String portName, String appName) {
         return null;
     }
 
+    @Override
     public void configure() {
     }
 
+    @Override
     public String[] validBaudRates() {
         return null;
     }
@@ -45,6 +47,7 @@ class DCCppPortControllerScaffold extends DCCppSimulatorPortController {
     /**
      * Returns the InputStream from the port.
      */
+    @Override
     public DataInputStream getInputStream() {
         return istream;
     }
@@ -52,6 +55,7 @@ class DCCppPortControllerScaffold extends DCCppSimulatorPortController {
     /**
      * Returns the outputStream to the port.
      */
+    @Override
     public DataOutputStream getOutputStream() {
         return ostream;
     }
@@ -59,14 +63,17 @@ class DCCppPortControllerScaffold extends DCCppSimulatorPortController {
     /**
      * Check that this object is ready to operate.
      */
+    @Override
     public boolean status() {
         return true;
     }
 
+    @Override
     public boolean okToSend() {
         return true;
     }
 
+    @Override
     public void setOutputBufferEmpty(boolean s) {
     }
 

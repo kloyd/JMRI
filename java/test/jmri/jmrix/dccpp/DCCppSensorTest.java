@@ -1,11 +1,9 @@
 package jmri.jmrix.dccpp;
 
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * DCCppSensorTest.java
@@ -14,7 +12,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author	Bob Jacobsen
  * @author	Mark Underwood
- * @version $Revision$
  */
 public class DCCppSensorTest extends TestCase {
 
@@ -46,6 +43,32 @@ public class DCCppSensorTest extends TestCase {
         t.message(m);
 
         Assert.assertEquals("Known state after inactivate ", jmri.Sensor.INACTIVE, t.getKnownState());
+
+    }
+
+    // DCCppSensor test for incoming status message
+    public void testDCCppSensorInvertStatusMsg() {
+        DCCppInterfaceScaffold xnis = new DCCppInterfaceScaffold(new DCCppCommandStation());
+        Assert.assertNotNull("exists", xnis);
+
+        DCCppSensor t = new DCCppSensor("DCCPPS04", xnis);
+        DCCppReply m;
+
+        // Verify this was created in UNKNOWN state
+        Assert.assertTrue(t.getKnownState() == jmri.Sensor.UNKNOWN);
+        
+        // Set the inverted flag
+        t.setInverted(true);
+
+        // notify the Sensor that somebody else changed it...
+        m = DCCppReply.parseDCCppReply("Q 4");
+        t.message(m);
+        Assert.assertEquals("Known state after activate ", jmri.Sensor.INACTIVE, t.getKnownState());
+
+        m = DCCppReply.parseDCCppReply("q 4");
+        t.message(m);
+
+        Assert.assertEquals("Known state after inactivate ", jmri.Sensor.ACTIVE, t.getKnownState());
 
     }
 
@@ -93,7 +116,7 @@ public class DCCppSensorTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", DCCppSensorTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -103,16 +126,16 @@ public class DCCppSensorTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() throws Exception {
         apps.tests.Log4JFixture.setUp();
         super.setUp();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         super.tearDown();
         apps.tests.Log4JFixture.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(DCCppSensorTest.class.getName());
 
 }

@@ -1,11 +1,12 @@
-// StoreXmlConfigAction.java
 package jmri.configurexml;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ResourceBundle;
+import javax.annotation.CheckForNull;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import jmri.ConfigureManager;
 import jmri.InstanceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,16 +19,11 @@ import org.slf4j.LoggerFactory;
  * information on the various types of information stored in configuration
  * files.
  *
- * @author	Bob Jacobsen Copyright (C) 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002
  * @see jmri.jmrit.XmlFile
  */
 public class StoreXmlConfigAction extends LoadStoreBaseAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1159289010249492584L;
     static final ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrit.display.DisplayBundle");
 
     public StoreXmlConfigAction() {
@@ -51,8 +47,11 @@ public class StoreXmlConfigAction extends LoadStoreBaseAction {
      * <LI>adds .xml extension if needed
      * <LI>if that file exists, check with user
      * </OL>
-     * Returns null if selection failed for any reason
+     *
+     * @param fileChooser the file chooser to use
+     * @return the file to store or null if the user declined to store a file
      */
+    @CheckForNull
     public static File getFileCustom(JFileChooser fileChooser) {
         fileChooser.rescanCurrentDirectory();
         int retVal = fileChooser.showDialog(null, null);
@@ -75,8 +74,8 @@ public class StoreXmlConfigAction extends LoadStoreBaseAction {
         // check for possible overwrite
         if (file.exists()) {
             int selectedValue = JOptionPane.showConfirmDialog(null,
-                    "File " + file.getName() + " already exists, overwrite it?",
-                    "Overwrite file?",
+                    Bundle.getMessage("FileOverwriteWarning", file.getName()),
+                    Bundle.getMessage("OverwriteFile"),
                     JOptionPane.OK_CANCEL_OPTION);
             if (selectedValue != JOptionPane.OK_OPTION) {
                 return null;
@@ -85,25 +84,31 @@ public class StoreXmlConfigAction extends LoadStoreBaseAction {
         return file;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        File file = getFileName(this.getConfigFileChooser());
+        File file = getFileName(getConfigFileChooser());
         if (file == null) {
             return;
         }
 
         // and finally store
-        boolean results = InstanceManager.configureManagerInstance().storeConfig(file);
-        System.out.println(results);
-        log.debug(results ? "store was successful" : "store failed");
-        if (!results) {
-            JOptionPane.showMessageDialog(null,
-                    rb.getString("StoreHasErrors") + "\n"
-                    + rb.getString("StoreIncomplete") + "\n"
-                    + rb.getString("ConsoleWindowHasInfo"),
-                    rb.getString("StoreError"), JOptionPane.ERROR_MESSAGE);
+        ConfigureManager cm = InstanceManager.getNullableDefault(jmri.ConfigureManager.class);
+        if (cm == null) {
+            log.error("Failed to get default configure manager");
+        } else {
+            boolean results = cm.storeConfig(file);
+            System.out.println(results);
+            log.debug(results ? "store was successful" : "store failed");
+            if (!results) {
+                JOptionPane.showMessageDialog(null,
+                        rb.getString("StoreHasErrors") + "\n"
+                        + rb.getString("StoreIncomplete") + "\n"
+                        + rb.getString("ConsoleWindowHasInfo"),
+                        rb.getString("StoreError"), JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(StoreXmlConfigAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(StoreXmlConfigAction.class);
 }

@@ -21,8 +21,7 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Pete Cressman Copyright (C) 2009
- * @version	$Revision 1.0 $
+ * @author Pete Cressman Copyright (C) 2009
  * @since 2.5.1
  */
 public class JmriTwoStatePropertyListener extends JmriSimplePropertyListener {
@@ -37,6 +36,7 @@ public class JmriTwoStatePropertyListener extends JmriSimplePropertyListener {
         super(propName, type, namedBean, varType, client);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (log.isDebugEnabled()) {
             log.debug("\"" + _varName + "\" sent PropertyChangeEvent \"" + evt.getPropertyName()
@@ -56,5 +56,5 @@ public class JmriTwoStatePropertyListener extends JmriSimplePropertyListener {
          */
     }
 
-    static final Logger log = LoggerFactory.getLogger(JmriTwoStatePropertyListener.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(JmriTwoStatePropertyListener.class);
 }

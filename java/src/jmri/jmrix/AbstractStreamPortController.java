@@ -1,4 +1,3 @@
-// AbstractStreamPortController.java
 package jmri.jmrix;
 
 import java.io.DataInputStream;
@@ -7,12 +6,11 @@ import java.io.DataOutputStream;
 /**
  * Provide an abstract implementation of a *StreamPortController for stream
  * based ports.
- * <P>
+ * <p>
  * Implementing classes need to implement status and configure from the
  * portAdapter interface, along with any system specific requirements.
- * <P>
- * @author	Paul Bender Copyright (C) 2014
- * @version	$Revision$
+ *
+ * @author Paul Bender Copyright (C) 2014
  */
 public abstract class AbstractStreamPortController extends AbstractPortController {
 
@@ -61,5 +59,5 @@ public abstract class AbstractStreamPortController extends AbstractPortControlle
         output = null;
     }
 
-    // static private final Logger log = LoggerFactory.getLogger(AbstractStreamPortController.class.getName());
+    // static private final Logger log = LoggerFactory.getLogger(AbstractStreamPortController.class);
 }

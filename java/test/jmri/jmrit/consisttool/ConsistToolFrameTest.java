@@ -1,44 +1,54 @@
-// ConsistToolFrameTest.java
 package jmri.jmrit.consisttool;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.awt.GraphicsEnvironment;
+import jmri.ConsistManager;
+import jmri.InstanceManager;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test simple functioning of ConsistToolFrame
  *
- * @author	Paul Bender Copyright (C) 2015
- * @version	$Revision$
+ * @author	Paul Bender Copyright (C) 2015,2016
  */
-public class ConsistToolFrameTest extends TestCase {
+public class ConsistToolFrameTest {
 
+    @Test
     public void testCtor() {
-        jmri.InstanceManager.setDefault(jmri.ConsistManager.class,new TestConsistManager());
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         ConsistToolFrame frame = new ConsistToolFrame();
         Assert.assertNotNull("exists", frame );
+        JUnitUtil.dispose(frame);
     }
 
-    // from here down is testing infrastructure
-    public ConsistToolFrameTest(String s) {
-        super(s);
+    @Test
+    public void testCtorWithCSpossible() {
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
+        // overwrite the default consist manager set in setUp for this test
+        // so that we can check initilization with CSConsists possible.
+        InstanceManager.setDefault(ConsistManager.class, new TestConsistManager(){
+             @Override
+             public boolean isCommandStationConsistPossible(){
+                 return true;
+             }
+        });
+
+        ConsistToolFrame frame = new ConsistToolFrame();
+        Assert.assertNotNull("exists", frame );
+        JUnitUtil.dispose(frame);
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", ConsistToolFrameTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();        InstanceManager.setDefault(ConsistManager.class, new TestConsistManager());
     }
 
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(ConsistToolFrameTest.class);
-        return suite;
-    }
+    @After
+    public void tearDown() {        JUnitUtil.tearDown();    }
 
-    static Logger log = LoggerFactory.getLogger(ConsistToolFrameTest.class.getName());
 
 }

@@ -1,9 +1,6 @@
-// ItemDialog.java
 package jmri.jmrit.display.palette;
 
 import jmri.util.JmriJFrame;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Container for dialogs that modify the user's changes to his/her icon catalog.
@@ -17,25 +14,12 @@ import org.slf4j.LoggerFactory;
  */
 public class ItemDialog extends JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2157245075058528455L;
-
-    //    protected ItemPanel _parent;
+    // protected ItemPanel _parent;
     protected String _type;
-//    protected String    _family;
+    // protected String    _family;
 
-    private static ItemDialog _instance = null;		// only let one dialog at a time
-
-    /**
-     */
     public ItemDialog(String type, String title) {
         super(title, true, true);
-        if (_instance != null) {
-            _instance.dispose();
-        }
-        _instance = this;
         _type = type;
     }
     /*
@@ -53,14 +37,9 @@ public class ItemDialog extends JmriJFrame {
     protected void closeDialogs() {
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "Null reference to singular version to allow gc earlier")
+    @Override
     public void dispose() {
         closeDialogs();
         super.dispose();
-        _instance = null;	// remove reference to allow gc
-
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ItemDialog.class.getName());
 }

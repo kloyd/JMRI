@@ -11,8 +11,6 @@ import jmri.jmrit.catalog.NamedIcon;
 import jmri.jmrix.rps.Distributor;
 import jmri.jmrix.rps.Measurement;
 import jmri.jmrix.rps.MeasurementListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An icon to display the position of an RPS input.
@@ -20,14 +18,8 @@ import org.slf4j.LoggerFactory;
  * In this initial version, it ignores the ID, so there's only one icon.
  *
  * @author Bob Jacobsen Copyright (C) 2007
- * @version $Revision$
  */
 public class RpsPositionIcon extends PositionableLabel implements MeasurementListener {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2764090638708108310L;
 
     public RpsPositionIcon(Editor editor) {
         // super ctor call to make sure this is an icon label
@@ -37,7 +29,7 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         displayState();
 
         // blow up default font
-        setFont(jmri.util.FontUtil.deriveFont(getFont(), (float) 24.));
+        setFont(getFont().deriveFont(24.f));
 
         // connect
         Distributor.instance().addMeasurementListener(this);
@@ -69,10 +61,12 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         displayState();
     }
 
+    @Override
     public String getNameString() {
         return "RPS Position Readout";
     }
 
+    @Override
     public boolean setEditIconMenu(JPopupMenu popup) {
         return false;
     }
@@ -80,12 +74,14 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
     /**
      * Pop-up contents
      */
+    @Override
     public boolean showPopUp(JPopupMenu popup) {
 
         if (showIdItem == null) {
             showIdItem = new JCheckBoxMenuItem("Show ID");
             showIdItem.setSelected(false);
             showIdItem.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     toggleID(showIdItem.isSelected());
                 }
@@ -94,23 +90,15 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         popup.add(showIdItem);
 
         popup.add(new AbstractAction("Set Origin") {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -3391746152957428043L;
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setRpsOrigin();
             }
         });
 
         popup.add(new AbstractAction("Set Current Location") {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -9079038426378006086L;
-
-            public void actionPerformed(ActionEvent e) {
+            @Override
+              public void actionPerformed(ActionEvent e) {
                 setRpsCurrentLocation();
             }
         });
@@ -119,11 +107,7 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         popup.add(notify);
 
         popup.add(new AbstractAction("Set Filter") {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 3157524767064527041L;
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setFilterPopup();
             }
@@ -142,6 +126,7 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
     /**
      * ****** popup AbstractAction.actionPerformed method overrides ********
      */
+    @Override
     protected void rotateOrthogonal() {
         active.setRotation(active.getRotation() + 1, this);
         error.setRotation(error.getRotation() + 1, this);
@@ -150,12 +135,14 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         repaint();
     }
 
+    @Override
     public void setScale(double s) {
         active.scale(s, this);
         error.scale(s, this);
         displayState();
     }
 
+    @Override
     public void rotate(int deg) {
         active.rotate(deg, this);
         error.rotate(deg, this);
@@ -171,11 +158,6 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
      */
     class Notifier extends AbstractAction {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 5902446945220035813L;
-
         public Notifier() {
             super();
         }
@@ -183,6 +165,7 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         /**
          * Does nothing, here to make this work
          */
+        @Override
         public void actionPerformed(ActionEvent e) {
         }
 
@@ -234,10 +217,12 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         return;
     }
 
+    @Override
     public int maxHeight() {
         return getPreferredSize().height;
     }
 
+    @Override
     public int maxWidth() {
         return getPreferredSize().width;
     }
@@ -275,10 +260,11 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
     /**
      * Respond to a measurement by moving to new position
      */
+    @Override
     public void notify(Measurement m) {
         // only honor measurements to this icon if filtered
         if (filterNumber != null && m.getReading() != null
-                && !filterNumber.equals(m.getReading().getID())) {
+                && !filterNumber.equals(m.getReading().getId())) {
             return;
         }
 
@@ -294,7 +280,7 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
         }
 
         if (_text) {
-            super.setText("" + m.getReading().getID());
+            super.setText("" + m.getReading().getId());
         }
         displayState();
 
@@ -333,6 +319,7 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
     }
     String filterNumber = null;
 
+    @Override
     public void dispose() {
         Distributor.instance().removeMeasurementListener(this);
         active = null;
@@ -406,6 +393,4 @@ public class RpsPositionIcon extends PositionableLabel implements MeasurementLis
 
     double sxScale, syScale;
     int sxOrigin, syOrigin;
-
-    static Logger log = LoggerFactory.getLogger(SensorIcon.class.getName());
 }

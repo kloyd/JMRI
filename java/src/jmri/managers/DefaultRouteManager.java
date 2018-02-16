@@ -1,4 +1,3 @@
-// DefaultRouteManager.java
 package jmri.managers;
 
 import java.text.DecimalFormat;
@@ -15,9 +14,8 @@ import org.slf4j.LoggerFactory;
  * Note that this does not enforce any particular system naming convention
  *
  * @author Dave Duchamp Copyright (C) 2004
- * @version	$Revision$
  */
-public class DefaultRouteManager extends AbstractManager
+public class DefaultRouteManager extends AbstractManager<Route>
         implements RouteManager, java.beans.PropertyChangeListener, java.beans.VetoableChangeListener {
 
     public DefaultRouteManager() {
@@ -26,14 +24,17 @@ public class DefaultRouteManager extends AbstractManager
         jmri.InstanceManager.sensorManagerInstance().addVetoableChangeListener(this);
     }
 
+    @Override
     public int getXMLOrder() {
         return Manager.ROUTES;
     }
 
+    @Override
     public String getSystemPrefix() {
         return "I";
     }
 
+    @Override
     public char typeLetter() {
         return 'R';
     }
@@ -41,6 +42,7 @@ public class DefaultRouteManager extends AbstractManager
     /**
      * Method to provide a Route whether or not is already exists.
      */
+    @Override
     public Route provideRoute(String systemName, String userName) {
         Route r;
         r = getByUserName(systemName);
@@ -71,6 +73,7 @@ public class DefaultRouteManager extends AbstractManager
         return r;
     }
 
+    @Override
     public Route newRoute(String userName) {
         int nextAutoRouteRef = lastAutoRouteRef + 1;
         StringBuilder b = new StringBuilder("IR:AUTO:");
@@ -87,6 +90,7 @@ public class DefaultRouteManager extends AbstractManager
      * Remove an existing route. Route must have been deactivated before
      * invoking this.
      */
+    @Override
     public void deleteRoute(Route r) {
         deregister(r);
     }
@@ -96,6 +100,7 @@ public class DefaultRouteManager extends AbstractManager
      * User Name. If this fails looks up assuming that name is a System Name. If
      * both fail, returns null.
      */
+    @Override
     public Route getRoute(String name) {
         Route r = getByUserName(name);
         if (r != null) {
@@ -104,12 +109,14 @@ public class DefaultRouteManager extends AbstractManager
         return getBySystemName(name);
     }
 
+    @Override
     public Route getBySystemName(String name) {
-        return (Route) _tsys.get(name);
+        return _tsys.get(name);
     }
 
+    @Override
     public Route getByUserName(String key) {
-        return (Route) _tuser.get(key);
+        return _tuser.get(key);
     }
 
     static DefaultRouteManager _instance = null;
@@ -121,11 +128,10 @@ public class DefaultRouteManager extends AbstractManager
         return (_instance);
     }
 
+    @Override
     public String getBeanTypeHandled() {
         return Bundle.getMessage("BeanNameRoute");
     }
 
-    static Logger log = LoggerFactory.getLogger(DefaultRouteManager.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DefaultRouteManager.class);
 }
-
-/* @(#)DefaultRouteManager.java */

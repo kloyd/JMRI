@@ -1,8 +1,8 @@
-// TrainCsvCommon.java
 package jmri.jmrit.operations.trains;
 
 import java.io.PrintWriter;
 import java.util.List;
+import jmri.InstanceManager;
 import jmri.jmrit.operations.locations.Location;
 import jmri.jmrit.operations.locations.Track;
 import jmri.jmrit.operations.rollingstock.cars.Car;
@@ -17,13 +17,13 @@ import org.slf4j.LoggerFactory;
  * Contains the csv operators for manifests and switch lists
  *
  * @author Daniel Boudreau Copyright (C) 2011, 2013, 2015
- * @version $Revision: 1 $
+ * 
  *
  */
 public class TrainCsvCommon extends TrainCommon {
 
-    protected final static String DEL = ","; // NOI18N delimiter
-    protected final static String ESC = "\""; // NOI18N escape
+    protected final static String DEL = ","; // delimiter // NOI18N
+    protected final static String ESC = "\""; // escape // NOI18N
 
     protected final static String HEADER = Bundle.getMessage("csvOperator") + DEL + Bundle.getMessage("csvDescription")
             + DEL + Bundle.getMessage("csvParameters");
@@ -65,7 +65,7 @@ public class TrainCsvCommon extends TrainCommon {
 
     // switch list specific operators
     protected final static String DL = "DL" + DEL + Bundle.getMessage("csvDepartureLocationName") + DEL; // NOI18N
-    protected final static String END = "END" + DEL + Bundle.getMessage("csvEnd") + DEL; // NOI18N
+    protected final static String END = "END" + DEL + Bundle.getMessage("csvEnd"); // NOI18N
     protected final static String ETA = "ETA" + DEL + Bundle.getMessage("csvExpectedTimeArrival") + DEL; // NOI18N
     protected final static String ETE = "ETE" + DEL + Bundle.getMessage("csvEstimatedTimeEnroute") + DEL; // NOI18N
     protected final static String HOLD = "HOLD" + DEL + Bundle.getMessage("csvHoldCar"); // NOI18N
@@ -75,8 +75,9 @@ public class TrainCsvCommon extends TrainCommon {
     protected final static String SWLC = "SWLC" + DEL + Bundle.getMessage("csvSwitchListComment") + DEL; // NOI18N
     protected final static String TA = "TA" + DEL + Bundle.getMessage("csvTrainArrives") + DEL; // NOI18N
     protected final static String TDC = "TDC" + DEL + Bundle.getMessage("csvTrainChangesDirection") + DEL; // NOI18N
-    protected final static String TIR = "TIR" + DEL + Bundle.getMessage("csvTrainInRoute"); // NOI18N
+    protected final static String TIR = "TIR" + DEL + Bundle.getMessage("csvTrainEnRoute"); // NOI18N
     protected final static String TDONE = "TDONE" + DEL + Bundle.getMessage("csvTrainHasAlreadyServiced"); // NOI18N
+    protected final static String TEND = "TEND" + DEL + Bundle.getMessage("csvTrainEnd") + DEL; // NOI18N
     protected final static String VN = "VN" + DEL + Bundle.getMessage("csvVisitNumber") + DEL; // NOI18N
 
     private final static Logger log = LoggerFactory.getLogger(TrainCsvCommon.class);
@@ -297,7 +298,7 @@ public class TrainCsvCommon extends TrainCommon {
     }
 
     protected void listCarsLocationUnknown(PrintWriter fileOut) {
-        List<Car> cars = CarManager.instance().getCarsLocationUnknown();
+        List<Car> cars = InstanceManager.getDefault(CarManager.class).getCarsLocationUnknown();
         if (cars.size() == 0) {
             return; // no cars to search for!
         }

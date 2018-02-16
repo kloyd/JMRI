@@ -1,4 +1,3 @@
-// KnownLocoSelPane.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.event.ActionListener;
@@ -10,13 +9,14 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import jmri.GlobalProgrammerManager;
 import jmri.Programmer;
 import jmri.jmrit.decoderdefn.DecoderFile;
+import jmri.jmrit.progsupport.ProgModeSelector;
 import jmri.jmrit.roster.IdentifyLoco;
 import jmri.jmrit.roster.Roster;
 import jmri.jmrit.roster.RosterEntry;
 import jmri.jmrit.roster.swing.RosterEntrySelectorPanel;
-import jmri.jmrit.progsupport.ProgModeSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,15 +28,9 @@ import org.slf4j.LoggerFactory;
  * (e.g. in a local anonymous class) to create the programmer frame you're
  * interested in.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002
  */
 public class KnownLocoSelPane extends LocoSelPane {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 9052342102384471212L;
 
     public KnownLocoSelPane(JLabel s, boolean ident, ProgModeSelector selector) {
         mCanIdent = ident;
@@ -63,6 +57,7 @@ public class KnownLocoSelPane extends LocoSelPane {
         if (mCanIdent) {
             JButton idloco = new JButton(java.util.ResourceBundle.getBundle("jmri/jmrit/symbolicprog/SymbolicProgBundle").getString("ReadAndSelect"));
             idloco.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     if (log.isDebugEnabled()) {
                         log.debug("Identify locomotive pressed");
@@ -83,6 +78,7 @@ public class KnownLocoSelPane extends LocoSelPane {
 
         JButton go2 = new JButton(Bundle.getMessage("OpenProgrammer"));
         go2.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 if (log.isDebugEnabled()) {
                     log.debug("Open programmer pressed");
@@ -122,22 +118,25 @@ public class KnownLocoSelPane extends LocoSelPane {
         if (selector != null && selector.isSelected()) p = selector.getProgrammer();
         if (p == null) {
             log.warn("Selector did not provide a programmer, use default");
-            p = jmri.InstanceManager.programmerManagerInstance().getGlobalProgrammer();
+            p = jmri.InstanceManager.getDefault(GlobalProgrammerManager.class).getGlobalProgrammer();
         }
         IdentifyLoco id = new IdentifyLoco(p) {
             private KnownLocoSelPane who = me;
 
+            @Override
             protected void done(int dccAddress) {
                 // if Done, updated the selected decoder
                 who.selectLoco(dccAddress);
             }
 
+            @Override
             protected void message(String m) {
                 if (mStatusLabel != null) {
                     mStatusLabel.setText(m);
                 }
             }
 
+            @Override
             public void error() {
             }
         };
@@ -146,7 +145,7 @@ public class KnownLocoSelPane extends LocoSelPane {
 
     protected void selectLoco(int dccAddress) {
         // locate that loco
-        List<RosterEntry> l = Roster.instance().matchingList(null, null, Integer.toString(dccAddress),
+        List<RosterEntry> l = Roster.getDefault().matchingList(null, null, Integer.toString(dccAddress),
                 null, null, null, null);
         if (log.isDebugEnabled()) {
             log.debug("selectLoco found " + l.size() + " matches");
@@ -159,7 +158,7 @@ public class KnownLocoSelPane extends LocoSelPane {
             }
             String group = locoBox.getSelectedRosterGroup();
             if (group != null && !group.equals(Roster.ALLENTRIES)) {
-                List<RosterEntry> entries = Roster.instance().getEntriesWithAttributeKeyValue(Roster.getRosterGroupProperty(group), "yes");
+                List<RosterEntry> entries = Roster.getDefault().getEntriesWithAttributeKeyValue(Roster.getRosterGroupProperty(group), "yes");
                 if (entries.contains(r)) {
                     locoBox.setSelectedRosterEntry(r);
                 } else {
@@ -200,6 +199,6 @@ public class KnownLocoSelPane extends LocoSelPane {
         log.error("startProgrammer method in NewLocoSelPane should have been overridden");
     }
 
-    static Logger log = LoggerFactory.getLogger(KnownLocoSelPane.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(KnownLocoSelPane.class);
 
 }

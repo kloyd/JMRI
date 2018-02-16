@@ -1,15 +1,14 @@
-// PositionFileTest.java
 package jmri.jmrix.rps;
 
 import java.io.File;
 import java.io.IOException;
 import javax.vecmath.Point3d;
 import jmri.util.FileUtil;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.jdom2.Element;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the rps.PositionFile class.
@@ -18,8 +17,7 @@ import org.jdom2.Element;
  * working directory.
  *
  * @author	Bob Jacobsen Copyright 2007
- * @version	$Revision$
- */
+  */
 public class PositionFileTest extends TestCase {
 
     public void testCtor() {
@@ -54,7 +52,7 @@ public class PositionFileTest extends TestCase {
     }
 
     void checkReading(Reading first, Reading second) {
-        Assert.assertEquals("id ok", first.getID(), second.getID());
+        Assert.assertEquals("id ok", first.getId(), second.getId());
         Assert.assertEquals("num ok", first.getNValues(), second.getNValues());
 
         for (int i = 1; i <= first.getNValues(); i++) {
@@ -101,7 +99,7 @@ public class PositionFileTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {PositionFileTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

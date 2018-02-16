@@ -1,10 +1,22 @@
-// LocoNetSystemConnectionMemo.java
 package jmri.jmrix.loconet;
 
 import java.util.ResourceBundle;
+import jmri.AddressedProgrammerManager;
+import jmri.ClockControl;
+import jmri.CommandStation;
+import jmri.ConsistManager;
+import jmri.GlobalProgrammerManager;
 import jmri.InstanceManager;
-import jmri.ProgrammerManager;
+import jmri.LightManager;
+import jmri.PowerManager;
+import jmri.ReporterManager;
+import jmri.SensorManager;
 import jmri.ThrottleManager;
+import jmri.TurnoutManager;
+import jmri.jmrix.debugthrottle.DebugThrottleManager;
+import jmri.jmrix.loconet.swing.LnComponentFactory;
+import jmri.jmrix.swing.ComponentFactory;
+import jmri.managers.DefaultProgrammerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,14 +27,12 @@ import org.slf4j.LoggerFactory;
  * Objects of specific subtypes are registered in the instance manager to
  * activate their particular system.
  *
- * @author	Bob Jacobsen Copyright (C) 2010
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2010
  */
 public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
 
-    public LocoNetSystemConnectionMemo(LnTrafficController lt,
-            SlotManager sm) {
-        super("L", "LocoNet");
+    public LocoNetSystemConnectionMemo(LnTrafficController lt, SlotManager sm) {
+        super("L", "LocoNet"); // NOI18N
         this.lt = lt;
 
         this.sm = sm; // doesn't full register, but fine for this purpose.
@@ -30,25 +40,30 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
         register(); // registers general type
         InstanceManager.store(this, LocoNetSystemConnectionMemo.class); // also register as specific type
 
-        // create and register the LnComponentFactory
-        InstanceManager.store(cf = new jmri.jmrix.loconet.swing.LnComponentFactory(this),
-                jmri.jmrix.swing.ComponentFactory.class);
+        // create and register the ComponentFactory for the GUI
+        InstanceManager.store(cf = new LnComponentFactory(this),
+                ComponentFactory.class);
     }
 
     public LocoNetSystemConnectionMemo() {
-        super("L", "LocoNet");
+        super("L", "LocoNet"); // NOI18N
         register(); // registers general type
         InstanceManager.store(this, LocoNetSystemConnectionMemo.class); // also register as specific type
 
-        // create and register the LnComponentFactory
-        InstanceManager.store(cf = new jmri.jmrix.loconet.swing.LnComponentFactory(this),
-                jmri.jmrix.swing.ComponentFactory.class);
+        // create and register the ComponentFactory for the GUI
+        InstanceManager.store(cf = new LnComponentFactory(this),
+                ComponentFactory.class);
     }
 
-    jmri.jmrix.swing.ComponentFactory cf = null;
+    ComponentFactory cf = null;
+    private LnTrafficController lt;
+    private SlotManager sm;
+    private LnMessageManager lnm = null;
 
     /**
      * Provides access to the SlotManager for this particular connection.
+     *
+     * @return the slot manager or null if no valid slot manager is available
      */
     public SlotManager getSlotManager() {
         if (sm == null) {
@@ -56,15 +71,15 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
         }
         return sm;
     }
-    private SlotManager sm;
 
     /**
      * Provides access to the TrafficController for this particular connection.
+     *
+     * @return the LocoNet-specific TrafficController
      */
     public LnTrafficController getLnTrafficController() {
         return lt;
     }
-    private LnTrafficController lt;
 
     public void setLnTrafficController(LnTrafficController lt) {
         this.lt = lt;
@@ -77,18 +92,17 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
         }
         return lnm;
     }
-    private LnMessageManager lnm = null;
 
-    protected ProgrammerManager programmerManager;
+    protected DefaultProgrammerManager programmerManager;
 
-    public ProgrammerManager getProgrammerManager() {
+    public DefaultProgrammerManager getProgrammerManager() {
         if (programmerManager == null) {
             programmerManager = new LnProgrammerManager(getSlotManager(), this);
         }
         return programmerManager;
     }
 
-    public void setProgrammerManager(ProgrammerManager p) {
+    public void setProgrammerManager(DefaultProgrammerManager p) {
         programmerManager = p;
     }
 
@@ -118,108 +132,105 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
         sm = type.getSlotManager(lt);
         if (sm != null) {
             sm.setThrottledTransmitter(tm, mTurnoutNoRetry);
+
+            sm.setCommandStationType(type);
+            sm.setSystemConnectionMemo(this);
+
+            // store as CommandStation object
+            InstanceManager.setCommandStation(sm);
         }
-
-        sm.setCommandStationType(type);
-        sm.setSystemConnectionMemo(this);
-
-        // store as CommandStation object
-        jmri.InstanceManager.setCommandStation(sm);
 
     }
 
     /**
-     * Tells which managers this provides by class
+     * {@inheritDoc}
      */
     @Override
     public boolean provides(Class<?> type) {
         if (getDisabled()) {
             return false;
         }
-        if (type.equals(jmri.ProgrammerManager.class)) {
-            return true;
-        }
-        if (type.equals(jmri.GlobalProgrammerManager.class)) {
+        if (type.equals(GlobalProgrammerManager.class)) {
             return getProgrammerManager().isGlobalProgrammerAvailable();
         }
-        if (type.equals(jmri.AddressedProgrammerManager.class)) {
+        if (type.equals(AddressedProgrammerManager.class)) {
             return getProgrammerManager().isAddressedModePossible();
         }
 
-        if (type.equals(jmri.ThrottleManager.class)) {
+        if (type.equals(ThrottleManager.class)) {
             return true;
         }
-        if (type.equals(jmri.PowerManager.class)) {
+        if (type.equals(PowerManager.class)) {
             return true;
         }
-        if (type.equals(jmri.SensorManager.class)) {
+        if (type.equals(SensorManager.class)) {
             return true;
         }
-        if (type.equals(jmri.TurnoutManager.class)) {
+        if (type.equals(TurnoutManager.class)) {
             return true;
         }
-        if (type.equals(jmri.LightManager.class)) {
+        if (type.equals(LightManager.class)) {
             return true;
         }
-        if (type.equals(jmri.ReporterManager.class)) {
+        if (type.equals(ReporterManager.class)) {
             return true;
         }
-        if (type.equals(jmri.ConsistManager.class)) {
+        if (type.equals(ConsistManager.class)) {
             return true;
         }
-        if (type.equals(jmri.ClockControl.class)) {
+        if (type.equals(ClockControl.class)) {
             return true;
         }
-        if (type.equals(jmri.CommandStation.class)) {
+        if (type.equals(CommandStation.class)) {
             return true;
         }
-        return false; // nothing, by default
+        return super.provides(type);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <T> T get(Class<?> T) {
         if (getDisabled()) {
             return null;
         }
-        if (T.equals(jmri.ProgrammerManager.class)) {
+        if (T.equals(GlobalProgrammerManager.class)) {
             return (T) getProgrammerManager();
         }
-        if (T.equals(jmri.GlobalProgrammerManager.class)) {
-            return (T) getProgrammerManager();
-        }
-        if (T.equals(jmri.AddressedProgrammerManager.class)) {
+        if (T.equals(AddressedProgrammerManager.class)) {
             return (T) getProgrammerManager();
         }
 
-        if (T.equals(jmri.ThrottleManager.class)) {
+        if (T.equals(ThrottleManager.class)) {
             return (T) getThrottleManager();
         }
-        if (T.equals(jmri.PowerManager.class)) {
+        if (T.equals(PowerManager.class)) {
             return (T) getPowerManager();
         }
-        if (T.equals(jmri.SensorManager.class)) {
+        if (T.equals(SensorManager.class)) {
             return (T) getSensorManager();
         }
-        if (T.equals(jmri.TurnoutManager.class)) {
+        if (T.equals(TurnoutManager.class)) {
             return (T) getTurnoutManager();
         }
-        if (T.equals(jmri.LightManager.class)) {
+        if (T.equals(LightManager.class)) {
             return (T) getLightManager();
         }
-        if (T.equals(jmri.ClockControl.class)) {
+        if (T.equals(ClockControl.class)) {
             return (T) getClockControl();
         }
-        if (T.equals(jmri.ReporterManager.class)) {
+        if (T.equals(ReporterManager.class)) {
             return (T) getReporterManager();
         }
-        if (T.equals(jmri.ConsistManager.class)) {
+        if (T.equals(ConsistManager.class)) {
             return (T) getConsistManager();
         }
-        if (T.equals(jmri.CommandStation.class)) {
+        if (T.equals(CommandStation.class)) {
             return (T) getSlotManager();
         }
-        return null; // nothing, by default
+        return super.get(T);
     }
 
     protected LocoNetThrottledTransmitter tm;
@@ -231,14 +242,13 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
     public void configureManagers() {
 
         tm = new LocoNetThrottledTransmitter(getLnTrafficController(), mTurnoutExtraSpace);
-        log.debug("ThrottleTransmitted configured with :" + mTurnoutExtraSpace);
+        log.debug("ThrottleTransmitted configured with :{}", mTurnoutExtraSpace);
         if (sm != null) {
             sm.setThrottledTransmitter(tm, mTurnoutNoRetry);
-            log.debug("set turnout retry: " + mTurnoutNoRetry);
+            log.debug("set turnout retry: {}", mTurnoutNoRetry);
         }
 
-        InstanceManager.setPowerManager(
-                getPowerManager());
+        InstanceManager.store(getPowerManager(), PowerManager.class);
 
         InstanceManager.setSensorManager(
                 getSensorManager());
@@ -252,14 +262,17 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
         InstanceManager.setThrottleManager(
                 getThrottleManager());
 
-        jmri.InstanceManager.setProgrammerManager(
-                getProgrammerManager());
+        if (getProgrammerManager().isAddressedModePossible()) {
+            InstanceManager.setAddressedProgrammerManager(getProgrammerManager());
+        }
+        if (getProgrammerManager().isGlobalProgrammerAvailable()) {
+            InstanceManager.store(getProgrammerManager(), GlobalProgrammerManager.class);
+        }
 
         InstanceManager.setReporterManager(
                 getReporterManager());
 
-        InstanceManager.setConsistManager(
-                getConsistManager());
+        setConsistManager(new LocoNetConsistManager(this));
 
         InstanceManager.addClockControl(
                 getClockControl());
@@ -273,7 +286,7 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
             return null;
         }
         if (powerManager == null) {
-            powerManager = new jmri.jmrix.loconet.LnPowerManager(this);
+            powerManager = new LnPowerManager(this);
         }
         return powerManager;
     }
@@ -308,7 +321,7 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
             return null;
         }
         if (turnoutManager == null) {
-            turnoutManager = new jmri.jmrix.loconet.LnTurnoutManager(getLnTrafficController(), tm, getSystemPrefix(), mTurnoutNoRetry);
+            turnoutManager = new LnTurnoutManager(getLnTrafficController(), tm, getSystemPrefix(), mTurnoutNoRetry);
         }
         return turnoutManager;
     }
@@ -320,7 +333,7 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
             return null;
         }
         if (clockControl == null) {
-            clockControl = new jmri.jmrix.loconet.LnClockControl(getSlotManager(), getLnTrafficController());
+            clockControl = new LnClockControl(getSlotManager(), getLnTrafficController());
         }
         return clockControl;
     }
@@ -332,7 +345,7 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
             return null;
         }
         if (reporterManager == null) {
-            reporterManager = new jmri.jmrix.loconet.LnReporterManager(getLnTrafficController(), getSystemPrefix());
+            reporterManager = new LnReporterManager(getLnTrafficController(), getSystemPrefix());
         }
         return reporterManager;
     }
@@ -344,7 +357,7 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
             return null;
         }
         if (sensorManager == null) {
-            sensorManager = new jmri.jmrix.loconet.LnSensorManager(getLnTrafficController(), getSystemPrefix());
+            sensorManager = new LnSensorManager(getLnTrafficController(), getSystemPrefix());
         }
         return sensorManager;
     }
@@ -356,67 +369,55 @@ public class LocoNetSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo
             return null;
         }
         if (lightManager == null) {
-            lightManager = new jmri.jmrix.loconet.LnLightManager(getLnTrafficController(), getSystemPrefix());
+            lightManager = new LnLightManager(getLnTrafficController(), getSystemPrefix());
         }
         return lightManager;
     }
 
-    private LocoNetConsistManager consistManager;
-
-    public LocoNetConsistManager getConsistManager() {
-        if (getDisabled()) {
-            return null;
-        }
-        if (consistManager == null) {
-            consistManager = new jmri.jmrix.loconet.LocoNetConsistManager(this);
-        }
-        return consistManager;
-    }
-
+    @Override
     protected ResourceBundle getActionModelResourceBundle() {
         return ResourceBundle.getBundle("jmri.jmrix.loconet.LocoNetActionListBundle");
     }
 
+    @Override
     public void dispose() {
         lt = null;
         sm = null;
         InstanceManager.deregister(this, LocoNetSystemConnectionMemo.class);
         if (cf != null) {
-            InstanceManager.deregister(cf, jmri.jmrix.swing.ComponentFactory.class);
+            InstanceManager.deregister(cf, ComponentFactory.class);
         }
         if (powerManager != null) {
-            InstanceManager.deregister(powerManager, jmri.jmrix.loconet.LnPowerManager.class);
+            InstanceManager.deregister(powerManager, LnPowerManager.class);
         }
         if (turnoutManager != null) {
-            InstanceManager.deregister(turnoutManager, jmri.jmrix.loconet.LnTurnoutManager.class);
+            InstanceManager.deregister(turnoutManager, LnTurnoutManager.class);
         }
         if (lightManager != null) {
-            InstanceManager.deregister(lightManager, jmri.jmrix.loconet.LnLightManager.class);
+            InstanceManager.deregister(lightManager, LnLightManager.class);
         }
         if (sensorManager != null) {
-            InstanceManager.deregister(sensorManager, jmri.jmrix.loconet.LnSensorManager.class);
+            InstanceManager.deregister(sensorManager, LnSensorManager.class);
         }
         if (reporterManager != null) {
-            InstanceManager.deregister(reporterManager, jmri.jmrix.loconet.LnReporterManager.class);
+            InstanceManager.deregister(reporterManager, LnReporterManager.class);
         }
         if (throttleManager != null) {
             if (throttleManager instanceof LnThrottleManager) {
-                InstanceManager.deregister(((LnThrottleManager) throttleManager), jmri.jmrix.loconet.LnThrottleManager.class);
-            } else if (throttleManager instanceof jmri.jmrix.debugthrottle.DebugThrottleManager) {
-                InstanceManager.deregister(((jmri.jmrix.debugthrottle.DebugThrottleManager) throttleManager), jmri.jmrix.debugthrottle.DebugThrottleManager.class);
+                InstanceManager.deregister(((LnThrottleManager) throttleManager), LnThrottleManager.class);
+            } else if (throttleManager instanceof DebugThrottleManager) {
+                InstanceManager.deregister(((DebugThrottleManager) throttleManager), DebugThrottleManager.class);
             }
         }
-        if (consistManager != null) {
-            InstanceManager.deregister(consistManager, jmri.jmrix.loconet.LocoNetConsistManager.class);
-        }
         if (clockControl != null) {
-            InstanceManager.deregister(clockControl, jmri.jmrix.loconet.LnClockControl.class);
+            InstanceManager.deregister(clockControl, LnClockControl.class);
+        }
+        if (tm != null){
+            tm.dispose();
         }
         super.dispose();
     }
 
-    static Logger log = LoggerFactory.getLogger(LocoNetSystemConnectionMemo.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LocoNetSystemConnectionMemo.class);
+
 }
-
-
-/* @(#)LocoNetSystemConnectionMemo.java */

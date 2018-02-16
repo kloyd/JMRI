@@ -1,4 +1,3 @@
-// DuplexGroupTabbedPanel.java
 package jmri.jmrix.loconet.duplexgroup.swing;
 
 import java.util.ResourceBundle;
@@ -16,14 +15,9 @@ import jmri.util.JmriJFrame;
  * clarity, only the term UR92 is used herein.
  *
  * @author B. Milhaupt, Copyright 2011
- * @version	$Revision: 1.0 $
  */
 public class DuplexGroupTabbedPanel extends LnPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5891070481222820538L;
     javax.swing.JTabbedPane tabbedPane = null;
     DuplexGroupInfoPanel dgip = null;
     DuplexGroupScanPanel dgsp = null;
@@ -35,9 +29,11 @@ public class DuplexGroupTabbedPanel extends LnPanel {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void initComponents() throws Exception {
-        super.initComponents();
+    public void initComponents() {
         tabbedPane = new javax.swing.JTabbedPane();
         dgsp = new DuplexGroupScanPanel();
         dgip = new DuplexGroupInfoPanel();
@@ -51,6 +47,9 @@ public class DuplexGroupTabbedPanel extends LnPanel {
         // uses swing operations
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initComponents(LocoNetSystemConnectionMemo memo) {
         super.initComponents(memo);
@@ -60,14 +59,20 @@ public class DuplexGroupTabbedPanel extends LnPanel {
     }
     javax.swing.Timer tmr = null;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initContext(Object context) {
 
         tmr = new javax.swing.Timer(10, new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 tmr.stop();
-                ((JmriJFrame) thisone.getRootPane().getParent()).setPreferredSize(null);
-                ((JmriJFrame) thisone.getRootPane().getParent()).pack();
+                if ((thisone.getRootPane().getParent()) instanceof JmriJFrame) {
+                    ((JmriJFrame) (thisone.getRootPane().getParent())).setPreferredSize(null);
+                    ((JmriJFrame) (thisone.getRootPane().getParent())).pack();
+                }
             }
         });
         // need to trigger first delay to get first channel to be scanned
@@ -76,18 +81,27 @@ public class DuplexGroupTabbedPanel extends LnPanel {
         tmr.start();
         return;
     }
-    private static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.loconet.duplexgroup.DuplexGroupTabbed");
+    private static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.loconet.duplexgroup.swing.DuplexGroupTabbed");
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getHelpTarget() {
-        return "package.jmri.jmrix.loconet.duplexgroup.DuplexGroupTabbedPanel";
+        return "package.jmri.jmrix.loconet.duplexgroup.DuplexGroupTabbedPanel"; // NOI18N
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getTitle() {
         return rb.getString("Title");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void dispose() {
         dgip.dispose();

@@ -1,39 +1,33 @@
-// QsiProgrammer.java
 package jmri.jmrix.qsi;
 
+import java.util.ArrayList;
+import java.util.List;
+import jmri.ProgrammingMode;
+import jmri.jmrix.AbstractProgrammer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import jmri.*;
-import jmri.jmrix.AbstractProgrammer;
-
-import java.util.*;
-import jmri.managers.DefaultProgrammerManager;
 
 /**
  * Implements the jmri.Programmer interface via commands for the QSI programmer.
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2008
- * @version	$Revision$
  */
 public class QsiProgrammer extends AbstractProgrammer implements QsiListener {
 
-    protected QsiProgrammer() {
-        // error if more than one constructed?
-        if (self != null) {
-            log.error("Creating too many QsiProgrammer objects");
-        }
+    private QsiSystemConnectionMemo _memo = null;
+
+    protected QsiProgrammer(QsiSystemConnectionMemo memo) {
+        _memo = memo;
     }
 
     /*
      * method to find the existing QsiProgrammer object, if need be creating one
+     * @deprecated since 4.5.1, use constructor instead.
      */
+    @Deprecated
     static public final QsiProgrammer instance() {
-        if (self == null) {
-            self = new QsiProgrammer();
-        }
-        return self;
+           return null;
     }
-    static volatile private QsiProgrammer self = null;
 
     /**
      * Types implemented here.
@@ -41,8 +35,8 @@ public class QsiProgrammer extends AbstractProgrammer implements QsiListener {
     @Override
     public List<ProgrammingMode> getSupportedModes() {
         List<ProgrammingMode> ret = new ArrayList<ProgrammingMode>();
-        ret.add(DefaultProgrammerManager.PAGEMODE);
-        ret.add(DefaultProgrammerManager.DIRECTBITMODE);
+        ret.add(ProgrammingMode.PAGEMODE);
+        ret.add(ProgrammingMode.DIRECTBITMODE);
         return ret;
     }
 
@@ -57,6 +51,7 @@ public class QsiProgrammer extends AbstractProgrammer implements QsiListener {
     int _cv;	// remember the cv being read/written
 
     // programming interface
+    @Override
     public synchronized void writeCV(int CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
         if (log.isDebugEnabled()) {
             log.debug("writeCV " + CV + " listens " + p);
@@ -75,10 +70,12 @@ public class QsiProgrammer extends AbstractProgrammer implements QsiListener {
         controller().sendQsiMessage(QsiMessage.getWriteCV(CV, val, getMode()), this);
     }
 
-    public synchronized void confirmCV(int CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
+    @Override
+    public synchronized void confirmCV(String CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
         readCV(CV, p);
     }
 
+    @Override
     public synchronized void readCV(int CV, jmri.ProgListener p) throws jmri.ProgrammerException {
         if (log.isDebugEnabled()) {
             log.debug("readCV " + CV + " listens " + p);
@@ -114,10 +111,12 @@ public class QsiProgrammer extends AbstractProgrammer implements QsiListener {
         }
     }
 
+    @Override
     public void message(QsiMessage m) {
         log.error("message received unexpectedly: " + m.toString());
     }
 
+    @Override
     synchronized public void reply(QsiReply m) {
         if (progState == NOTPROGRAMMING) {
             // we get the complete set of replies now, so ignore these
@@ -178,6 +177,7 @@ public class QsiProgrammer extends AbstractProgrammer implements QsiListener {
     /**
      * Internal routine to handle a timeout
      */
+    @Override
     synchronized protected void timeout() {
         if (progState != NOTPROGRAMMING) {
             // we're programming, time to stop
@@ -210,13 +210,11 @@ public class QsiProgrammer extends AbstractProgrammer implements QsiListener {
     protected QsiTrafficController controller() {
         // connect the first time
         if (_controller == null) {
-            _controller = QsiTrafficController.instance();
+            _controller = _memo.getQsiTrafficController();
         }
         return _controller;
     }
 
-    static Logger log = LoggerFactory.getLogger(QsiProgrammer.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(QsiProgrammer.class);
 
 }
-
-/* @(#)QsiProgrammer.java */

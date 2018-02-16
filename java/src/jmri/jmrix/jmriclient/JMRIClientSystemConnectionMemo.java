@@ -1,23 +1,25 @@
-//JMRIClientSystemConnectionMemo.java
 package jmri.jmrix.jmriclient;
 
 import java.util.ResourceBundle;
 import jmri.InstanceManager;
+import jmri.Light;
 import jmri.LightManager;
 import jmri.PowerManager;
+import jmri.Reporter;
 import jmri.ReporterManager;
+import jmri.Sensor;
 import jmri.SensorManager;
+import jmri.Turnout;
 import jmri.TurnoutManager;
 
 /**
  * Lightweight class to denote that a system is active and provide general
- * information
+ * information.
  * <p>
  * Objects of specific subtypes are registered in the instance manager to
  * activate their particular system.
  *
  * @author Paul Bender Copyright (C) 2010
- * @version $Revision$
  */
 public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
 
@@ -30,7 +32,6 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
         // create and register the JMRIClientComponentFactory
         InstanceManager.store(cf = new jmri.jmrix.jmriclient.swing.JMRIClientComponentFactory(this),
                 jmri.jmrix.swing.ComponentFactory.class);
-
     }
 
     public JMRIClientSystemConnectionMemo() {
@@ -41,7 +42,6 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
 
         // create and register the JMRIClientComponentFactory
         InstanceManager.store(cf = new jmri.jmrix.jmriclient.swing.JMRIClientComponentFactory(this), jmri.jmrix.swing.ComponentFactory.class);
-
     }
 
     jmri.jmrix.swing.ComponentFactory cf = null;
@@ -58,6 +58,7 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
         this.jt = jt;
     }
 
+    @Override
     public void dispose() {
         jt = null;
         InstanceManager.deregister(this, JMRIClientSystemConnectionMemo.class);
@@ -74,7 +75,7 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
     public void configureManagers() {
 
         setPowerManager(new jmri.jmrix.jmriclient.JMRIClientPowerManager(this));
-        jmri.InstanceManager.setPowerManager(getPowerManager());
+        jmri.InstanceManager.store(getPowerManager(), jmri.PowerManager.class);
         setTurnoutManager(new jmri.jmrix.jmriclient.JMRIClientTurnoutManager(this));
         jmri.InstanceManager.setTurnoutManager(getTurnoutManager());
         setSensorManager(new jmri.jmrix.jmriclient.JMRIClientSensorManager(this));
@@ -91,16 +92,28 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
     public void requestAllStatus() {
 
         getTurnoutManager().getSystemNameList().forEach((t) -> {
-           ((JMRIClientTurnout)(getTurnoutManager().getTurnout(t))).requestUpdateFromLayout();
+            Turnout turn = getTurnoutManager().getTurnout(t);
+            if (turn != null) {
+               ((JMRIClientTurnout)(turn)).requestUpdateFromLayout();
+            }
         }); 
         getSensorManager().getSystemNameList().forEach((s) -> {
-           ((JMRIClientSensor)(getSensorManager().getSensor(s))).requestUpdateFromLayout();
+            Sensor sen = getSensorManager().getSensor(s);
+            if (sen != null) {
+                ((JMRIClientSensor)(sen)).requestUpdateFromLayout();
+            }
         }); 
         getLightManager().getSystemNameList().forEach((l) -> {
-           ((JMRIClientLight)(getLightManager().getLight(l))).requestUpdateFromLayout();
+            Light o = getLightManager().getLight(l);
+            if (o != null) {
+                ((JMRIClientLight)o).requestUpdateFromLayout();
+            }
         }); 
         getReporterManager().getSystemNameList().forEach((r) -> {
-           ((JMRIClientReporter)(getReporterManager().getReporter(r))).requestUpdateFromLayout();
+            Reporter rep = getReporterManager().getReporter(r);
+            if (rep != null) {
+                ((JMRIClientReporter)(rep)).requestUpdateFromLayout();
+            }
         }); 
     }
 
@@ -186,6 +199,7 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
 
     private String transmitPrefix = null;
 
+    @Override
     protected ResourceBundle getActionModelResourceBundle() {
         //No actions that can be loaded at startup
         return null;
@@ -212,11 +226,11 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
         if (T.equals(jmri.ReporterManager.class)) {
             return (T) getReporterManager();
         }
-        return null; // nothing, by default
+        return super.get(T);
     }
 
     /**
-     * Tells which managers this provides by class
+     * Tells which managers this class provides.
      */
     @Override
     public boolean provides(Class<?> type) {
@@ -238,8 +252,7 @@ public class JMRIClientSystemConnectionMemo extends jmri.jmrix.SystemConnectionM
         if (type.equals(jmri.ReporterManager.class)) {
             return (null != reporterManager);
         }
-        return false; // nothing, by default
+        return super.provides(type);
     }
 
 }
-/* @(#)JMRIClientSystemConnectionMemo.java */

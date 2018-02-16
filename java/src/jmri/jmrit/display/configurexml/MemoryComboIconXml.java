@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
  * Handle configuration for display.MemorySpinnerIcon objects.
  *
  * @author Pete Cressman Copyright (c) 2012
- * @version $Revision: 1 $
  */
 public class MemoryComboIconXml extends PositionableLabelXml {
 
@@ -24,29 +23,30 @@ public class MemoryComboIconXml extends PositionableLabelXml {
     /**
      * Default implementation for storing the contents of a MemorySpinnerIcon
      *
-     * @param o Object to store, of type MemorySpinnerIcon
+     * @param obj Object to store, of type MemorySpinnerIcon
      * @return Element containing the complete info
      */
-    public Element store(Object o) {
+    @Override
+    public Element store(Object obj) {
 
-        MemoryComboIcon p = (MemoryComboIcon) o;
+        MemoryComboIcon memoryIcon = (MemoryComboIcon) obj;
 
         Element element = new Element("memoryComboIcon");
 
         Element elem = new Element("itemList");
-        DefaultComboBoxModel model = p.getComboModel();
+        DefaultComboBoxModel<String> model = memoryIcon.getComboModel();
         for (int i = 0; i < model.getSize(); i++) {
             Element e = new Element("item");
             e.setAttribute("index", "" + i);
-            e.addContent((String) model.getElementAt(i));
+            e.addContent(model.getElementAt(i));
             elem.addContent(e);
         }
         element.addContent(elem);
 
         // include attributes
-        element.setAttribute("memory", p.getNamedMemory().getName());
-        storeCommonAttributes(p, element);
-        storeTextInfo(p, element);
+        element.setAttribute("memory", memoryIcon.getNamedMemory().getName());
+        storeCommonAttributes(memoryIcon, element);
+        storeTextInfo(memoryIcon, element);
 
         element.setAttribute("class", "jmri.jmrit.display.configurexml.MemoryComboIconXml");
         return element;
@@ -59,6 +59,7 @@ public class MemoryComboIconXml extends PositionableLabelXml {
      * @param element Top level Element to unpack.
      * @param o       an Editor as an Object
      */
+    @Override
     public void load(Element element, Object o) {
         // create the objects
         Editor p = (Editor) o;
@@ -69,14 +70,15 @@ public class MemoryComboIconXml extends PositionableLabelXml {
         for (int i = 0; i < list.size(); i++) {
             Element e = list.get(i);
             String item = e.getText();
-//            int idx = 0;
-//            try {
-//                idx = e.getAttribute("index").getIntValue();
-//            } catch ( org.jdom2.DataConversionException ex) {
-//                log.error("failed to convert ComboBoxIcon index attribute");
-//                idx = i;
-//            }
-            items[i] = item;
+            try {
+                int idx = e.getAttribute("index").getIntValue();
+                items[idx] = item;
+            } catch ( org.jdom2.DataConversionException ex) {
+                log.error("failed to convert ComboBoxIcon index attribute");
+                if (items[i]==null) {
+                    items[i] = item;                    
+                }
+            }
         }
 
         MemoryComboIcon l = new MemoryComboIcon(p, items);
@@ -107,5 +109,5 @@ public class MemoryComboIconXml extends PositionableLabelXml {
         loadCommonAttributes(l, Editor.MEMORIES, element);
     }
 
-    static Logger log = LoggerFactory.getLogger(MemoryComboIconXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(MemoryComboIconXml.class);
 }

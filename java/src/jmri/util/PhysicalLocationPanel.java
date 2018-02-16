@@ -13,35 +13,26 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/*
+/**
+ * Provides a Swing component to show and/or edit a PhysicalLocation
  * <hr>
  * This file is part of JMRI.
  * <P>
- * JMRI is free software; you can redistribute it and/or modify it under 
- * the terms of version 2 of the GNU General Public License as published 
+ * JMRI is free software; you can redistribute it and/or modify it under
+ * the terms of version 2 of the GNU General Public License as published
  * by the Free Software Foundation. See the "COPYING" file for a copy
  * of this license.
  * <P>
- * JMRI is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License 
+ * JMRI is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  * <P>
  *
  * @author			Mark Underwood Copyright (C) 2011
- * @version			$Revision$
- */
-/**
- * PhysicalLocationPanel
- *
- * Provides a Swing component to show and/or edit a PhysicalLocation
  */
 public class PhysicalLocationPanel extends JPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5045462821415921427L;
     TitledBorder tb;
     JSpinner xs, ys, zs;
     SpinnerNumberModel spinnerModel;
@@ -69,6 +60,8 @@ public class PhysicalLocationPanel extends JPanel {
         initComponents(title);
     }
 
+    // FIXME: Why does the if statement in this method include a direct false?
+    @SuppressWarnings("unused")
     private GridBagConstraints setConstraints(int x, int y, boolean fill) {
         GridBagConstraints gbc1 = new GridBagConstraints();
         gbc1.insets = new Insets(2, 2, 2, 2);
@@ -79,9 +72,6 @@ public class PhysicalLocationPanel extends JPanel {
         gbc1.weighty = 100.0;
         gbc1.gridwidth = 1;
         gbc1.anchor = GridBagConstraints.LINE_START;
-        if (fill && false) {
-            gbc1.fill = GridBagConstraints.HORIZONTAL;
-        }
         return (gbc1);
     }
 
@@ -166,6 +156,6 @@ public class PhysicalLocationPanel extends JPanel {
 
     }
 
-    private static final Logger log = LoggerFactory.getLogger(PhysicalLocationPanel.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(PhysicalLocationPanel.class);
 
 }

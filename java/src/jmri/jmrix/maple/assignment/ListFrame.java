@@ -1,4 +1,3 @@
-// ListFrame.java
 package jmri.jmrix.maple.assignment;
 
 import java.awt.BorderLayout;
@@ -25,10 +24,10 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import jmri.jmrix.maple.InputBits;
+import jmri.jmrix.maple.MapleSystemConnectionMemo;
 import jmri.jmrix.maple.OutputBits;
 import jmri.jmrix.maple.SerialAddress;
 import jmri.jmrix.maple.SerialNode;
-import jmri.jmrix.maple.SerialTrafficController;
 import jmri.util.davidflanagan.HardcopyWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,15 +35,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Frame for running assignment list.
  *
- * @author	Dave Duchamp Copyright (C) 2006
- * @version	$Revision$
+ * @author Dave Duchamp Copyright (C) 2006
  */
 public class ListFrame extends jmri.util.JmriJFrame {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3796415081741573877L;
 
     ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.maple.assignment.ListBundle");
 
@@ -84,12 +77,19 @@ public class ListFrame extends jmri.util.JmriJFrame {
 
     ListFrame curFrame;
 
-    public ListFrame() {
+    private MapleSystemConnectionMemo _memo = null;
+
+    public ListFrame(MapleSystemConnectionMemo memo) {
         super();
         curFrame = this;
+        _memo = memo;
     }
 
-    public void initComponents() throws Exception {
+    /** 
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents() {
 
         // set the frame's initial state
         setTitle(rb.getString("WindowTitle"));
@@ -102,11 +102,13 @@ public class ListFrame extends jmri.util.JmriJFrame {
         nodeSelBox.setEditable(false);
         if (numConfigNodes > 0) {
             nodeSelBox.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent event) {
                     displayNodeInfo((String) nodeSelBox.getSelectedItem());
                 }
             });
             inputBits.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent event) {
                     if (inputSelected == false) {
                         inputSelected = true;
@@ -115,6 +117,7 @@ public class ListFrame extends jmri.util.JmriJFrame {
                 }
             });
             outputBits.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent event) {
                     if (inputSelected == true) {
                         inputSelected = false;
@@ -190,6 +193,7 @@ public class ListFrame extends jmri.util.JmriJFrame {
         printButton.setToolTipText(rb.getString("PrintButtonTip"));
         if (numConfigNodes > 0) {
             printButton.addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     printButtonActionPerformed(e);
                 }
@@ -221,7 +225,7 @@ public class ListFrame extends jmri.util.JmriJFrame {
             configNodes[i] = null;
         }
         // get all configured nodes
-        SerialNode node = (SerialNode) SerialTrafficController.instance().getNode(0);
+        SerialNode node = (SerialNode) _memo.getTrafficController().getNode(0);
         int index = 1;
         while (node != null) {
             configNodes[numConfigNodes] = node;
@@ -235,7 +239,7 @@ public class ListFrame extends jmri.util.JmriJFrame {
             }
             numConfigNodes++;
             // go to next node
-            node = (SerialNode) SerialTrafficController.instance().getNode(index);
+            node = (SerialNode) _memo.getTrafficController().getNode(index);
             index++;
         }
     }
@@ -317,34 +321,54 @@ public class ListFrame extends jmri.util.JmriJFrame {
      */
     public class AssignmentTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = -1104519212252849474L;
         private String free = rb.getString("AssignmentFree");
         private int curRow = -1;
         private String curRowSysName = "";
 
+        /** 
+         * {@inheritDoc}
+         */
+        @Override
         public String getColumnName(int c) {
             return assignmentTableColumnNames[c];
         }
 
+        /** 
+         * {@inheritDoc}
+         */
+        @Override
         public Class<?> getColumnClass(int c) {
             return String.class;
         }
 
+        /** 
+         * {@inheritDoc}
+         */
+        @Override
         public boolean isCellEditable(int r, int c) {
             return false;
         }
 
+        /** 
+         * {@inheritDoc}
+         */
+        @Override
         public int getColumnCount() {
             return 4;
         }
 
+        /** 
+         * {@inheritDoc}
+         */
+        @Override
         public int getRowCount() {
             return numBits;
         }
 
+        /** 
+         * {@inheritDoc}
+         */
+        @Override
         public Object getValueAt(int r, int c) {
             if (c == 0) {
                 return Integer.toString(r + 1);
@@ -358,9 +382,9 @@ public class ListFrame extends jmri.util.JmriJFrame {
                 String sName = null;
                 if (curRow != r) {
                     if (inputSelected) {
-                        sName = SerialAddress.isInputBitFree((r + 1));
+                        sName = SerialAddress.isInputBitFree((r + 1), _memo.getSystemPrefix());
                     } else {
-                        sName = SerialAddress.isOutputBitFree((r + 1));
+                        sName = SerialAddress.isOutputBitFree((r + 1), _memo.getSystemPrefix());
                     }
                     curRow = r;
                     curRowSysName = sName;
@@ -376,9 +400,9 @@ public class ListFrame extends jmri.util.JmriJFrame {
                 String sName = null;
                 if (curRow != r) {
                     if (inputSelected) {
-                        sName = SerialAddress.isInputBitFree((r + 1));
+                        sName = SerialAddress.isInputBitFree((r + 1), _memo.getSystemPrefix());
                     } else {
-                        sName = SerialAddress.isOutputBitFree((r + 1));
+                        sName = SerialAddress.isOutputBitFree((r + 1), _memo.getSystemPrefix());
                     }
                     curRow = r;
                     curRowSysName = sName;
@@ -388,12 +412,13 @@ public class ListFrame extends jmri.util.JmriJFrame {
                 if (sName == null) {
                     return ("");
                 } else {
-                    return (SerialAddress.getUserNameFromSystemName(sName));
+                    return (SerialAddress.getUserNameFromSystemName(sName, _memo.getSystemPrefix()));
                 }
             }
             return "";
         }
 
+        @Override
         public void setValueAt(Object type, int r, int c) {
             // nothing is stored here
         }
@@ -468,18 +493,15 @@ public class ListFrame extends jmri.util.JmriJFrame {
             w.close();
         }
 
-        @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION")
-        // Only used occasionally, so inefficient String processing not really a problem
-        // though it would be good to fix it if you're working in this area
         protected void printColumns(HardcopyWriter w, String columnStrings[], int columnSize[]) {
             String columnString = "";
-            String lineString = "";
-            String[] spaces = new String[4];
+            StringBuilder lineString = new StringBuilder("");
+            StringBuilder[] spaces = new StringBuilder[4];
             // create base strings the width of each of the columns
             for (int k = 0; k < 4; k++) {
-                spaces[k] = "";
+                spaces[k] = new StringBuilder("");
                 for (int i = 0; i < columnSize[k]; i++) {
-                    spaces[k] = spaces[k] + " ";
+                    spaces[k].append(" ");
                 }
             }
             // loop through each column
@@ -516,10 +538,10 @@ public class ListFrame extends jmri.util.JmriJFrame {
                         columnString = columnStrings[i] + spaces[i].substring(columnStrings[i].length());
                         columnStrings[i] = "";
                     }
-                    lineString = lineString + columnString + " ";
+                    lineString.append(columnString).append(" ");
                 }
                 try {
-                    w.write(lineString);
+                    w.write(lineString.toString());
                     //write vertical dividing lines
                     int iLine = w.getCurrentLineNumber();
                     for (int i = 0, k = 0; i < w.getCharactersPerLine(); k++) {
@@ -530,22 +552,19 @@ public class ListFrame extends jmri.util.JmriJFrame {
                             i = w.getCharactersPerLine();
                         }
                     }
-                    lineString = "\n";
-                    w.write(lineString);
-                    lineString = "";
+                    w.write("\n"); // NOI18N
+                    lineString = new StringBuilder("");
                 } catch (IOException e) {
-                    log.warn("error during printing: " + e);
+                    log.warn("error during printing:", e);
                 }
             }
         }
     }
-    private String[] assignmentTableColumnNames = {rb.getString("HeadingBit"),
+    private final String[] assignmentTableColumnNames = {rb.getString("HeadingBit"),
         rb.getString("HeadingAddress"),
         rb.getString("HeadingSystemName"),
         rb.getString("HeadingUserName")};
 
-    static Logger log = LoggerFactory.getLogger(ListFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ListFrame.class);
 
 }
-
-/* @(#)ListFrame.java */

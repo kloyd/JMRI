@@ -1,4 +1,3 @@
-// AffineEntryPanel.java
 package jmri.jmrix.rps.swing;
 
 import java.awt.GridLayout;
@@ -10,21 +9,14 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Panel for entry and modifiation of an Affine Transform
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
  */
 public class AffineEntryPanel extends javax.swing.JPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1282006269847211098L;
     JTextField m00 = new JTextField(8);
     JTextField m01 = new JTextField(8);
     JTextField m02 = new JTextField(8);
@@ -56,6 +48,7 @@ public class AffineEntryPanel extends javax.swing.JPanel {
 
         JButton b = new JButton("Set");
         b.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 update();
             }
@@ -103,6 +96,4 @@ public class AffineEntryPanel extends javax.swing.JPanel {
         update();
     }
     AffineTransform t = new AffineTransform();
-
-    static Logger log = LoggerFactory.getLogger(AffineEntryPanel.class.getName());
 }

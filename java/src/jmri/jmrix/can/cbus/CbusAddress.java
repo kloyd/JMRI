@@ -1,12 +1,9 @@
-// CbusAddress.java
 package jmri.jmrix.can.cbus;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jmri.jmrix.can.CanMessage;
 import jmri.jmrix.can.CanReply;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utilities for handling CBUS addresses.
@@ -23,10 +20,8 @@ import org.slf4j.LoggerFactory;
  * </dl>
  * If ddd &lt; 65536 then the CBUS address is taken to represent a short event.
  *
- * <P>
- * @author	Bob Jacobsen Copyright (C) 2008
- * @author	Andrew Crosland Copyright (C) 2011
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2008
+ * @author Andrew Crosland Copyright (C) 2011
  */
 public class CbusAddress {
 
@@ -130,13 +125,13 @@ public class CbusAddress {
     }
 
     /**
-     * Two addresses are equal if they result in the same numeric contents
+     * Two addresses are equal if they result in the same numeric contents.
      */
+    @Override
     public boolean equals(Object r) {
         if (r == null) {
             return false;
         }
-//        if (! (r.getClass().equals(CbusAddress.class))) return false;
         if (!(r.getClass().equals(this.getClass()))) {
             return false;
         }
@@ -152,6 +147,7 @@ public class CbusAddress {
         return true;
     }
 
+    @Override
     public int hashCode() {
         int ret = 0;
         for (int i = 0; i < this.aFrame.length; i++) {
@@ -259,6 +255,7 @@ public class CbusAddress {
         return aFrame;
     }
 
+    @Override
     public String toString() {
         return aString;
     }
@@ -271,9 +268,4 @@ public class CbusAddress {
         return retval;
     }
 
-    static Logger log = LoggerFactory.getLogger(CbusAddress.class.getName());
-
 }
-
-
-/* @(#)CbusAddress.java */

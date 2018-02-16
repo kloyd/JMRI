@@ -1,5 +1,6 @@
 package jmri.jmrit.operations.setup;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
 import org.jdom2.Element;
@@ -13,12 +14,12 @@ import org.slf4j.LoggerFactory;
  * @author Daniel Boudreau Copyright (C) 2008
  *
  */
-@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "MS_CANNOT_BE_FINAL")
+@SuppressFBWarnings(value = "MS_CANNOT_BE_FINAL")
 public class Control {
 
     // debug flags
-    public static final boolean showProperty = false;
-    public static final boolean showInstance = false;
+    public static final boolean SHOW_PROPERTY = false;
+    public static final boolean SHOW_INSTANCE = false;
 
     // Default panel width
     public static final int panelWidth1025 = 1025;
@@ -38,7 +39,7 @@ public class Control {
     public static final int panelHeight100 = 100;
 
     /*
-     static Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();	
+     static Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); 
      // Maximum panel height
      public static final int panelMaxHeight = screenSize.height;
      */
@@ -47,13 +48,13 @@ public class Control {
     public static final int panelY = 0;
 
     // Train build parameters
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL") // allow access for testing
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL") // allow access for testing
     public static boolean fullTrainOnly = false;
 
-    // Car and Engine attribute maximum string length	
+    // Car and Engine attribute maximum string length 
     public static int max_len_string_attibute = 12;
 
-    // Car and Engine number maximum string length	
+    // Car and Engine number maximum string length 
     public static int max_len_string_road_number = 10;
     
     // Car and Engine number maximum string length when printing  
@@ -82,6 +83,9 @@ public class Control {
 
     // Route name maximum string length
     public static int max_len_string_route_name = 25;
+    
+    // Automation name maximum string length
+    public static int max_len_string_automation_name = 25;
 
     // Backward compatibility for xml saves (pre 2013 releases)
     // backward compatibility to false in 2014
@@ -89,6 +93,8 @@ public class Control {
     
     public static int reportFontSize = 10;
     public static String reportFontName = ""; // use default
+    
+    public static int excelWaitTime = 120; // in seconds
 
     // must synchronize changes with operation-config.dtd
     public static Element store() {
@@ -122,10 +128,16 @@ public class Control {
         length.setAttribute(Xml.LENGTH, Integer.toString(max_len_string_train_name));
         values.addContent(length = new Element(Xml.MAX_LEN_STRING_ROUTE_NAME));
         length.setAttribute(Xml.LENGTH, Integer.toString(max_len_string_route_name));
+        values.addContent(length = new Element(Xml.MAX_LEN_STRING_AUTOMATION_NAME));
+        length.setAttribute(Xml.LENGTH, Integer.toString(max_len_string_automation_name));
         // reports
         e.addContent(values = new Element(Xml.REPORTS));
         values.setAttribute(Xml.FONT_SIZE, Integer.toString(reportFontSize));
         values.setAttribute(Xml.FONT_NAME, reportFontName);
+        // actions
+        e.addContent(values = new Element(Xml.ACTIONS));
+        values.setAttribute(Xml.EXCEL_WAIT_TIME, Integer.toString(excelWaitTime));
+        
         return e;
     }
 
@@ -188,6 +200,10 @@ public class Control {
                     && (length = maximumStringLengths.getChild(Xml.MAX_LEN_STRING_ROUTE_NAME).getAttribute(Xml.LENGTH)) != null) {
                 max_len_string_route_name = Integer.parseInt(length.getValue());
             }
+            if ((maximumStringLengths.getChild(Xml.MAX_LEN_STRING_AUTOMATION_NAME) != null)
+                    && (length = maximumStringLengths.getChild(Xml.MAX_LEN_STRING_AUTOMATION_NAME).getAttribute(Xml.LENGTH)) != null) {
+                max_len_string_automation_name = Integer.parseInt(length.getValue());
+            }
         }
         Element eReports = eControl.getChild(Xml.REPORTS);
         if (eReports != null) {
@@ -202,8 +218,19 @@ public class Control {
             if ((a = eReports.getAttribute(Xml.FONT_NAME)) != null) {
                 reportFontName = a.getValue();
             }
+        }   
+        Element eActions = eControl.getChild(Xml.ACTIONS);
+        if (eActions != null) {
+            Attribute a;
+            if ((a = eActions.getAttribute(Xml.EXCEL_WAIT_TIME)) != null) {
+                try {
+                    excelWaitTime = a.getIntValue();
+                } catch (DataConversionException e1) {
+                    log.error("Excel wait time ({}) isn't a number", a.getValue());
+                }
+            }
         }
     }
     
-    static Logger log = LoggerFactory.getLogger(Control.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Control.class);
 }

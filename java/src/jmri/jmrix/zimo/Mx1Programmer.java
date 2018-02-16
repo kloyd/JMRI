@@ -1,14 +1,9 @@
-/**
- * Mx1Programmer.java
- */
- // Convert the jmri.Programmer interface into commands for the MX-1
 package jmri.jmrix.zimo;
 
 import java.util.ArrayList;
 import java.util.List;
 import jmri.ProgrammingMode;
 import jmri.jmrix.AbstractProgrammer;
-import jmri.managers.DefaultProgrammerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +20,6 @@ import org.slf4j.LoggerFactory;
  * </UL>
  *
  * @author Bob Jacobsen Copyright (c) 2002
- * @version $Revision$
  *
  * Adapted by Sip Bosch for use with zimo Mx-1
  *
@@ -36,6 +30,7 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
 
     protected Mx1Programmer(Mx1TrafficController _tc) {
         this.tc = _tc;
+        SHORT_TIMEOUT = 4000; // length default timeout
         // connect to listen
         log.info("" + this.tc);
         if(this.tc!=null)
@@ -48,7 +43,7 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
     @Override
     public List<ProgrammingMode> getSupportedModes() {
         List<ProgrammingMode> ret = new ArrayList<ProgrammingMode>();
-        ret.add(DefaultProgrammerManager.PAGEMODE);
+        ret.add(ProgrammingMode.PAGEMODE);
         return ret;
     }
 
@@ -60,9 +55,9 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
     boolean _progRead = false;
     int _val;	// remember the value being read/written for confirmative reply
     int _cv;	// remember the cv being read/written
-    protected int SHORT_TIMEOUT = 4000;
 
     // programming interface
+    @Override
     synchronized public void writeCV(int CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
         if (log.isDebugEnabled()) {
             log.debug("writeCV " + CV + " listens " + p);
@@ -76,7 +71,7 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
         // start the error timer
         startShortTimer();
         // format and send message to go to program mode
-        if (getMode() == DefaultProgrammerManager.PAGEMODE) {
+        if (getMode() == ProgrammingMode.PAGEMODE) {
             if (tc.getProtocol() == Mx1Packetizer.ASCII) {
                 if (firstTime) {
                     tc.sendMx1Message(tc.getCommandStation().resetModeMsg(), this);
@@ -89,10 +84,12 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
         }
     }
 
-    public void confirmCV(int CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
+    @Override
+    public void confirmCV(String CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
         readCV(CV, p);
     }
 
+    @Override
     synchronized public void readCV(int CV, jmri.ProgListener p) throws jmri.ProgrammerException {
         if (log.isDebugEnabled()) {
             log.debug("readCV " + CV + " listens " + p);
@@ -105,7 +102,7 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
         // start the error timer
         startShortTimer();
         // format and send message to go to program mode
-        if (getMode() == DefaultProgrammerManager.PAGEMODE) {
+        if (getMode() == ProgrammingMode.PAGEMODE) {
             if (tc.getProtocol() == Mx1Packetizer.ASCII) {
                 if (firstTime) {
                     tc.sendMx1Message(tc.getCommandStation().resetModeMsg(), this);
@@ -134,6 +131,7 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
         }
     }
 
+    @Override
     synchronized public void message(Mx1Message m) {
         if (progState == NOTPROGRAMMING) {
             // we get the complete set of replies now, so ignore these
@@ -192,6 +190,7 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
     /**
      * Internal routine to handle a timeout
      */
+    @Override
     synchronized protected void timeout() {
         if (progState != NOTPROGRAMMING) {
             // we're programming, time to stop
@@ -259,9 +258,6 @@ public class Mx1Programmer extends AbstractProgrammer implements Mx1Listener {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(Mx1Programmer.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Mx1Programmer.class);
 
 }
-
-
-/* @(#)Mx1Programmer.java */

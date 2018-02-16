@@ -15,8 +15,8 @@ package jmri.jmrit.vsdecoder;
  * for more details.
  * <P>
  *
- * @author			Mark Underwood Copyright (C) 2011
- * @version			$Revision$
+ * @author   Mark Underwood Copyright (C) 2011
+ * 
  */
 // JMRI and Java stuff
 import java.awt.event.ActionEvent;
@@ -94,6 +94,7 @@ class ConfigurableSound extends VSDSound {
         return (is_playing);
     }
 
+    @Override
     public void play() {
         if (use_short_sound) {
             short_sound.play();
@@ -102,6 +103,7 @@ class ConfigurableSound extends VSDSound {
             if (use_start_sound) {
                 t = newTimer(start_sound.getLengthAsInt(), false,
                         new ActionListener() {
+                    @Override
                             public void actionPerformed(ActionEvent e) {
                                 handleTimerPop(e);
                             }
@@ -118,12 +120,14 @@ class ConfigurableSound extends VSDSound {
         }
     }
 
+    @Override
     public void loop() {
         if (use_start_sound) {
             start_sound.setLooped(false);
             start_sound.play();
             t = newTimer(start_sound.getLengthAsInt() - 100, false,
                     new ActionListener() {
+                @Override
                         public void actionPerformed(ActionEvent e) {
                             handleTimerPop(e);
                         }
@@ -139,7 +143,7 @@ class ConfigurableSound extends VSDSound {
 
     // Catch the timer pop after the start sound is played and trigger the (looped) sustain sound.
     protected void handleTimerPop(ActionEvent e) {
-        log.info("Received timer pop after start sound played.");
+        log.debug("Received timer pop after start sound played.");
         //TODO: Need to validate that this is the timer pop
         if (use_mid_sound) {
             mid_sound.setLooped(true);
@@ -148,8 +152,9 @@ class ConfigurableSound extends VSDSound {
         t.stop();
     }
 
+    @Override
     public void stop() {
-        log.warn("Stopping");
+        log.debug("Stopping");
         // make sure the start sound is killed
         if (use_start_sound) {
             start_sound.stop();
@@ -179,14 +184,17 @@ class ConfigurableSound extends VSDSound {
         is_playing = false;
     }
 
+    @Override
     public void fadeIn() {
         this.play();
     }
 
+    @Override
     public void fadeOut() {
         this.stop();
     }
 
+    @Override
     public void shutdown() {
         if (use_start_sound) {
             start_sound.stop();
@@ -291,7 +299,6 @@ class ConfigurableSound extends VSDSound {
     }
 
     public void setXml(Element e, VSDFile vf) {
-        this.setName(this.getName() + e.getAttributeValue("name"));
         log.debug("ConfigurableSound: " + e.getAttributeValue("name"));
         //log.debug("  start file: " + e.getChildText("start-file"));
         if (((start_file = e.getChildText("start-file")) != null) && !(start_file.equals(""))) {
@@ -346,6 +353,6 @@ class ConfigurableSound extends VSDSound {
 
     }
 
-    static Logger log = LoggerFactory.getLogger(ConfigurableSound.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ConfigurableSound.class);
 
 }

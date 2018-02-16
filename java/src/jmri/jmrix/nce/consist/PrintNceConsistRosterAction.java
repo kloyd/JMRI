@@ -1,4 +1,3 @@
-// PrintNceConsistRosterAction.java
 package jmri.jmrix.nce.consist;
 
 import java.awt.Frame;
@@ -18,17 +17,11 @@ import org.slf4j.LoggerFactory;
  * This uses the older style printing, for compatibility with Java 1.1.8 in
  * Macintosh MRJ
  *
- * @author	Bob Jacobsen Copyright (C) 2003
+ * @author Bob Jacobsen Copyright (C) 2003
  * @author Dennis Miller Copyright (C) 2005
  * @author Daniel Boudreau Copyright (C) 2008
- * @version $Revision$
  */
 public class PrintNceConsistRosterAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2634928231435374292L;
 
     public PrintNceConsistRosterAction(String actionName, Frame frame, boolean preview) {
         super(actionName);
@@ -45,6 +38,7 @@ public class PrintNceConsistRosterAction extends AbstractAction {
      */
     boolean isPreview;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         // obtain a HardcopyWriter to do this
@@ -74,5 +68,5 @@ public class PrintNceConsistRosterAction extends AbstractAction {
         writer.close();
     }
 
-    static Logger log = LoggerFactory.getLogger(PrintNceConsistRosterAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PrintNceConsistRosterAction.class);
 }

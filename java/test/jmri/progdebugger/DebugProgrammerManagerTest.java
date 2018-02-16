@@ -1,20 +1,17 @@
-// DebugProgrammerManagerTest.java
 package jmri.progdebugger;
 
+import jmri.GlobalProgrammerManager;
 import jmri.InstanceManager;
 import jmri.Programmer;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * Test the DebugProgrammerManager class.
  *
  * @author	Bob Jacobsen Copyright 2002
- * @version $Revision$
  */
 public class DebugProgrammerManagerTest extends TestCase {
 
@@ -22,9 +19,9 @@ public class DebugProgrammerManagerTest extends TestCase {
      * Service mode request returns a programmer
      */
     public void testServiceModeRequest() {
-        InstanceManager.setProgrammerManager(
+        InstanceManager.setDefault(GlobalProgrammerManager.class,
                 new DebugProgrammerManager());
-        Programmer p = InstanceManager.programmerManagerInstance()
+        Programmer p = InstanceManager.getDefault(jmri.GlobalProgrammerManager.class)
                 .getGlobalProgrammer();
         Assert.assertTrue("got service mode", p != null);
         Assert.assertTrue("correct type", (p instanceof ProgDebugger));
@@ -34,22 +31,22 @@ public class DebugProgrammerManagerTest extends TestCase {
      * Any service mode request gets the same object
      */
     public void testServiceModeUnique() {
-        InstanceManager.setProgrammerManager(
+        InstanceManager.setDefault(GlobalProgrammerManager.class,
                 new DebugProgrammerManager());
-        Programmer p = InstanceManager.programmerManagerInstance()
+        Programmer p = InstanceManager.getDefault(jmri.GlobalProgrammerManager.class)
                 .getGlobalProgrammer();
         Assert.assertTrue("same service mode programmer",
-                InstanceManager.programmerManagerInstance()
-                .getGlobalProgrammer() == p);
+                InstanceManager.getDefault(jmri.GlobalProgrammerManager.class)
+                        .getGlobalProgrammer() == p);
     }
 
     /**
      * ops mode request returns a programmer
      */
     public void testOpsModeRequest() {
-        InstanceManager.setProgrammerManager(
+        InstanceManager.setAddressedProgrammerManager(
                 new DebugProgrammerManager());
-        Programmer p = InstanceManager.programmerManagerInstance()
+        Programmer p = InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
                 .getAddressedProgrammer(true, 777);
         Assert.assertTrue("got ops mode", p != null);
         Assert.assertTrue("correct type", (p instanceof ProgDebugger));
@@ -59,29 +56,29 @@ public class DebugProgrammerManagerTest extends TestCase {
      * Any identical ops mode request gets the same object
      */
     public void testOpsModeUnique() {
-        InstanceManager.setProgrammerManager(
+        InstanceManager.setAddressedProgrammerManager(
                 new DebugProgrammerManager());
-        Programmer p = InstanceManager.programmerManagerInstance()
+        Programmer p = InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
                 .getAddressedProgrammer(true, 777);
         Assert.assertTrue("same ops mode programmer",
-                InstanceManager.programmerManagerInstance()
-                .getAddressedProgrammer(true, 777) == p);
+                InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
+                        .getAddressedProgrammer(true, 777) == p);
     }
 
     /**
      * Any identical ops mode request gets the same object
      */
     public void testOpsModeDistinct() {
-        InstanceManager.setProgrammerManager(
+        InstanceManager.setAddressedProgrammerManager(
                 new DebugProgrammerManager());
-        Programmer p = InstanceManager.programmerManagerInstance()
+        Programmer p = InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
                 .getAddressedProgrammer(true, 777);
         Assert.assertTrue("different ops mode programmer",
-                InstanceManager.programmerManagerInstance()
-                .getAddressedProgrammer(true, 888) != p);
+                InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
+                        .getAddressedProgrammer(true, 888) != p);
         Assert.assertTrue("same ops mode programmer",
-                InstanceManager.programmerManagerInstance()
-                .getAddressedProgrammer(true, 777) == p);
+                InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
+                        .getAddressedProgrammer(true, 777) == p);
     }
 
     // from here down is testing infrastructure
@@ -92,7 +89,7 @@ public class DebugProgrammerManagerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {DebugProgrammerManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -101,7 +98,5 @@ public class DebugProgrammerManagerTest extends TestCase {
         TestSuite suite = new TestSuite(DebugProgrammerManagerTest.class);
         return suite;
     }
-
-    static Logger log = LoggerFactory.getLogger(DebugProgrammerManagerTest.class.getName());
 
 }

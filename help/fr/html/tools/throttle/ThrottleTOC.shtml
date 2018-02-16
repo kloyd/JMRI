@@ -1,11 +1,16 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <!-- $Id$ -->
-<!-- Translated by Herv&#233; Blorec 2013-10-04 -->
+<!-- Translated by Herv&#233; Blorec 2017-01-07 -->
 <html lang="fr">
 <head>
-  <title>Throttle: Table of Contents </title>
-  <meta name="keywords" content="JMRI decoderpro dcc nmra throttle throttlepro">
-  <meta name="Description" content="Throttle documentation for JMRI project">
+  <meta name="generator" content=
+  "HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 15.17), see www.w3.org">
+
+  <title>Throttle: Table of Contents</title>
+  <meta name="keywords" content=
+  "JMRI decoderpro dcc nmra throttle throttlepro">
+  <meta name="Description" content=
+  "Throttle documentation for JMRI project">
   <meta name="Keywords" content="JMRI">
   <meta name="Author" content="Paul Fraker (paul@frakers.com)">
   <meta name="Language" content="EN">
@@ -17,12 +22,14 @@
   <!-- delete the following 2 Defines if you want to use the default JMRI logo -->
   <!-- or change them to reflect your alternative logo -->
   <!-- Style -->
-  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
-  <link rel="stylesheet" type="text/css" href="/css/default.css" media="screen">
-  <link rel="stylesheet" type="text/css" href="/css/print.css" media="print">
+  <meta http-equiv="content-type" content=
+  "text/html; charset=us-ascii">
+  <link rel="stylesheet" type="text/css" href="/css/default.css"
+  media="screen">
+  <link rel="stylesheet" type="text/css" href="/css/print.css"
+  media="print">
   <link rel="icon" href="/images/jmri.ico" type="image/png">
-  <link rel="home" title="Home" href="/">
-  <!-- /Style -->
+  <link rel="home" title="Home" href="/"><!-- /Style -->
 </head>
 
 <body>
@@ -30,21 +37,20 @@
 <!--#include virtual="Sidebar" -->
 
 <div id="mainContent">
-<h1 style="color:#ff0000">Mise &#224; Jour de la version documentaire R&#233;gulateur</h1>
+<h1> Documentation R&#233;gulateur</h1>
 
-<p>Notez que cette documentation a &#233;t&#233; mise &#224; jour, se r&#233;f&#233;rer au lien ci-dessous:</p>
+<p>Notez que cette documentation a &#233;t&#233; mise &#224; jour. Version actuelle:</p>
 <ul>
-  <li>Le <a href="ToolsMenuThrottleEntry.shtml">Menu R&#233;gulateur dans JMRI</a></li>
-  <li>La <a href="BasicThrottleWindow.shtml">Fen&#234;tre R&#233;gulateur elle-m&#234;me</a></li>
-  <li>La <a href="ThrottleWindowMenus.shtml">Menu Fen&#234;tre R&#233;gulateur</a></li>
-  <li>La <a href="ThrottleToolBar.shtml">Fen&#234;tre barre d'outils R&#233;gulateur</a></li>
-  <li>La <a href="AdvancedThrottleControl.shtml">Fen&#234;tre Commandes R&#233;gulateur</a></li>
-  <li>La <a href="ThrottlesListWindow.shtml">Fenêtre Liste Régulateur</a></li>
-  <li>Le <a href="ThrottlesPreferencesPane.shtml">Volet des pr&#233;f&#233;rences R&#233;gulateur
-  </a></li>
+  <li>Le <a href="ToolsMenuThrottleEntry.shtml">Menu R&#233;gulateur JMRI</a></li>
+  <li>La <a href="BasicThrottleWindow.shtml">R&#233;gulateur</a></li>
+  <li>La <a href="ThrottleWindowMenus.shtml">Menu R&#233;gulateur</a></li>
+  <li>La <a href="ThrottleToolBar.shtml">Barre d'outils Fen&#234;tre R&#233;gulateur</a></li>
+  <li>La <a href="AdvancedThrottleControl.shtml">Commandes Fen&#234;tre R&#233;gulateur</a></li>
+  <li>La <a href="ThrottlesListWindow.shtml">Liste R&#233;gulateur</a></li>
+  <li>Le <a href="ThrottlesPreferencesPane.shtml">Pr&#233;f&#233;rences R&#233;gulateur</a></li>
 </ul>
-
-<h1>Tables des Mati&#232;res (TOC)</h1>
+<hr>
+<h2>r&#233;gulateurs dans JMTI v2.x</h2>
 <dl class="toc">
   <dt><a href="ThrottleMain.shtml"
   title="Introduction and table of contents (this page)">INTRODUCTION</a></dt>
@@ -89,7 +95,7 @@
   <dt>1. <a href="ThrottleChapter2.shtml#AddressPanel"
   title="Assign a Decoder Address to a Throttle Window">Assigner une Adresse D&#233;codeur &#224; une Fen&#234;tre R&#233;gulateur</a></dt>
   <dt>2. <a href="ThrottleChapter2.shtml#ControlPanel"
-  title="Control Panel — Let's Run a Train">Panneau de Commande &#8212; Lan&#231;ons un Train</a></dt>
+  title="Control Panel ï¿½ Let's Run a Train">Panneau de Commande &#8212; Lan&#231;ons un Train</a></dt>
   <dir>
   </dir>
   <dt>a. <a href="ThrottleChapter2.shtml#StandardActions"
@@ -140,13 +146,13 @@
   <dir>
   </dir>
   <dt>2. <a href="ThrottleChapter4.shtml#Merging"
-  title="Merging Throttle Windows">Fuusionner des Fen&#234;tres R&#233;gulateur</a></dt>
+  title="Merging Throttle Windows">Fusionner des Fen&#234;tres R&#233;gulateur</a></dt>
   <dt>C. <a href="ThrottleChapter4.shtml#CloseThrottle"
   title="Closing A Throttle Window">Fermeture d'une Fen&#234;tre R&#233;gulateur</a></dt>
 </dl>
-<br>
-<br>
-<br>
-<!--#include virtual="/Footer" --> </div>
+<!--#include virtual="/Footer" -->
+
+      </div><!-- closes #mainContent-->
+    </div> <!-- closes #mBody-->
 </body>
 </html>

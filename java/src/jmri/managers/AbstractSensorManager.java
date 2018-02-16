@@ -1,4 +1,3 @@
-// AbstractSensorManager.java
 package jmri.managers;
 
 import java.util.Enumeration;
@@ -13,33 +12,36 @@ import org.slf4j.LoggerFactory;
  * Abstract base implementation of the SensorManager interface.
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2003
- * @version	$Revision$
  */
-public abstract class AbstractSensorManager extends AbstractManager implements SensorManager {
+public abstract class AbstractSensorManager extends AbstractManager<Sensor> implements SensorManager {
 
-    /*public AbstractSensorManager(){
-     super(Manager.SENSORS);
-     }*/
+    @Override
     public int getXMLOrder() {
         return Manager.SENSORS;
     }
 
+    @Override
     public char typeLetter() {
         return 'S';
     }
 
+    @Override
     public Sensor provideSensor(String name) {
         Sensor t = getSensor(name);
         if (t != null) {
             return t;
         }
+        log.debug("check \"{}\" get {}", name, isNumber(name));
         if (isNumber(name)) {
             return newSensor(makeSystemName(name), null);
-        } else {
+        } else if (name.length() > 0) {
             return newSensor(name, null);
+        } else {
+            throw new IllegalArgumentException("Name must have non-full length");
         }
     }
 
+    @Override
     public Sensor getSensor(String name) {
         Sensor t = getByUserName(name);
         if (t != null) {
@@ -57,27 +59,33 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
         }
     }
 
+    @Override
+    public Sensor getBeanBySystemName(String key) {
+        return this.getBySystemName(key);
+    }
+    
+    @Override
     public Sensor getBySystemName(String key) {
         if (isNumber(key)) {
             key = makeSystemName(key);
         }
         String name = normalizeSystemName(key);
-        return (Sensor) _tsys.get(name);
+        return _tsys.get(name);
     }
 
-    protected Object getInstanceBySystemName(String systemName) {
+    @Override
+    protected Sensor getInstanceBySystemName(String systemName) {
         return getBySystemName(systemName);
     }
 
+    @Override
     public Sensor getByUserName(String key) {
-        return (Sensor) _tuser.get(key);
+        return _tuser.get(key);
     }
 
-    protected String normalizeSystemName(String sysName) {
-        return sysName;
-    }
-
-    public Sensor newSensor(String sysName, String userName) {
+    @Override
+    public Sensor newSensor(String sysName, String userName) throws IllegalArgumentException {
+        log.debug(" newSensor(\"{}\", \"{}\"", sysName, userName);
         String systemName = normalizeSystemName(sysName);
         if (log.isDebugEnabled()) {
             log.debug("newSensor:"
@@ -87,13 +95,14 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
         if (systemName == null) {
             log.error("SystemName cannot be null. UserName was "
                     + ((userName == null) ? "null" : userName));
-            return null;
+            throw new IllegalArgumentException("systemName null in newSensor");
         }
         // is system name in correct format?
-        if (!systemName.startsWith(getSystemPrefix() + typeLetter())) {
-            log.error("Invalid system name for sensor: " + systemName
+        if (!systemName.startsWith(getSystemPrefix() + typeLetter()) 
+                || !(systemName.length() > (getSystemPrefix() + typeLetter()).length())) {
+            log.debug("Invalid system name for sensor: " + systemName
                     + " needed " + getSystemPrefix() + typeLetter());
-            return null;
+            throw new IllegalArgumentException("systemName \""+systemName+"\" bad format in newSensor");
         }
 
         // return existing if there is one
@@ -129,6 +138,7 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
         return s;
     }
 
+    @Override
     public String getBeanTypeHandled() {
         return Bundle.getMessage("BeanNameSensor");
     }
@@ -149,39 +159,45 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
      * system-specific Sensor Managers where readout of sensor status from the
      * layout is possible.
      */
+    @Override
     public void updateAll() {
     }
 
     /**
      * A method that determines if it is possible to add a range of sensors in
      * numerical order eg 10 to 30, primarily used to enable/disable the add
-     * range box in the add sensor panel
+     * range box in the add sensor panel.
      *
+     * @param systemName configured system connection name
+     * @return false as default, unless overridden by implementations as supported
      */
+    @Override
     public boolean allowMultipleAdditions(String systemName) {
         return false;
     }
 
+    @Override
     public String createSystemName(String curAddress, String prefix) throws JmriException {
         try {
             Integer.parseInt(curAddress);
         } catch (java.lang.NumberFormatException ex) {
-            log.error("Hardware Address passed should be a number", ex);
+            log.warn("Hardware Address passed should be a number, was {}", curAddress);
             throw new JmriException("Hardware Address passed should be a number");
         }
         return prefix + typeLetter() + curAddress;
     }
 
+    @Override
     public String getNextValidAddress(String curAddress, String prefix) {
-        //If the hardware address past does not already exist then this can
-        //be considered the next valid address.
+        // If the hardware address passed does not already exist then this can
+        // be considered the next valid address.
         String tmpSName = "";
 
         try {
             tmpSName = createSystemName(curAddress, prefix);
         } catch (JmriException ex) {
             jmri.InstanceManager.getDefault(jmri.UserPreferencesManager.class).
-                    showErrorMessage("Error", "Unable to convert " + curAddress + " to a valid Hardware Address", "" + ex, "", true, false);
+                    showErrorMessage(Bundle.getMessage("WarningTitle"), "Unable to convert " + curAddress + " to a valid Hardware Address", null, "", true, false);
             return null;
         }
         Sensor s = getBySystemName(tmpSName);
@@ -196,7 +212,7 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
         } catch (NumberFormatException ex) {
             log.error("Unable to convert " + curAddress + " Hardware Address to a number");
             jmri.InstanceManager.getDefault(jmri.UserPreferencesManager.class).
-                    showErrorMessage("Error", "Unable to convert " + curAddress + " to a valid Hardware Address", "" + ex, "", true, false);
+                    showErrorMessage(Bundle.getMessage("WarningTitle"), "Unable to convert " + curAddress + " to a valid Hardware Address", "" + ex, "", true, false);
             return null;
         }
 
@@ -220,14 +236,17 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
     protected long sensorDebounceGoingActive = 0L;
     protected long sensorDebounceGoingInActive = 0L;
 
+    @Override
     public long getDefaultSensorDebounceGoingActive() {
         return sensorDebounceGoingActive;
     }
 
+    @Override
     public long getDefaultSensorDebounceGoingInActive() {
         return sensorDebounceGoingInActive;
     }
 
+    @Override
     public void setDefaultSensorDebounceGoingActive(long timer) {
         if (timer == sensorDebounceGoingActive) {
             return;
@@ -235,13 +254,14 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
         sensorDebounceGoingActive = timer;
         Enumeration<String> en = _tsys.keys();
         while (en.hasMoreElements()) {
-            Sensor sen = (Sensor) _tsys.get(en.nextElement());
-            if (sen.useDefaultTimerSettings()) {
+            Sensor sen = _tsys.get(en.nextElement());
+            if (sen.getUseDefaultTimerSettings()) {
                 sen.setSensorDebounceGoingActiveTimer(timer);
             }
         }
     }
 
+    @Override
     public void setDefaultSensorDebounceGoingInActive(long timer) {
         if (timer == sensorDebounceGoingInActive) {
             return;
@@ -249,14 +269,35 @@ public abstract class AbstractSensorManager extends AbstractManager implements S
         sensorDebounceGoingInActive = timer;
         Enumeration<String> en = _tsys.keys();
         while (en.hasMoreElements()) {
-            Sensor sen = (Sensor) _tsys.get(en.nextElement());
-            if (sen.useDefaultTimerSettings()) {
+            Sensor sen = _tsys.get(en.nextElement());
+            if (sen.getUseDefaultTimerSettings()) {
                 sen.setSensorDebounceGoingInActiveTimer(timer);
             }
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(AbstractSensorManager.class.getName());
-}
+    /**
+     * Do the sensor objects provided by this manager support configuring
+     * an internal pullup or pull down resistor?
+     * <p>
+     * This default implementation always returns false.
+     *
+     * @return true if pull up/pull down configuration is supported.
+     */
+    @Override
+    public boolean isPullResistanceConfigurable(){
+       return false;
+    }
 
-/* @(#)AbstractSensorManager.java */
+    /**
+     * Provide a manager-agnostic tooltip for the Add new item beantable pane.
+     */
+    @Override
+    public String getEntryToolTip() {
+        String entryToolTip = "Enter a number from 1 to 9999"; // Basic number format help
+        return entryToolTip;
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(AbstractSensorManager.class);
+
+}

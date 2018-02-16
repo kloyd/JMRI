@@ -1,4 +1,3 @@
-// CbusSensor.java
 package jmri.jmrix.can.cbus;
 
 import jmri.Sensor;
@@ -13,15 +12,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Extend jmri.AbstractSensor for CBUS controls.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2008
  */
 public class CbusSensor extends AbstractSensor implements CanListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3589288718741372494L;
     CbusAddress addrActive;    // go to active state
     CbusAddress addrInactive;  // go to inactive state
 
@@ -77,6 +71,7 @@ public class CbusSensor extends AbstractSensor implements CanListener {
      * <p>
      * There is no known way to do this, so the request is just ignored.
      */
+    @Override
     public void requestUpdateFromLayout() {
     }
 
@@ -85,9 +80,8 @@ public class CbusSensor extends AbstractSensor implements CanListener {
      * listeners by putting it out on CBUS. In turn, the code in this class
      * should use setOwnState to handle internal sets and bean notifies.
      *
-     * @param s
-     * @throws jmri.JmriException
      */
+    @Override
     public void setKnownState(int s) throws jmri.JmriException {
         CanMessage m;
         if (s == Sensor.ACTIVE) {
@@ -104,8 +98,8 @@ public class CbusSensor extends AbstractSensor implements CanListener {
     /**
      * Track layout status from messages being sent to CAN
      *
-     * @param f
      */
+    @Override
     public void message(CanMessage f) {
         if (addrActive.match(f)) {
             setOwnState(Sensor.ACTIVE);
@@ -117,8 +111,8 @@ public class CbusSensor extends AbstractSensor implements CanListener {
     /**
      * Track layout status from messages being received from CAN
      *
-     * @param f
      */
+    @Override
     public void reply(CanReply f) {
         if (addrActive.match(f)) {
             setOwnState(Sensor.ACTIVE);
@@ -127,14 +121,12 @@ public class CbusSensor extends AbstractSensor implements CanListener {
         }
     }
 
+    @Override
     public void dispose() {
         tc.removeCanListener(this);
         super.dispose();
     }
 
-    static Logger log = LoggerFactory.getLogger(CbusSensor.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CbusSensor.class);
 
 }
-
-
-/* @(#)CbusSensor.java */

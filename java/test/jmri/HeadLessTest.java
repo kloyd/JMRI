@@ -1,4 +1,3 @@
-// HeadLessTest.java
 package jmri;
 
 import junit.framework.Test;
@@ -20,7 +19,6 @@ import junit.framework.TestSuite;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  * @author	Bob Jacobsen, Copyright (C) 2001, 2002, 2007
- * @version $Revision$
  */
 public class HeadLessTest extends TestCase {
 
@@ -33,7 +31,6 @@ public class HeadLessTest extends TestCase {
     static public void main(String[] args) {
         // force headless operation
         System.setProperty("java.awt.headless", "true");
-        System.setProperty("jmri.headlesstest", "true");
 
         // start tests
         String[] testCaseName = {"-noloading", HeadLessTest.class.getName()};
@@ -45,9 +42,8 @@ public class HeadLessTest extends TestCase {
         apps.tests.AllTest.initLogging();
         TestSuite suite = new TestSuite("jmri.JmriTest");  // no tests in this class itself
 
-        suite.addTest(jmri.PackageTest.suite());
-        suite.addTest(apps.PackageTest.suite());
-
+        suite.addTest(new junit.framework.JUnit4TestAdapter(jmri.PackageTest.class));
+        suite.addTest(new junit.framework.JUnit4TestAdapter(apps.PackageTest.class));
         return suite;
     }
 

@@ -1,4 +1,3 @@
-// JavaSoundAudioListener.java
 package jmri.jmrit.audio;
 
 import javax.vecmath.Vector3f;
@@ -30,14 +29,8 @@ import org.slf4j.LoggerFactory;
  * <p>
  *
  * @author Matthew Harris copyright (c) 2009
- * @version $Revision$
  */
 public class JavaSoundAudioListener extends AbstractAudioListener {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 9173649719613819402L;
 
     /**
      * Constructor for new JavaSoundAudioListener with system name
@@ -80,7 +73,7 @@ public class JavaSoundAudioListener extends AbstractAudioListener {
      */
     private void recalculateSources() {
         // Loop through each AudioSource and recalculate their gain & pan
-        AudioManager am = InstanceManager.audioManagerInstance();
+        AudioManager am = InstanceManager.getDefault(jmri.AudioManager.class);
         for (String sysName : am.getSystemNameList()) {
             Audio audio = am.getBySystemName(sysName);
             if (audio.getSubType() == Audio.SOURCE
@@ -95,7 +88,7 @@ public class JavaSoundAudioListener extends AbstractAudioListener {
     }
 
     @Override
-    protected void cleanUp() {
+    protected void cleanup() {
         // no clean-up needed for Listener
         if (log.isDebugEnabled()) {
             log.debug("Cleanup JavaSoundAudioListener (" + this.getSystemName() + ")");
@@ -103,8 +96,6 @@ public class JavaSoundAudioListener extends AbstractAudioListener {
         this.dispose();
     }
 
-    private static final Logger log = LoggerFactory.getLogger(JavaSoundAudioListener.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(JavaSoundAudioListener.class);
 
 }
-
-/* $(#)JavaSoundAudioListener.java */

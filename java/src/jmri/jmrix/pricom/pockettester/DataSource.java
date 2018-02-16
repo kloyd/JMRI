@@ -1,9 +1,6 @@
-// pricom.pockettester.DataSource.java
 package jmri.jmrix.pricom.pockettester;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.FlowLayout;
 import java.io.DataInputStream;
 import java.io.OutputStream;
@@ -19,6 +16,11 @@ import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import purejavacomm.CommPortIdentifier;
+import purejavacomm.NoSuchPortException;
+import purejavacomm.PortInUseException;
+import purejavacomm.SerialPort;
+import purejavacomm.UnsupportedCommOperationException;
 
 /**
  * Simple GUI for controlling the PRICOM Pocket Tester.
@@ -29,14 +31,9 @@ import org.slf4j.LoggerFactory;
  * For more info on the product, see http://www.pricom.com
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
- */
+  */
 public class DataSource extends jmri.util.JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6253194020952470551L;
     static DataSource existingInstance;
 
     /**
@@ -71,6 +68,7 @@ public class DataSource extends jmri.util.JmriJFrame {
      *
      * @since 1.7.7
      */
+    @Override
     public void initComponents() {
         setTitle(rb.getString("TitleSource"));
 
@@ -90,6 +88,7 @@ public class DataSource extends jmri.util.JmriJFrame {
         openPortButton.setText(rb.getString("ButtonOpen"));
         openPortButton.setToolTipText(rb.getString("TooltipOpen"));
         openPortButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 try {
                     openPortButtonActionPerformed(evt);
@@ -122,6 +121,7 @@ public class DataSource extends jmri.util.JmriJFrame {
         JPanel p2 = new JPanel();
         p2.add(checkButton);
         checkButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sendBytes(new byte[]{(byte) 'G'});
                 sendBytes(new byte[]{(byte) 'F'});
@@ -138,6 +138,7 @@ public class DataSource extends jmri.util.JmriJFrame {
             p.add(b);
             b.setSelected(true);
             b.addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     sendBytes(new byte[]{(byte) 'F'});
                 }
@@ -146,6 +147,7 @@ public class DataSource extends jmri.util.JmriJFrame {
             g.add(b);
             p.add(b);
             b.addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     sendBytes(new byte[]{(byte) 'A'});
                 }
@@ -155,6 +157,7 @@ public class DataSource extends jmri.util.JmriJFrame {
             g.add(b);
             p.add(b);
             b.addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     sendBytes(new byte[]{(byte) 'M'});
                 }
@@ -165,6 +168,7 @@ public class DataSource extends jmri.util.JmriJFrame {
         {
             JButton b = new JButton(rb.getString("ButtonGetVersion"));
             b.addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     version.setText(rb.getString("LabelWaitVersion"));
                     sendBytes(new byte[]{(byte) 'V'});
@@ -189,11 +193,7 @@ public class DataSource extends jmri.util.JmriJFrame {
 
         {
             MonitorAction a = new MonitorAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -1633077392080446971L;
-
+                @Override
                 public void connect(DataListener l) {
                     DataSource.this.addListener(l);
                 }
@@ -205,11 +205,7 @@ public class DataSource extends jmri.util.JmriJFrame {
 
         {
             PacketTableAction p = new PacketTableAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = 6577986261540429898L;
-
+                @Override
                 public void connect(DataListener l) {
                     DataSource.this.addListener(l);
                     ((PacketTableFrame) l).setSource(DataSource.this);
@@ -222,11 +218,7 @@ public class DataSource extends jmri.util.JmriJFrame {
 
         {
             StatusAction a = new StatusAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -8975013830132142941L;
-
+                @Override
                 public void connect(StatusFrame l) {
                     DataSource.this.addListener(l);
                     l.setSource(DataSource.this);
@@ -291,6 +283,7 @@ public class DataSource extends jmri.util.JmriJFrame {
     protected javax.swing.JButton openPortButton = new javax.swing.JButton();
 
     @SuppressWarnings("deprecation")
+    @Override
     public void dispose() {
         // stop operations here. This is a deprecated method, but OK for us.
         if (readerThread != null) {
@@ -327,6 +320,8 @@ public class DataSource extends jmri.util.JmriJFrame {
         return portNameVector;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value="SR_NOT_CHECKED",
+                                        justification="this is for skip-chars while loop: no matter how many, we're skipping")
     public String openPort(String portName, String appName) {
         // open the port, check ability to set moderators
         try {
@@ -346,7 +341,7 @@ public class DataSource extends jmri.util.JmriJFrame {
                 speed = Integer.parseInt((String) speedBox.getSelectedItem());
                 // 8-bits, 1-stop, no parity
                 activeSerialPort.setSerialPortParams(speed, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-            } catch (gnu.io.UnsupportedCommOperationException e) {
+            } catch (UnsupportedCommOperationException e) {
                 log.error("Cannot set serial parameters on port " + portName + ": " + e.getMessage());
                 return "Cannot set serial parameters on port " + portName + ": " + e.getMessage();
             }
@@ -392,27 +387,27 @@ public class DataSource extends jmri.util.JmriJFrame {
         } catch (java.io.IOException ex) {
             log.error("Unexpected I/O exception while opening port " + portName, ex);
             return "Unexpected error while opening port " + portName + ": " + ex;
-        } catch (gnu.io.NoSuchPortException ex) {
+        } catch (NoSuchPortException ex) {
             log.error("No such port while opening port " + portName, ex);
             return "Unexpected error while opening port " + portName + ": " + ex;
-        } catch (gnu.io.UnsupportedCommOperationException ex) {
+        } catch (UnsupportedCommOperationException ex) {
             log.error("Unexpected comm exception while opening port " + portName, ex);
             return "Unexpected error while opening port " + portName + ": " + ex;
         }
         return null; // indicates OK return
     }
 
-    void handlePortBusy(gnu.io.PortInUseException p, String port) {
+    void handlePortBusy(PortInUseException p, String port) {
         log.error("Port " + p + " in use, cannot open");
     }
 
     DataInputStream serialStream = null;
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "IS2_INCONSISTENT_SYNC",
+    @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC",
             justification = "Class is no longer active, no hardware with which to test fix")
     OutputStream ostream = null;
 
-    static Logger log = LoggerFactory.getLogger(DataSource.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DataSource.class);
 
     /**
      * Internal class to handle the separate character-receive thread
@@ -426,6 +421,7 @@ public class DataSource extends jmri.util.JmriJFrame {
          * PortController via <code>connectPort</code>. Terminates with the
          * input stream breaking out of the try block.
          */
+        @Override
         public void run() {
             // have to limit verbosity!
 
@@ -472,6 +468,7 @@ public class DataSource extends jmri.util.JmriJFrame {
                 // retain a copy of the message at startup
                 String msgForLater = msgString;
 
+                @Override
                 public void run() {
                     nextLine(msgForLater);
                 }

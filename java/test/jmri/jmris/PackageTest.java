@@ -1,57 +1,29 @@
 //JmrisTest.java
 package jmri.jmris;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+        jmri.jmris.srcp.PackageTest.class,
+        jmri.jmris.simpleserver.PackageTest.class,
+        jmri.jmris.json.PackageTest.class,
+        jmri.jmris.JmriServerTest.class,
+        jmri.jmris.JmriConnectionTest.class,
+        jmri.jmris.ServiceHandlerTest.class,
+        BundleTest.class,
+        JmriServerFrameTest.class,
+        JmriServerActionTest.class,
+        ServerMenuTest.class,
+        AbstractRouteServerTest.class,
+        AbstractSignalMastServerTest.class,
+})
 
 /**
  * Set of tests for the jmri.jmris package
  *
  * @author	Paul Bender Copyright 2010
- * @version $Revision$
  */
-public class PackageTest extends TestCase {
-
-    // from here down is testing infrastructure
-    public PackageTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {PackageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite("jmri.jmris.JmrisTest");
-
-        suite.addTest(jmri.jmris.srcp.SRCPTest.suite());
-        suite.addTest(jmri.jmris.simpleserver.SimpleServerTest.suite());
-        suite.addTest(jmri.jmris.json.JsonServerTest.suite());
-        suite.addTest(jmri.jmris.JmriServerTest.suite());
-        suite.addTest(jmri.jmris.JmriConnectionTest.suite());
-        suite.addTest(jmri.jmris.ServiceHandlerTest.suite());
-
-        if (!System.getProperty("jmri.headlesstest", "false").equals("true")) {
-            // put any tests that require a UI here.
-            suite.addTest(jmri.jmris.JmriServerFrameTest.suite());
-            suite.addTest(jmri.jmris.JmriServerActionTest.suite());
-        }
-
-
-        return suite;
-    }
-
-    // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
-    }
-
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
-    }
-
+public class PackageTest {
 }

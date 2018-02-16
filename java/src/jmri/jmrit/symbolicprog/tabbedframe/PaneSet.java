@@ -1,26 +1,26 @@
-// PaneSet.java
 package jmri.jmrit.symbolicprog.tabbedframe;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JLabel;
+import jmri.InstanceManager;
 import jmri.Programmer;
 import jmri.jmrit.decoderdefn.DecoderFile;
 import jmri.jmrit.decoderdefn.DecoderIndexFile;
 import jmri.jmrit.roster.RosterEntry;
 import jmri.jmrit.symbolicprog.CvTableModel;
-import jmri.jmrit.symbolicprog.IndexedCvTableModel;
 import jmri.jmrit.symbolicprog.ResetTableModel;
 import jmri.jmrit.symbolicprog.SymbolicProgBundle;
 import jmri.jmrit.symbolicprog.VariableTableModel;
-import org.jdom2.Element;
+import org.jdom2.*;
+import java.io.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Interface for the container of a set of PaneProgPanes. The panes use services
  * provided here to work with buttons and the busy cursor.
- *
+ * <p>
  * TODO: Several methods are copied from PaneProgFrame and should be refactored
  * No programmer support yet No glass pane support Need better support for
  * visible/non-visible panes Special panes (Roster entry, attributes, graphics)
@@ -29,15 +29,13 @@ import org.slf4j.LoggerFactory;
  * @see apps.gui3.dp3.DecoderPro3Window
  *
  * @author Bob Jacobsen Copyright (C) 2010
- * @version	$Revision$
  */
 public class PaneSet {
 
-    List<PaneProgPane> paneList = new ArrayList<PaneProgPane>();
+    List<PaneProgPane> paneList = new ArrayList<>();
     PaneContainer container;
     Programmer mProgrammer;
     CvTableModel cvModel = null;
-    IndexedCvTableModel iCvModel = null;
     VariableTableModel variableModel;
     ResetTableModel resetModel = null;
     JLabel progStatus = new JLabel(SymbolicProgBundle.getMessage("StateIdle"));
@@ -52,10 +50,9 @@ public class PaneSet {
         this.mProgrammer = programmer;
 
         cvModel = new CvTableModel(progStatus, mProgrammer);
-        iCvModel = new IndexedCvTableModel(progStatus, mProgrammer);
 
         variableModel = new VariableTableModel(progStatus, new String[]{"Name", "Value"},
-                cvModel, iCvModel);
+                cvModel);
 
         resetModel = new ResetTableModel(progStatus, mProgrammer);
 
@@ -67,9 +64,9 @@ public class PaneSet {
         // load from decoder file
         loadDecoderFromLoco(re);
 
-        // fill the CV values from the specific loco file
+        // finally fill the Variable and CV values from the specific loco file
         if (re.getFileName() != null) {
-            re.loadCvModel(cvModel, iCvModel);
+            re.loadCvModel(variableModel, cvModel);
         }
     }
 
@@ -82,14 +79,14 @@ public class PaneSet {
             log.debug("selected loco uses decoder " + decoderFamily + " " + decoderModel);
         }
         // locate a decoder like that.
-        List<DecoderFile> l = DecoderIndexFile.instance().matchingDecoderList(null, decoderFamily, null, null, null, decoderModel);
+        List<DecoderFile> l = InstanceManager.getDefault(DecoderIndexFile.class).matchingDecoderList(null, decoderFamily, null, null, null, decoderModel);
         if (log.isDebugEnabled()) {
             log.debug("found " + l.size() + " matches");
         }
         if (l.size() == 0) {
             log.debug("Loco uses " + decoderFamily + " " + decoderModel + " decoder, but no such decoder defined");
             // fall back to use just the decoder name, not family
-            l = DecoderIndexFile.instance().matchingDecoderList(null, null, null, null, null, decoderModel);
+            l = InstanceManager.getDefault(DecoderIndexFile.class).matchingDecoderList(null, null, null, null, null, decoderModel);
             if (log.isDebugEnabled()) {
                 log.debug("found " + l.size() + " matches without family key");
             }
@@ -113,25 +110,19 @@ public class PaneSet {
         }
         if (log.isDebugEnabled()) {
             log.debug("loadDecoderFile from " + DecoderFile.fileLocation
-                    + " " + df.getFilename());
+                    + " " + df.getFileName());
         }
 
         try {
-            decoderRoot = df.rootFromName(DecoderFile.fileLocation + df.getFilename());
-        } catch (Exception e) {
-            log.error("Exception while loading decoder XML file: " + df.getFilename(), e);
+            decoderRoot = df.rootFromName(DecoderFile.fileLocation + df.getFileName());
+        } catch (JDOMException | IOException e) {
+            log.error("Exception while loading decoder XML file: " + df.getFileName(), e);
         }
         // load variables from decoder tree
         df.getProductID();
         df.loadVariableModel(decoderRoot.getChild("decoder"), variableModel);
 
         // load reset from decoder tree
-        if (variableModel.piCv() != "") {
-            resetModel.setPiCv(variableModel.piCv());
-        }
-        if (variableModel.siCv() != "") {
-            resetModel.setSiCv(variableModel.siCv());
-        }
         df.loadResetModel(decoderRoot.getChild("decoder"), resetModel);
 
         // load function names
@@ -188,7 +179,7 @@ public class PaneSet {
             log.debug("newPane " + name);
         }
         // create a panel to hold columns
-        PaneProgPane p = new PaneProgPane(container, name, pane, cvModel, iCvModel, variableModel, modelElem, r);
+        PaneProgPane p = new PaneProgPane(container, name, pane, cvModel, variableModel, modelElem, r);
 
         // and remember it for programming
         paneList.add(p);
@@ -206,8 +197,8 @@ public class PaneSet {
         re.ensureFilenameExists();
 
         // write the RosterEntry to its file
-        re.writeFile(cvModel, iCvModel, variableModel);
+        re.writeFile(cvModel, variableModel);
     }
 
-    static Logger log = LoggerFactory.getLogger(PaneSet.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PaneSet.class);
 }

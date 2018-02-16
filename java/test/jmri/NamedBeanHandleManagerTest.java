@@ -1,17 +1,16 @@
-// NamedBeanHandleManagerTest.java
 package jmri;
 
 import jmri.util.JUnitUtil;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the NamedBeanHandleManager class
  *
  * @author	Kevin Dickerson Copyright (C) 2006
- * @version $Revision: 18111 $
+ * 
  */
 public class NamedBeanHandleManagerTest extends TestCase {
 
@@ -81,6 +80,9 @@ public class NamedBeanHandleManagerTest extends TestCase {
         Assert.assertTrue("Sensor NamedBean2 should have a the system name IS2 set against it ", ns2.getName().equals("IS2"));
         Assert.assertTrue("Memory NamedBean1 should have a the user name set against it " + name, nm1.getName().equals(name));
 
+        NamedBeanHandle<Sensor> checkRename = nbhm.getNamedBeanHandle("ISno_user_name", sm.provideSensor("ISno_user_name"));
+        nbhm.updateBeanFromUserToSystem(checkRename.getBean());
+        jmri.util.JUnitAppender.assertWarnMessage("updateBeanFromUserToSystem requires non-blank user name: \"ISNO_USER_NAME\" not renamed");
     }
 
     // from here down is testing infrastructure
@@ -91,7 +93,7 @@ public class NamedBeanHandleManagerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {NamedBeanHandleManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -102,17 +104,16 @@ public class NamedBeanHandleManagerTest extends TestCase {
 
     jmri.NamedBeanHandleManager nbhm;
 
+    @Override
     protected void setUp() throws Exception {
+        JUnitUtil.setUp();
         super.setUp();
-        JUnitUtil.resetInstanceManager();
-        apps.tests.Log4JFixture.setUp();
         jmri.InstanceManager.store(new jmri.NamedBeanHandleManager(), jmri.NamedBeanHandleManager.class);
         nbhm = jmri.InstanceManager.getDefault(jmri.NamedBeanHandleManager.class);
     }
 
+    @Override
     protected void tearDown() throws Exception {
-        JUnitUtil.resetInstanceManager();
-        super.tearDown();
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 }

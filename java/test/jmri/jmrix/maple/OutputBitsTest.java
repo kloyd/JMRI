@@ -1,22 +1,21 @@
-// OutputBitsTest.java
 package jmri.jmrix.maple;
 
 import jmri.jmrix.AbstractMRMessage;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the OutputBits class
  *
  * @author	Dave Duchamp 2009
- * @version	$Revision$
- */
+  */
 public class OutputBitsTest extends TestCase {
 
     public void testConstructor1() {
-        Assert.assertNotNull("check instance", OutputBits.instance());
+        Assert.assertNotNull("check ctor", new OutputBits(new SerialTrafficControlScaffold()));
     }
 
     public void testAccessors() {
@@ -59,7 +58,7 @@ public class OutputBitsTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", OutputBitsTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -70,15 +69,18 @@ public class OutputBitsTest extends TestCase {
 
     private OutputBits obit;
 
+    @Override
     protected void setUp() {
         // The minimal setup for log4J
         apps.tests.Log4JFixture.setUp();
-        OutputBits.mInstance = null;
-        obit = OutputBits.instance();
+        SerialTrafficControlScaffold tc = new SerialTrafficControlScaffold();
+        obit = new OutputBits(tc);
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        obit = null;
+        JUnitUtil.tearDown();
     }
 
 }

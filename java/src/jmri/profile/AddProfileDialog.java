@@ -46,10 +46,6 @@ import org.slf4j.LoggerFactory;
  */
 public class AddProfileDialog extends javax.swing.JDialog {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2838864019793309792L;
     private String profileId;
     private boolean setNextProfile = false;
     private Profile source = null;
@@ -146,7 +142,9 @@ public class AddProfileDialog extends javax.swing.JDialog {
             }
         });
 
+        profileFolder.setEditable(false);
         profileFolder.setText(ProfileManager.getDefault().getDefaultSearchPath().getPath());
+        profileFolder.setEnabled(false);
         profileFolder.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 profileFolderActionPerformed(evt);
@@ -283,9 +281,11 @@ public class AddProfileDialog extends javax.swing.JDialog {
             Profile p = new Profile(this.profileName.getText(), this.profileId, new File(this.profileFolder.getText()));
             ProfileManager.getDefault().addProfile(p);
             if (this.source != null) {
-                // TODO: if source is active profile, save source first
-                FileUtil.copy(source.getPath(), p.getPath());
-                p.save();
+                //if (this.source.equals(ProfileManager.getDefault().getActiveProfile())) {
+                //    // TODO: if source is active profile, prompt user to save source
+                //    InstanceManager.getDefault(ConfigureManager.class).storePrefs();
+                //}
+                ProfileUtils.copy(source, p);
             }
             if (this.setNextProfile) {
                 ProfileManager.getDefault().setNextActiveProfile(p);

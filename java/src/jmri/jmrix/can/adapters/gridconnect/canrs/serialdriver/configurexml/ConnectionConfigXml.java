@@ -3,8 +3,6 @@ package jmri.jmrix.can.adapters.gridconnect.canrs.serialdriver.configurexml;
 import jmri.jmrix.can.adapters.gridconnect.canrs.serialdriver.ConnectionConfig;
 import jmri.jmrix.can.adapters.gridconnect.canrs.serialdriver.SerialDriverAdapter;
 import jmri.jmrix.configurexml.AbstractSerialConnectionConfigXml;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistance of layout connections by persistening the
@@ -18,7 +16,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003
  * @author Andrew Crosland 2008
- * @version $Revision$
  */
 public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
 
@@ -26,10 +23,12 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
         super();
     }
 
+    @Override
     protected void getInstance() {
         adapter = new SerialDriverAdapter();
     }
 
+    @Override
     protected void getInstance(Object object) {
         adapter = ((ConnectionConfig) object).getAdapter();
     }
@@ -38,8 +37,5 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

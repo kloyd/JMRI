@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
  * is an int with values from 0 to 127.
  * <P>
  * @author Andrew Crosland Copyright (C) 2009
- * @version $Revision$
  */
 public class CbusThrottle extends AbstractThrottle {
 
@@ -96,10 +95,6 @@ public class CbusThrottle extends AbstractThrottle {
     /**
      * Set initial throttle values as taken from PLOC reply from hardware
      *
-     * @param speed
-     * @param f0f4
-     * @param f5f8
-     * @param f9f12
      */
     public void throttleInit(int speed, int f0f4, int f5f8, int f9f12) {
 
@@ -124,14 +119,14 @@ public class CbusThrottle extends AbstractThrottle {
         this.isForward = (speed & 0x80) == 0x80;
     }
 
-    /*
+    /**
      * setSpeedStepMode - set the speed step value.
      * <P>
      * Overridden to capture mode changes to be forwarded to the hardware.
      * New throttles default to 128 step
      * mode
      * <P>
-     * @param Mode - the current speed step mode - default should be 128
+     * @param Mode the current speed step mode - default should be 128
      *              speed step mode in most cases
      */
     @Override
@@ -395,6 +390,9 @@ public class CbusThrottle extends AbstractThrottle {
             case 28:
                 this.f28 = state;
                 break;
+            default:
+                log.warn("Unhandled function number: {}", fn);
+                break;
         }
     }
 
@@ -407,6 +405,7 @@ public class CbusThrottle extends AbstractThrottle {
      */
     @Override
     public void setSpeedSetting(float speed) {
+        if (log.isDebugEnabled()) log.debug("setSpeedSetting({}) ", speed);
         float oldSpeed = this.speedSetting;
         this.speedSetting = speed;
         if (speed < 0) {
@@ -417,7 +416,7 @@ public class CbusThrottle extends AbstractThrottle {
         if (this.isForward) {
             new_spd = new_spd | 0x80;
         }
-        log.debug("Sending speed/dir for speed: " + new_spd);
+        if (log.isDebugEnabled()) log.debug("Sending speed/dir for speed: " + new_spd);
         cs.setSpeedDir(_handle, new_spd);
 
         if (Math.abs(oldSpeed - this.speedSetting) > 0.0001) {
@@ -469,7 +468,6 @@ public class CbusThrottle extends AbstractThrottle {
      * support CBUS sharing by taking direction received <b>from</b> the
      * hardware in an OPC_DSPD message.
      *
-     * @param forward
      */
     public void updateIsForward(boolean forward) {
         boolean old = isForward;
@@ -502,7 +500,6 @@ public class CbusThrottle extends AbstractThrottle {
      */
     public void throttleTimedOut() {
         _handle = -1;
-        cs = null;
 
         // stop timeout
         mRefreshTimer.stop();
@@ -520,15 +517,14 @@ public class CbusThrottle extends AbstractThrottle {
     public void throttleDispose() {
         log.debug("dispose");
 
+        // stop timeout
+        mRefreshTimer.stop();
+
         cs.releaseSession(_handle);
         _handle = -1;
         cs = null;
 
-        // stop timeout
-        mRefreshTimer.stop();
-
         mRefreshTimer = null;
-        cs = null;
         finishRecord();
     }
 
@@ -537,6 +533,7 @@ public class CbusThrottle extends AbstractThrottle {
     // CBUS command station expect DSPD every 4s
     protected void startRefresh() {
         mRefreshTimer = new javax.swing.Timer(4000, new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 keepAlive();
             }
@@ -549,13 +546,14 @@ public class CbusThrottle extends AbstractThrottle {
      * Internal routine to resend the speed on a timeout
      */
     synchronized protected void keepAlive() {
-        cs.sendKeepAlive(_handle);
+        if (cs != null) { // cs can be null if in process of terminating?
+            cs.sendKeepAlive(_handle);
 
-        // reset timeout
-        mRefreshTimer.stop();
-        mRefreshTimer.setRepeats(true);     // refresh until stopped by dispose
-        mRefreshTimer.start();
-
+            // reset timeout
+            mRefreshTimer.stop();
+            mRefreshTimer.setRepeats(true);     // refresh until stopped by dispose
+            mRefreshTimer.start();
+        } 
     }
 
     @Override
@@ -564,6 +562,6 @@ public class CbusThrottle extends AbstractThrottle {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(CbusThrottle.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CbusThrottle.class);
 
 }

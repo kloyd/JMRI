@@ -1,4 +1,3 @@
-// DeleteRosterGroupAction.java
 package jmri.jmrit.roster.swing;
 
 import java.awt.Component;
@@ -7,10 +6,9 @@ import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import jmri.beans.Beans;
 import jmri.jmrit.roster.Roster;
+import jmri.jmrit.roster.rostergroup.RosterGroupSelector;
 import jmri.util.swing.JmriAbstractAction;
 import jmri.util.swing.WindowInterface;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Rename a roster group.
@@ -28,17 +26,11 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Kevin Dickerson Copyright (C) 2009
+ * @author Kevin Dickerson Copyright (C) 2009
  * @author Randall Wood Copyright (C) 2011
- * @version	$Revision$
  * @see Roster
  */
 public class RenameRosterGroupAction extends JmriAbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -1370317330367764168L;
 
     public RenameRosterGroupAction(String s, WindowInterface wi) {
         super(s, wi);
@@ -65,23 +57,22 @@ public class RenameRosterGroupAction extends JmriAbstractAction {
      * name of the group to be copied is already known and is not the
      * selectedRosterGroup property of the WindowInterface.
      *
-     * @param event
      */
     @Override
     public void actionPerformed(ActionEvent event) {
         String group = null;
-        if (Beans.hasProperty(wi, "selectedRosterGroup")) {
-            group = (String) Beans.getProperty(wi, "selectedRosterGroup");
+        if (Beans.hasProperty(wi, RosterGroupSelector.SELECTED_ROSTER_GROUP)) {
+            group = (String) Beans.getProperty(wi, RosterGroupSelector.SELECTED_ROSTER_GROUP);
         }
         // null might be valid output from getting the selectedRosterGroup,
         // so we have to check for null again.
         if (group == null) {
             group = (String) JOptionPane.showInputDialog(_who,
-                    "<html><b>Rename roster group</b><br>Select the roster group to rename.</html>",
-                    "Rename Roster Group",
+                    Bundle.getMessage("RenameRosterGroupDialog"),
+                    Bundle.getMessage("RenameRosterGroupTitle", ""),
                     JOptionPane.INFORMATION_MESSAGE,
                     null,
-                    Roster.instance().getRosterGroupList().toArray(),
+                    Roster.getDefault().getRosterGroupList().toArray(),
                     null);
         }
         // can't rename the groups that represent the entire roster 
@@ -90,24 +81,27 @@ public class RenameRosterGroupAction extends JmriAbstractAction {
         }
 
         String entry = (String) JOptionPane.showInputDialog(_who,
-                "<html><b>Rename roster group</b><br>Enter the new name for roster group \"" + group + "\".</html>",
-                "Rename Roster Group " + group,
+                Bundle.getMessage("RenameRosterGroupNewName", group),
+                Bundle.getMessage("RenameRosterGroupTitle", group),
                 JOptionPane.INFORMATION_MESSAGE,
                 null,
                 null,
                 null);
-        if (entry == null || entry.equals(Roster.ALLENTRIES)) {
+        if (entry != null) {
+            entry = entry.trim(); // remove white space around name, also prevent "Space" as a Group name
+        }
+        if (entry == null || entry.length() == 0 || entry.equals(Roster.ALLENTRIES)) {
             return;
-        } else if (Roster.instance().getRosterGroupList().contains(entry)) {
+        } else if (Roster.getDefault().getRosterGroupList().contains(entry)) {
             JOptionPane.showMessageDialog(_who,
-                    "<html><b>Unable to rename roster group</b><br>The roster group named \"" + entry + "\" already exists.",
-                    "Rename Roster Group " + group,
+                    Bundle.getMessage("RenameRosterGroupSameName", entry),
+                    Bundle.getMessage("RenameRosterGroupTitle", group),
                     JOptionPane.ERROR_MESSAGE);
         }
 
         // rename the roster grouping
-        Roster.instance().renameRosterGroupList(group, entry);
-        Roster.writeRosterFile();
+        Roster.getDefault().renameRosterGroupList(group, entry);
+        Roster.getDefault().writeRoster();
     }
 
     // never invoked, because we overrode actionPerformed above
@@ -115,7 +109,4 @@ public class RenameRosterGroupAction extends JmriAbstractAction {
     public jmri.util.swing.JmriPanel makePanel() {
         throw new IllegalArgumentException("Should not be invoked");
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(RenameRosterGroupAction.class.getName());
 }

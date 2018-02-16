@@ -1,4 +1,3 @@
-// LocaleSelector.java
 package jmri.util.jdom;
 
 import java.util.Locale;
@@ -9,13 +8,13 @@ import org.jdom2.Namespace;
 /**
  * Select XML content based on current Locale.
  *
- * Tries: e.g. jp_JP, then jp, then nothing.
+ * Tries locale and country separated by an underscore, language, and then uses
+ * the default Locale.
  *
  * _tlh is treated as a special case, for the ant locale target
  *
  * @author Bob Jacobsen Copyright 2010
  * @since 2.9.3
- * @version $Revision$
  */
 public class LocaleSelector {
 
@@ -30,15 +29,20 @@ public class LocaleSelector {
 
     /**
      * Return the value of an attribute for the current locale.
-     *
-     * <foo temp="a">
-     * <temp xml:lang="hh">b</temp>
-     * </foo>
-     *
+     * <p>
+     * {@code <foo temp="a">}
+     * {@code <temp xml:lang="hh">b</temp>}
+     * {@code </foo>}
+     * </p>
+     * <p>
      * Say it's looking for the attribute ATT. For each possible suffix, it
      * first looks for a contained element named ATT with an XML 'lang'
      * attribute for the suffix. If so, it takes that value. If none are found,
-     * the attribute value is taken from the original element
+     * the attribute value is taken from the original element</p>
+     *
+     * @param el   the element with the attribute or child element
+     * @param name the name of the attribute or child element
+     * @return the value of the attribute or null
      */
     static public String getAttribute(Element el, String name) {
         String retval;
@@ -78,8 +82,13 @@ public class LocaleSelector {
     }
 
     /**
-     * checks one element to see if it's the one for the current language else
-     * returns null
+     * Checks one element to see if it's the one for the current language else
+     * returns null.
+     *
+     * @param el     the element
+     * @param name   the attribute
+     * @param suffix the locale
+     * @return the value of the attribute or null
      */
     static String checkElement(Element el, String name, String suffix) {
         for (Object obj : el.getChildren(name)) {

@@ -19,9 +19,8 @@ import org.slf4j.LoggerFactory;
 /**
  * CBUS implementation of a ThrottleManager.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2001
- * @author	Andrew Crosland Copyright (C) 2009
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2001
+ * @author Andrew Crosland Copyright (C) 2009
  */
 public class CbusThrottleManager extends AbstractThrottleManager implements ThrottleManager, CanListener {
 
@@ -118,7 +117,7 @@ public class CbusThrottleManager extends AbstractThrottleManager implements Thro
     synchronized public void reply(CanReply m) {
         int opc = m.getElement(0);
         int rcvdIntAddr = (m.getElement(2) & 0x3f) * 256 + m.getElement(3);
-        boolean rcvdIsLong = (m.getElement(2) & 0xc0) > 0;
+        boolean rcvdIsLong = (m.getElement(2) & 0xc0) != 0;
         int handle = m.getElement(1);
         int errCode = m.getElement(3);
         DccLocoAddress rcvdDccAddr;
@@ -170,6 +169,9 @@ public class CbusThrottleManager extends AbstractThrottleManager implements Thro
                         break;
                     case CbusConstants.ERR_SESSION_CANCELLED:
                         errStr = "Throttle session cancelled for loco ";
+                        break;
+                    default:
+                        log.warn("Unhandled error code: {}", errCode);
                         break;
                 }
 
@@ -398,5 +400,5 @@ public class CbusThrottleManager extends AbstractThrottleManager implements Thro
         return false;
     }
 
-    static Logger log = LoggerFactory.getLogger(CbusThrottleManager.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CbusThrottleManager.class);
 }

@@ -1,6 +1,6 @@
-// TrainsEditFrame.java
 package jmri.jmrit.operations.trains;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -24,6 +24,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import jmri.InstanceManager;
 import jmri.jmrit.operations.OperationsFrame;
 import jmri.jmrit.operations.OperationsXml;
 import jmri.jmrit.operations.locations.Location;
@@ -41,6 +42,14 @@ import jmri.jmrit.operations.routes.RouteLocation;
 import jmri.jmrit.operations.routes.RouteManager;
 import jmri.jmrit.operations.setup.Control;
 import jmri.jmrit.operations.setup.Setup;
+import jmri.jmrit.operations.trains.tools.PrintSavedTrainManifestAction;
+import jmri.jmrit.operations.trains.tools.PrintTrainAction;
+import jmri.jmrit.operations.trains.tools.PrintTrainBuildReportAction;
+import jmri.jmrit.operations.trains.tools.PrintTrainManifestAction;
+import jmri.jmrit.operations.trains.tools.TrainByCarTypeAction;
+import jmri.jmrit.operations.trains.tools.TrainCopyAction;
+import jmri.jmrit.operations.trains.tools.TrainManifestOptionAction;
+import jmri.jmrit.operations.trains.tools.TrainScriptAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,18 +57,13 @@ import org.slf4j.LoggerFactory;
  * Frame for user edit of a train
  *
  * @author Dan Boudreau Copyright (C) 2008, 2011, 2012, 2013, 2014
- * @version $Revision$
  */
 public class TrainEditFrame extends OperationsFrame implements java.beans.PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5151081816323580604L;
     TrainManager trainManager;
     RouteManager routeManager;
 
-    Train _train = null;
+    public Train _train = null;
     List<JCheckBox> typeCarCheckBoxes = new ArrayList<JCheckBox>();
     List<JCheckBox> typeEngineCheckBoxes = new ArrayList<JCheckBox>();
     List<JCheckBox> locationCheckBoxes = new ArrayList<JCheckBox>();
@@ -81,9 +85,9 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
     JLabel textEngine = new JLabel(Bundle.getMessage("Engines"));
 
     // major buttons
-    JButton editButton = new JButton(Bundle.getMessage("Edit"));	// edit route
-    JButton clearButton = new JButton(Bundle.getMessage("Clear"));
-    JButton setButton = new JButton(Bundle.getMessage("Select"));
+    JButton editButton = new JButton(Bundle.getMessage("ButtonEdit")); // edit route
+    JButton clearButton = new JButton(Bundle.getMessage("ClearAll"));
+    JButton setButton = new JButton(Bundle.getMessage("SelectAll"));
     JButton resetButton = new JButton(Bundle.getMessage("ResetTrain"));
     JButton saveTrainButton = new JButton(Bundle.getMessage("SaveTrain"));
     JButton deleteTrainButton = new JButton(Bundle.getMessage("DeleteTrain"));
@@ -114,10 +118,10 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
     // combo boxes
     JComboBox<String> hourBox = new JComboBox<>();
     JComboBox<String> minuteBox = new JComboBox<>();
-    JComboBox<Route> routeBox = RouteManager.instance().getComboBox();
+    JComboBox<Route> routeBox = InstanceManager.getDefault(RouteManager.class).getComboBox();
     JComboBox<String> roadCabooseBox = new JComboBox<>();
     JComboBox<String> roadEngineBox = new JComboBox<>();
-    JComboBox<String> modelEngineBox = EngineModels.instance().getComboBox();
+    JComboBox<String> modelEngineBox = InstanceManager.getDefault(EngineModels.class).getComboBox();
     JComboBox<String> numEnginesBox = new JComboBox<>();
 
     public static final String DISPOSE = "dispose"; // NOI18N
@@ -140,8 +144,8 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         _train = train;
 
         // load managers
-        trainManager = TrainManager.instance();
-        routeManager = RouteManager.instance();
+        trainManager = InstanceManager.getDefault(TrainManager.class);
+        routeManager = InstanceManager.getDefault(RouteManager.class);
 
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
@@ -188,7 +192,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         }
         hourBox.setMinimumSize(new Dimension(100, 25));
 
-        for (int i = 0; i < 60; i += 5) {
+        for (int i = 0; i < 60; i += 1) {
             if (i < 10) {
                 minuteBox.addItem("0" + Integer.toString(i));
             } else {
@@ -328,8 +332,8 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
             routeBox.setSelectedItem(_train.getRoute());
             modelEngineBox.setSelectedItem(_train.getEngineModel());
             commentTextArea.setText(_train.getComment());
-            cabooseRadioButton.setSelected((_train.getRequirements() & Train.CABOOSE) > 0);
-            fredRadioButton.setSelected((_train.getRequirements() & Train.FRED) > 0);
+            cabooseRadioButton.setSelected((_train.getRequirements() & Train.CABOOSE) == Train.CABOOSE);
+            fredRadioButton.setSelected((_train.getRequirements() & Train.FRED) == Train.FRED);
             updateDepartureTime();
             enableButtons(true);
             // listen for train changes
@@ -338,7 +342,9 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
             Route route = _train.getRoute();
             if (route != null) {
                 route.addPropertyChangeListener(this);
-                if (_train.getTrainDepartsRouteLocation() != null && !_train.getTrainDepartsRouteLocation().getLocation().isStaging())
+                if (_train.getTrainDepartsRouteLocation() != null
+                        && _train.getTrainDepartsRouteLocation().getLocation() != null
+                        && !_train.getTrainDepartsRouteLocation().getLocation().isStaging())
                     numEnginesBox.addItem(Train.AUTO_HPT);
             }
            numEnginesBox.setSelectedItem(_train.getNumberEngines());
@@ -352,7 +358,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
 
         // build menu
         JMenuBar menuBar = new JMenuBar();
-        JMenu toolMenu = new JMenu(Bundle.getMessage("Tools"));
+        JMenu toolMenu = new JMenu(Bundle.getMessage("MenuTools"));
         toolMenu.add(new TrainEditBuildOptionsAction(Bundle.getMessage("MenuItemBuildOptions"), this));
         toolMenu.add(new TrainLoadOptionsAction(Bundle.getMessage("MenuItemLoadOptions"), this));
         toolMenu.add(new TrainRoadOptionsAction(Bundle.getMessage("MenuItemRoadOptions"), this));
@@ -365,12 +371,15 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         if (_train != null) {
             toolMenu.add(new TrainConductorAction(Bundle.getMessage("TitleTrainConductor"), _train));
         }
+        toolMenu.addSeparator();
         toolMenu.add(new PrintTrainAction(Bundle.getMessage("MenuItemPrint"), new Frame(), false, this));
         toolMenu.add(new PrintTrainAction(Bundle.getMessage("MenuItemPreview"), new Frame(), true, this));
         toolMenu.add(new PrintTrainManifestAction(Bundle.getMessage("MenuItemPrintManifest"), false, this));
         toolMenu.add(new PrintTrainManifestAction(Bundle.getMessage("MenuItemPreviewManifest"), true, this));
         toolMenu.add(new PrintTrainBuildReportAction(Bundle.getMessage("MenuItemPrintBuildReport"), false, this));
         toolMenu.add(new PrintTrainBuildReportAction(Bundle.getMessage("MenuItemPreviewBuildReport"), true, this));
+        toolMenu.add(new PrintSavedTrainManifestAction(Bundle.getMessage("MenuItemPrintSavedManifest"), false, _train));
+        toolMenu.add(new PrintSavedTrainManifestAction(Bundle.getMessage("MenuItemPreviewSavedManifest"), true, _train));
 
         menuBar.add(toolMenu);
         setJMenuBar(menuBar);
@@ -392,16 +401,17 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         // get notified if combo box gets modified
         routeManager.addPropertyChangeListener(this);
         // get notified if car types or roads gets modified
-        CarTypes.instance().addPropertyChangeListener(this);
-        CarRoads.instance().addPropertyChangeListener(this);
-        EngineTypes.instance().addPropertyChangeListener(this);
-        EngineModels.instance().addPropertyChangeListener(this);
-        LocationManager.instance().addPropertyChangeListener(this);
+        InstanceManager.getDefault(CarTypes.class).addPropertyChangeListener(this);
+        InstanceManager.getDefault(CarRoads.class).addPropertyChangeListener(this);
+        InstanceManager.getDefault(EngineTypes.class).addPropertyChangeListener(this);
+        InstanceManager.getDefault(EngineModels.class).addPropertyChangeListener(this);
+        InstanceManager.getDefault(LocationManager.class).addPropertyChangeListener(this);
 
         packFrame();
     }
 
     // Save, Delete, Add, Edit, Reset, Set, Clear
+    @Override
     public void buttonActionPerformed(java.awt.event.ActionEvent ae) {
         if (ae.getSource() == saveTrainButton) {
             log.debug("train save button activated");
@@ -474,6 +484,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         }
     }
 
+    @Override
     public void radioButtonActionPerformed(java.awt.event.ActionEvent ae) {
         log.debug("radio button activated");
         if (_train != null) {
@@ -490,9 +501,8 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         }
         Train train = trainManager.newTrain(trainNameTextField.getText());
         _train = train;
-        if (_train != null) {
-            _train.addPropertyChangeListener(this);
-        }
+        _train.addPropertyChangeListener(this);
+
         // update check boxes
         updateCarTypeCheckboxes();
         updateEngineTypeCheckboxes();
@@ -508,10 +518,6 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         if (!checkModel() || !checkEngineRoad()) {
             return;
         }
-//        if (numEnginesBox.getSelectedItem().equals(Train.AUTO) && !_train.getNumberEngines().equals(Train.AUTO)) {
-//            JOptionPane.showMessageDialog(this, Bundle.getMessage("AutoEngines"), Bundle
-//                    .getMessage("FeatureUnderDevelopment"), JOptionPane.INFORMATION_MESSAGE);
-//        }
         _train.setDepartureTime((String) hourBox.getSelectedItem(), (String) minuteBox.getSelectedItem());
         _train.setNumberEngines((String) numEnginesBox.getSelectedItem());
         if (_train.getNumberEngines().equals("0")) {
@@ -555,10 +561,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
                             .getMessage("CanNot"), new Object[]{s}), JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        if (trainName.contains(".") || trainName.contains("<") || trainName.contains(">") // NOI18N
-                || trainName.contains(":") || trainName.contains("\"") || trainName.contains("\\") // NOI18N
-                || trainName.contains("/") || trainName.contains("|") || trainName.contains("?") // NOI18N
-                || trainName.contains("*")) { // NOI18N
+        if (!OperationsXml.checkFileName(trainName)) { // NOI18N
             log.error("Train name must not contain reserved characters");
             JOptionPane.showMessageDialog(this, Bundle.getMessage("TrainNameResChar") + NEW_LINE
                     + Bundle.getMessage("ReservedChar"), MessageFormat.format(Bundle.getMessage("CanNot"),
@@ -574,7 +577,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         if (numEnginesBox.getSelectedItem().equals("0") || model.equals(NONE)) {
             return true;
         }
-        String type = EngineModels.instance().getModelType(model);
+        String type = InstanceManager.getDefault(EngineModels.class).getModelType(model);
         if (!_train.acceptsTypeName(type)) {
             JOptionPane.showMessageDialog(this, MessageFormat.format(Bundle.getMessage("TrainModelService"),
                     new Object[]{model, type}), MessageFormat.format(Bundle.getMessage("CanNot"),
@@ -596,7 +599,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         if (numEnginesBox.getSelectedItem().equals("0") || road.equals(NONE) || !model.equals(NONE)) {
             return true;
         }
-        for (RollingStock rs : EngineManager.instance().getList()) {
+        for (RollingStock rs : InstanceManager.getDefault(EngineManager.class).getList()) {
             if (!_train.acceptsTypeName(rs.getTypeName())) {
                 continue;
             }
@@ -659,6 +662,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         }
     }
 
+    @Override
     public void comboBoxActionPerformed(java.awt.event.ActionEvent ae) {
         if (_train == null) {
             return;
@@ -701,6 +705,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
 
     private void addLocationCheckBoxAction(JCheckBox b) {
         b.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 locationCheckBoxActionPerformed(e);
             }
@@ -717,6 +722,16 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         if (b.isSelected()) {
             _train.deleteTrainSkipsLocation(id);
         } else {
+            // check to see if skipped location is staging
+            if (_train.getRoute().getLocationById(id).getLocation().isStaging()) {
+                int result = JOptionPane.showConfirmDialog(this, MessageFormat.format(Bundle.getMessage("TrainRouteStaging"),
+                        new Object[]{_train.getName(), _train.getRoute().getLocationById(id).getName()}),
+                        Bundle.getMessage("TrainRouteNotStaging"), JOptionPane.OK_CANCEL_OPTION);
+                if (result == JOptionPane.CANCEL_OPTION) {
+                    b.setSelected(true);
+                    return; // don't skip staging
+                }
+            }
             _train.addTrainSkipsLocation(id);
         }
     }
@@ -740,10 +755,10 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
     }
 
     private void loadCarTypes() {
-        int numberOfCheckboxes = getNumberOfCheckboxesPerLine();	// number per line
+        int numberOfCheckboxes = getNumberOfCheckboxesPerLine(); // number per line
         int x = 0;
         int y = 1; // vertical position in panel
-        for (String type : CarTypes.instance().getNames()) {
+        for (String type : InstanceManager.getDefault(CarTypes.class).getNames()) {
             JCheckBox checkBox = new javax.swing.JCheckBox();
             typeCarCheckBoxes.add(checkBox);
             checkBox.setText(type);
@@ -778,10 +793,10 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
     }
 
     private void loadEngineTypes() {
-        int numberOfCheckboxes = getNumberOfCheckboxesPerLine();	// number per line
+        int numberOfCheckboxes = getNumberOfCheckboxesPerLine(); // number per line
         int x = 0;
         int y = 1;
-        for (String type : EngineTypes.instance().getNames()) {
+        for (String type : InstanceManager.getDefault(EngineTypes.class).getNames()) {
             JCheckBox checkBox = new javax.swing.JCheckBox();
             typeEngineCheckBoxes.add(checkBox);
             checkBox.setText(type);
@@ -813,9 +828,9 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         roadCabooseBox.setEnabled(true);
         List<String> roads;
         if (cabooseRadioButton.isSelected()) {
-            roads = CarManager.instance().getCabooseRoadNames();
+            roads = InstanceManager.getDefault(CarManager.class).getCabooseRoadNames();
         } else {
-            roads = CarManager.instance().getFredRoadNames();
+            roads = InstanceManager.getDefault(CarManager.class).getFredRoadNames();
         }
         for (String road : roads) {
             roadCabooseBox.addItem(road);
@@ -832,7 +847,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         }
         roadEngineBox.removeAllItems();
         roadEngineBox.addItem(NONE);
-        List<String> roads = EngineManager.instance().getEngineRoadNames(engineModel);
+        List<String> roads = InstanceManager.getDefault(EngineManager.class).getEngineRoadNames(engineModel);
         for (String roadName : roads) {
             roadEngineBox.addItem(roadName);
         }
@@ -843,6 +858,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
 
     private void addTypeCheckBoxAction(JCheckBox b) {
         b.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 typeCheckBoxActionPerformed(e);
             }
@@ -864,18 +880,15 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
 
     // the train's route shown as locations with checkboxes
     private void updateLocationCheckboxes() {
+        updateRouteStatus();
         locationCheckBoxes.clear();
         locationPanelCheckBoxes.removeAll();
         int y = 0; // vertical position in panel
         Route route = null;
-        textRouteStatus.setText(NONE); // clear out previous status
         if (_train != null) {
             route = _train.getRoute();
         }
         if (route != null) {
-            if (!route.getStatus().equals(Route.OKAY)) {
-                textRouteStatus.setText(route.getStatus());
-            }
             List<RouteLocation> routeList = route.getLocationsBySequenceList();
             for (int i = 0; i < routeList.size(); i++) {
                 RouteLocation rl = routeList.get(i);
@@ -884,7 +897,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
                 checkBox.setText(rl.toString());
                 checkBox.setName(rl.getId());
                 addItemLeft(locationPanelCheckBoxes, checkBox, 0, y++);
-                Location loc = LocationManager.instance().getLocationByName(rl.getName());
+                Location loc = InstanceManager.getDefault(LocationManager.class).getLocationByName(rl.getName());
                 // does the location exist?
                 if (loc != null) {
                     // need to listen for name and direction changes
@@ -892,7 +905,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
                     loc.addPropertyChangeListener(this);
                     boolean services = false;
                     // does train direction service location?
-                    if ((rl.getTrainDirection() & loc.getTrainDirections()) > 0) {
+                    if ((rl.getTrainDirection() & loc.getTrainDirections()) != 0) {
                         services = true;
                     } // train must service last location or single location
                     else if (i == routeList.size() - 1) {
@@ -912,28 +925,41 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         }
         locationPanelCheckBoxes.revalidate();
     }
+    
+    private void updateRouteStatus() {
+        Route route = null;
+        textRouteStatus.setText(NONE); // clear out previous status
+        if (_train != null) {
+            route = _train.getRoute();
+        }
+        if (route != null) {
+            if (!route.getStatus().equals(Route.OKAY)) {
+                textRouteStatus.setText(route.getStatus());
+                textRouteStatus.setForeground(Color.RED);
+            }
+        }
+    }
 
     RouteEditFrame ref;
 
     private void editAddRoute() {
         log.debug("Edit/add route");
-        // warn user if train is built that they shouldn't edit the train's route
-        if (_train != null && _train.isBuilt()) {
-            JOptionPane.showMessageDialog(this, Bundle.getMessage("DoNotModifyRoute"), Bundle.getMessage("BuiltTrain"),
-                    JOptionPane.WARNING_MESSAGE);
-        }
         if (ref != null) {
             ref.dispose();
         }
         ref = new RouteEditFrame();
         setChildFrame(ref);
+        Route route = null;
         Object selected = routeBox.getSelectedItem();
         if (selected != null) {
-            Route route = (Route) selected;
-            ref.initComponents(route);
-        } else {
-            ref.initComponents(null, _train);
+            route = (Route) selected;
         }
+        // warn user if train is built that they shouldn't edit the train's route
+        if (route != null && route.getStatus().equals(Route.TRAIN_BUILT)) {
+            JOptionPane.showMessageDialog(this, Bundle.getMessage("DoNotModifyRoute"), Bundle.getMessage("BuiltTrain"),
+                    JOptionPane.WARNING_MESSAGE);
+        }
+        ref.initComponents(route, _train);
     }
 
     private void updateDepartureTime() {
@@ -994,12 +1020,13 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         children.add(frame);
     }
 
+    @Override
     public void dispose() {
-        LocationManager.instance().removePropertyChangeListener(this);
-        EngineTypes.instance().removePropertyChangeListener(this);
-        EngineModels.instance().removePropertyChangeListener(this);
-        CarTypes.instance().removePropertyChangeListener(this);
-        CarRoads.instance().removePropertyChangeListener(this);
+        InstanceManager.getDefault(LocationManager.class).removePropertyChangeListener(this);
+        InstanceManager.getDefault(EngineTypes.class).removePropertyChangeListener(this);
+        InstanceManager.getDefault(EngineModels.class).removePropertyChangeListener(this);
+        InstanceManager.getDefault(CarTypes.class).removePropertyChangeListener(this);
+        InstanceManager.getDefault(CarRoads.class).removePropertyChangeListener(this);
         routeManager.removePropertyChangeListener(this);
         for (Frame frame : children) {
             frame.dispose();
@@ -1009,9 +1036,8 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
             Route route = _train.getRoute();
             if (route != null) {
                 route.removePropertyChangeListener(this);
-                List<RouteLocation> routeList = route.getLocationsBySequenceList();
-                for (int i = 0; i < routeList.size(); i++) {
-                    Location loc = LocationManager.instance().getLocationByName(routeList.get(i).getName());
+                for (RouteLocation rl : route.getLocationsBySequenceList()) {
+                    Location loc = rl.getLocation();
                     if (loc != null) {
                         loc.removePropertyChangeListener(this);
                     }
@@ -1021,8 +1047,9 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         super.dispose();
     }
 
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
-        if (Control.showProperty) {
+        if (Control.SHOW_PROPERTY) {
             log.debug("Property change ({}) old: ({}) new: ({})", e.getPropertyName(), e.getOldValue(), e.getNewValue()); // NOI18N
         }
         if (e.getPropertyName().equals(CarTypes.CARTYPES_CHANGED_PROPERTY)
@@ -1046,7 +1073,7 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
             updateRoadComboBoxes();
         }
         if (e.getPropertyName().equals(EngineModels.ENGINEMODELS_CHANGED_PROPERTY)) {
-            EngineModels.instance().updateComboBox(modelEngineBox);
+            InstanceManager.getDefault(EngineModels.class).updateComboBox(modelEngineBox);
             modelEngineBox.insertItemAt(NONE, 0);
             modelEngineBox.setSelectedIndex(0);
             if (_train != null) {
@@ -1059,8 +1086,9 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         if (e.getPropertyName().equals(Train.TRAIN_ROUTE_CHANGED_PROPERTY) && _train != null) {
             routeBox.setSelectedItem(_train.getRoute());
         }
-        if (e.getPropertyName().equals(Train.BUILT_CHANGED_PROPERTY)) {
+        if (e.getPropertyName().equals(Route.ROUTE_STATUS_CHANGED_PROPERTY)) {
             enableButtons(_train != null);
+            updateRouteStatus();
         }
         if (e.getPropertyName().equals(Train.ROADS_CHANGED_PROPERTY)
                 || e.getPropertyName().equals(Train.LOADS_CHANGED_PROPERTY)) {
@@ -1068,5 +1096,5 @@ public class TrainEditFrame extends OperationsFrame implements java.beans.Proper
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(TrainEditFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(TrainEditFrame.class);
 }

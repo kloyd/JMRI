@@ -1,9 +1,11 @@
-// LocationManagerXml.java
 package jmri.jmrit.operations.locations;
 
 import java.io.File;
+import jmri.InstanceManager;
+import jmri.InstanceManagerAutoDefault;
+import jmri.InstanceManagerAutoInitialize;
 import jmri.jmrit.operations.OperationsXml;
-import jmri.jmrit.operations.setup.Control;
+import jmri.jmrit.operations.locations.schedules.ScheduleManager;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.ProcessingInstruction;
@@ -14,37 +16,27 @@ import org.slf4j.LoggerFactory;
  * Load and stores locations and schedules for operations.
  *
  * @author Daniel Boudreau Copyright (C) 2008 2009 2010
- * @version $Revision$
  */
-public class LocationManagerXml extends OperationsXml {
+public class LocationManagerXml extends OperationsXml implements InstanceManagerAutoDefault, InstanceManagerAutoInitialize {
 
     public LocationManagerXml() {
     }
 
     /**
-     * record the single instance *
+     * Get the default instance of this class.
+     *
+     * @return the default instance of this class
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
      */
-    private static LocationManagerXml _instance = null;
-
+    @Deprecated
     public static synchronized LocationManagerXml instance() {
-        if (_instance == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("LocationManagerXml creating instance");
-            }
-            // create and load
-            _instance = new LocationManagerXml();
-            _instance.load();
-        }
-        if (Control.showInstance) {
-            log.debug("LocationManagerXml returns instance {}", _instance);
-        }
-        return _instance;
+        return InstanceManager.getDefault(LocationManagerXml.class);
     }
 
+    @Override
     public void writeFile(String name) throws java.io.FileNotFoundException, java.io.IOException {
-        if (log.isDebugEnabled()) {
-            log.debug("writeFile {}", name);
-        }
+        log.debug("writeFile {}", name);
         // This is taken in large part from "Java and XML" page 368
         File file = findFile(name);
         if (file == null) {
@@ -61,8 +53,8 @@ public class LocationManagerXml extends OperationsXml {
         ProcessingInstruction p = new ProcessingInstruction("xml-stylesheet", m); // NOI18N
         doc.addContent(0, p);
 
-        LocationManager.instance().store(root);
-        ScheduleManager.instance().store(root);
+        InstanceManager.getDefault(LocationManager.class).store(root);
+        InstanceManager.getDefault(ScheduleManager.class).store(root);
 
         writeXML(file, doc);
 
@@ -88,28 +80,33 @@ public class LocationManagerXml extends OperationsXml {
             return;
         }
 
-        LocationManager.instance().load(root);
-        ScheduleManager.instance().load(root);
+        InstanceManager.getDefault(LocationManager.class).load(root);
+        InstanceManager.getDefault(ScheduleManager.class).load(root);
 
         setDirty(false);
         log.debug("Locations have been loaded!");
     }
 
+    @Override
     public void setOperationsFileName(String name) {
         operationsFileName = name;
     }
 
+    @Override
     public String getOperationsFileName() {
         return operationsFileName;
     }
 
     private String operationsFileName = "OperationsLocationRoster.xml"; // NOI18N
 
-    public void dispose(){
-        _instance = null;
+    public void dispose() {
     }
 
-    static Logger log = LoggerFactory.getLogger(LocationManagerXml.class
-            .getName());
+    private final static Logger log = LoggerFactory.getLogger(LocationManagerXml.class);
+
+    @Override
+    public void initialize() {
+        this.load();
+    }
 
 }

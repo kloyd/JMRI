@@ -1,15 +1,12 @@
-// PaneOpsProgFrame.java
 package jmri.jmrit.symbolicprog.tabbedframe;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import javax.swing.JPanel;
 import java.util.List;
-
+import javax.annotation.Nonnull;
+import javax.swing.JPanel;
 import jmri.Programmer;
 import jmri.ProgrammingMode;
 import jmri.jmrit.decoderdefn.DecoderFile;
 import jmri.jmrit.roster.RosterEntry;
-
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,16 +14,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Extend the PaneProgFrame to handle ops mode operations
  *
- * @author	Bob Jacobsen Copyright (C) 2002, 2008
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002, 2008
  */
 public class PaneOpsProgFrame extends PaneProgFrame
         implements java.beans.PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 151719893908045286L;
     JPanel modePane;
 
     /**
@@ -35,6 +27,7 @@ public class PaneOpsProgFrame extends PaneProgFrame
      * In this case, provide just an empty JPanel; we presently don't want a
      * selection GUI to be present when in ops mode.
      */
+    @Override
     protected JPanel getModePane() {
         if (modePane == null) {
             modePane = new JPanel();
@@ -49,8 +42,6 @@ public class PaneOpsProgFrame extends PaneProgFrame
      *
      * @param decoderFile XML file defining the decoder contents
      * @param r           RosterEntry for information on this locomotive
-     * @param name
-     * @param file
      */
     public PaneOpsProgFrame(DecoderFile decoderFile, RosterEntry r,
             String name, String file, Programmer p) {
@@ -62,11 +53,13 @@ public class PaneOpsProgFrame extends PaneProgFrame
         }
     }
 
+    @Override
     void addHelp() {
         addHelpMenu("package.jmri.jmrit.symbolicprog.tabbedframe.PaneOpsProgFrame", true);
     }
 
-    protected void pickProgrammerMode(@NonNull Element programming) {
+    @Override
+    protected void pickProgrammerMode(@Nonnull Element programming) {
         // find an accepted mode to set it to
         List<ProgrammingMode> modes = mProgrammer.getSupportedModes();
 
@@ -98,6 +91,7 @@ public class PaneOpsProgFrame extends PaneProgFrame
      * local dispose, which also invokes parent. Note that we remove the
      * components (removeAll) before taking those apart.
      */
+    @Override
     public void dispose() {
 
         if (log.isDebugEnabled()) {
@@ -108,6 +102,6 @@ public class PaneOpsProgFrame extends PaneProgFrame
 
     }
 
-    static Logger log = LoggerFactory.getLogger(PaneOpsProgFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PaneOpsProgFrame.class);
 
 }

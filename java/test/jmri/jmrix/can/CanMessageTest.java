@@ -1,17 +1,16 @@
-// CanMessageTest.java
 package jmri.jmrix.can;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the jmri.jmrix.can.CanMessage class
  *
  * @author Bob Jacobsen Copyright 2008, 2009
- * @version $Revision$
  */
-public class CanMessageTest extends CanMRCommonTest {
+public class CanMessageTest extends CanMRCommonTestBase {
 
     public void testCopyCtor() {
         CanMessage m1 = new CanMessage(0x12);
@@ -135,7 +134,7 @@ public class CanMessageTest extends CanMRCommonTest {
     static public void main(String[] args) {
         apps.tests.AllTest.initLogging();
         String[] testCaseName = {"-noloading", CanMessageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -146,12 +145,14 @@ public class CanMessageTest extends CanMRCommonTest {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
         new TrafficControllerScaffold();
         apps.tests.Log4JFixture.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 }

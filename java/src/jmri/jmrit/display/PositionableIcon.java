@@ -1,28 +1,20 @@
-// PositionableIcon.java
 package jmri.jmrit.display;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import jmri.jmrit.catalog.NamedIcon;
 
 /**
  * Gather common methods for Turnouts, Semsors, SignalHeads, Masts, etc.
  *
  * @author PeteCressman Copyright (C) 2011
- * @version $Revision$
  */
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import jmri.jmrit.catalog.NamedIcon;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class PositionableIcon extends PositionableLabel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5192041937901708011L;
     protected HashMap<String, NamedIcon> _iconMap;
     protected String _iconFamily;
-    protected double _scale = 1.0;			// getScale, come from net result found in one of the icons
+    protected double _scale = 1.0;          // getScale, come from net result found in one of the icons
     protected int _rotate = 0;
 
     public PositionableIcon(Editor editor) {
@@ -40,8 +32,13 @@ public class PositionableIcon extends PositionableLabel {
         super(s, editor);
     }
 
-    public Positionable finishClone(Positionable p) {
-        PositionableIcon pos = (PositionableIcon) p;
+    @Override
+    public Positionable deepClone() {
+        PositionableIcon pos = new PositionableIcon(_editor);
+        return finishClone(pos);
+    }
+
+    protected Positionable finishClone(PositionableIcon pos) {
         pos._iconFamily = _iconFamily;
         pos._scale = _scale;
         pos._rotate = _rotate;
@@ -50,8 +47,10 @@ public class PositionableIcon extends PositionableLabel {
     }
 
     /**
-     * Get icon by its bean state name key found in
-     * jmri.NamedBeanBundle.properties Get icon by its localized bean state name
+     * Get icon by its localized bean state name.
+     *
+     * @param state the state name
+     * @return the icon or null if no match
      */
     public NamedIcon getIcon(String state) {
         return _iconMap.get(state);
@@ -69,6 +68,7 @@ public class PositionableIcon extends PositionableLabel {
         return _iconMap.keySet().iterator();
     }
 
+    @Override
     public int maxHeight() {
         int max = super.maxHeight();
         if (_iconMap != null) {
@@ -80,6 +80,7 @@ public class PositionableIcon extends PositionableLabel {
         return max;
     }
 
+    @Override
     public int maxWidth() {
         int max = super.maxWidth();
         if (_iconMap != null) {
@@ -97,6 +98,7 @@ public class PositionableIcon extends PositionableLabel {
     /**
      * ****** popup AbstractAction method overrides ********
      */
+    @Override
     protected void rotateOrthogonal() {
         Iterator<Entry<String, NamedIcon>> it = _iconMap.entrySet().iterator();
         while (it.hasNext()) {
@@ -106,6 +108,7 @@ public class PositionableIcon extends PositionableLabel {
         updateSize();
     }
 
+    @Override
     public void setScale(double s) {
         _scale = s;
         if (_iconMap == null) {
@@ -119,6 +122,12 @@ public class PositionableIcon extends PositionableLabel {
         updateSize();
     }
 
+    @Override
+    public double getScale() {
+        return _scale;
+    }
+
+    @Override
     public int getDegrees() {
         if (_text) {
             return super.getDegrees();
@@ -132,20 +141,18 @@ public class PositionableIcon extends PositionableLabel {
         return super.getDegrees();
     }
 
+    @Override
     public void rotate(int deg) {
         _rotate = deg % 360;
         setDegrees(deg);
-        if (_text /*&& !_icon*/) {
-            super.rotate(deg);
+        if (_iconMap != null) {
+            Iterator<Entry<String, NamedIcon>> it = _iconMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<String, NamedIcon> entry = it.next();
+                entry.getValue().rotate(deg, this);
+            }
         }
-        if (_iconMap == null) {
-            return;
-        }
-        Iterator<Entry<String, NamedIcon>> it = _iconMap.entrySet().iterator();
-        while (it.hasNext()) {
-            Entry<String, NamedIcon> entry = it.next();
-            entry.getValue().rotate(deg, this);
-        }
+        super.rotate(deg);
         updateSize();
     }
 
@@ -162,5 +169,4 @@ public class PositionableIcon extends PositionableLabel {
         return clone;
     }
 
-    static Logger log = LoggerFactory.getLogger(PositionableIcon.class.getName());
 }

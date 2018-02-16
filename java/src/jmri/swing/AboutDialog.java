@@ -1,4 +1,3 @@
-// AboutDialog.java
 package jmri.swing;
 
 import java.awt.Component;
@@ -27,15 +26,8 @@ import org.slf4j.LoggerFactory;
  * About dialog.
  *
  * @author Randall Wood Copyright (C) 2012
- * @version $Revision$
  */
-public class AboutDialog extends JDialog {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -769569735384243080L;
-    ConnectionConfig[] connection = {null, null, null, null};
+public final class AboutDialog extends JDialog {
 
     // this should probably be changed to a JmriAbstractAction that opens a JOptionPane with the contents and an OK button instead.
     public AboutDialog(JFrame frame, boolean modal) {
@@ -62,17 +54,26 @@ public class AboutDialog extends JDialog {
         JPanel pane = new JPanel();
         pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
         if (log.isDebugEnabled()) {
-            log.debug("Fetch main logo: {} ", logo, getToolkit().getImage(FileUtil.findURL(logo, FileUtil.Location.INSTALLED)));
+            log.debug("Fetch main logo: {} ({})", logo, FileUtil.findURL(logo, FileUtil.Location.INSTALLED));
         }
         addCenteredComponent(new JLabel(new ImageIcon(getToolkit().getImage(FileUtil.findURL(logo, FileUtil.Location.INSTALLED)), "JMRI logo"), JLabel.CENTER), pane);
         pane.add(Box.createRigidArea(new Dimension(0, 15)));
-        JLabel appName = new JLabel(Application.getApplicationName(), JLabel.CENTER);
+        String name = Application.getApplicationName();
+        name = checkCopyright(name);
+        JLabel appName = new JLabel(name, JLabel.CENTER);
         appName.setFont(pane.getFont().deriveFont(Font.BOLD, pane.getFont().getSize() * 1.2f));
         addCenteredComponent(appName, pane);
         addCenteredComponent(new JLabel(Application.getURL(), JLabel.CENTER), pane);
         pane.add(Box.createRigidArea(new Dimension(0, 15)));
         pane.setAlignmentX(Component.CENTER_ALIGNMENT);
         return pane;
+    }
+
+    protected String checkCopyright(String name) {
+        if (name.toUpperCase().equals("DECODERPRO")) {
+            name = name + "\u00ae";
+        }
+        return name;
     }
 
     protected JPanel infoPane() {
@@ -102,5 +103,6 @@ public class AboutDialog extends JDialog {
         c.setAlignmentX(Component.CENTER_ALIGNMENT); // doesn't work
         p.add(c);
     }
-    private static final Logger log = LoggerFactory.getLogger(AboutDialog.class.getName());
+
+    private static final Logger log = LoggerFactory.getLogger(AboutDialog.class);
 }

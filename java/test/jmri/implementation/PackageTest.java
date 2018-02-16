@@ -1,64 +1,86 @@
+package jmri.implementation;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+        // fundamental aspects
+        NamedBeanTest.class,
+
+        // implementations
+        AbstractSensorTest.class,
+        AccessoryOpsModeProgrammerFacadeTest.class,
+        OpsModeDelayedProgrammerFacadeTest.class,
+        AddressedHighCvProgrammerFacadeTest.class,
+        DccSignalHeadTest.class,
+        DccSignalMastTest.class,
+        DefaultConditionalTest.class,
+        DefaultConditionalActionTest.class,
+        DefaultIdTagTest.class,
+        DefaultLogixTest.class,
+        DefaultSignalSystemTest.class,
+        DefaultSignalAppearanceMapTest.class,
+        MultiIndexProgrammerFacadeTest.class,
+        VerifyWriteProgrammerFacadeTest.class,
+        OffsetHighCvProgrammerFacadeTest.class,
+        ResettingOffsetHighCvProgrammerFacadeTest.class,
+        RouteTest.class,
+        SE8cSignalHeadTest.class,
+        SignalHeadSignalMastTest.class,
+        SignalSpeedMapTest.class,
+        SignalSystemFileCheckTest.class,
+        SingleTurnoutSignalHeadTest.class,
+        TwoIndexTcsProgrammerFacadeTest.class,
+        BundleTest.class,
+        DccConsistTest.class,
+        NmraConsistTest.class,
+        MatrixSignalMastTest.class,
+        DefaultRailComTest.class,
+
+        // sub-packages
+        jmri.implementation.swing.PackageTest.class,
+        ReporterTest.class,
+        jmri.implementation.configurexml.PackageTest.class,
+        LightControlTest.class,
+        DccConsistManagerTest.class,
+        DefaultClockControlTest.class,
+        FileLocationsPreferencesTest.class,
+        JmriConfigurationManagerTest.class,
+        NmraConsistManagerTest.class,
+        ProgrammerFacadeSelectorTest.class,
+        AbstractRailComReporterTest.class,
+        DefaultConditionalTest.class,
+        DefaultSignalMastLogicTest.class,
+        DoubleTurnoutSignalHeadTest.class,
+        JmriClockPropertyListenerTest.class,
+        JmriMemoryPropertyListenerTest.class,
+        JmriMultiStatePropertyListenerTest.class,
+        JmriSimplePropertyListenerTest.class,
+        JmriTwoStatePropertyListenerTest.class,
+        LsDecSignalHeadTest.class,
+        MergSD2SignalHeadTest.class,
+        NoFeedbackTurnoutOperatorTest.class,
+        QuadOutputSignalHeadTest.class,
+        RawTurnoutOperatorTest.class,
+        SensorGroupConditionalTest.class,
+        SensorTurnoutOperatorTest.class,
+        SignalMastRepeaterTest.class,
+        TripleOutputSignalHeadTest.class,
+        TripleTurnoutSignalHeadTest.class,
+        TurnoutSignalMastTest.class,
+        VirtualSignalMastTest.class,
+        AbstractInstanceInitializerTest.class,
+
+})
+
 /**
  * PackageTest.java
  *
  * Description:	tests for the jmri.implementation package
  *
- * @author	Bob Jacobsen 2009
- * @version $Revision$
+ * @author	Bob Jacobsen 2009, 2017
  */
-package jmri.implementation;
-
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-
-public class PackageTest extends TestCase {
-
-    // from here down is testing infrastructure
-    public PackageTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {PackageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite("jmri.implementation");   // no tests in this class itself
-
-        // fundamental aspects
-        suite.addTest(NamedBeanTest.suite());
-
-        // implementations
-        suite.addTest(AccessoryOpsModeProgrammerFacadeTest.suite());
-        suite.addTest(AddressedHighCvProgrammerFacadeTest.suite());
-        suite.addTest(DccSignalHeadTest.suite());
-        suite.addTest(DccSignalMastTest.suite());
-        suite.addTest(DefaultConditionalTest.suite());
-        suite.addTest(DefaultConditionalActionTest.suite());
-        suite.addTest(DefaultIdTagTest.suite());
-        suite.addTest(DefaultLogixTest.suite());
-        suite.addTest(DefaultSignalSystemTest.suite());
-        suite.addTest(DefaultSignalAppearanceMapTest.suite());
-        suite.addTest(MultiIndexProgrammerFacadeTest.suite());
-        suite.addTest(OffsetHighCvProgrammerFacadeTest.suite());
-        suite.addTest(ResettingOffsetHighCvProgrammerFacadeTest.suite());
-        suite.addTest(RouteTest.suite());
-        suite.addTest(SE8cSignalHeadTest.suite());
-        suite.addTest(SignalHeadSignalMastTest.suite());
-        suite.addTest(SignalSpeedMapTest.suite());
-        suite.addTest(SignalSystemFileCheckTest.suite());
-        suite.addTest(SingleTurnoutSignalHeadTest.suite());
-        suite.addTest(TwoIndexTcsProgrammerFacadeTest.suite());
-
-        // sub-packages
-        suite.addTest(jmri.implementation.swing.SwingShutDownTaskTest.suite());
-        suite.addTest(ReporterTest.suite());
-
-        return suite;
-    }
-
+public class PackageTest {
 }
+

@@ -1,4 +1,3 @@
-// SampleAutomaton3.java
 package jmri.jmrit.automat;
 
 import jmri.DccThrottle;
@@ -23,8 +22,7 @@ import org.slf4j.LoggerFactory;
  * <a href="http://jmri.org/help/en/html/tools/automation/viaJava.shtml">JMRI
  * Layout Automation in Java page</a>.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  * @see jmri.jmrit.automat.SampleAutomaton3Action
  */
 public class SampleAutomaton3 extends AbstractAutomaton {
@@ -62,20 +60,15 @@ public class SampleAutomaton3 extends AbstractAutomaton {
     int locoNumber = 77;
     boolean locoLong = false;
 
+    @Override
     protected void init() {
         // get references to sample layout objects
 
         fwdSensor = InstanceManager.sensorManagerInstance().
                 provideSensor(fwdSensorName);
-        if (fwdSensor == null) {
-            log.error("Failure to provide forward sensor " + fwdSensorName + " on initialization");
-        }
 
         revSensor = InstanceManager.sensorManagerInstance().
                 provideSensor(revSensorName);
-        if (revSensor == null) {
-            log.error("Failure to provide reverse sensor " + revSensorName + " on initialization");
-        }
 
         throttle = getThrottle(locoNumber, locoLong);
     }
@@ -89,6 +82,7 @@ public class SampleAutomaton3 extends AbstractAutomaton {
      *
      * @return Always returns true to continue operation
      */
+    @Override
     protected boolean handle() {
 
         // we're supposed to be moving forward here
@@ -122,9 +116,6 @@ public class SampleAutomaton3 extends AbstractAutomaton {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(SampleAutomaton3.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SampleAutomaton3.class);
 
 }
-
-
-/* @(#)SampleAutomaton3.java */

@@ -1,5 +1,6 @@
 package jmri.jmrix.zimo;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jmri.DccLocoAddress;
 import jmri.LocoAddress;
 import jmri.jmrix.AbstractThrottle;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
  * Based on Glen Oberhauser's original LnThrottleManager implementation
  *
  * @author	Bob Jacobsen Copyright (C) 2001
- * @version $Revision: 25048 $
  */
 public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
 
@@ -20,7 +20,10 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
     //private Mx1Interface network;
 
     /**
-     * Constructor.
+     * Create a new throttle.
+     *
+     * @param memo    the system connection the throttle is associated with
+     * @param address the address for the throttle
      */
     public Mx1Throttle(Mx1SystemConnectionMemo memo, DccLocoAddress address) {
         super(memo);
@@ -76,10 +79,12 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
     int addressLo = 0x00;
     int addressHi = 0x00;
 
+    @Override
     public LocoAddress getLocoAddress() {
         return address;
     }
 
+    @Override
     protected void sendFunctionGroup1() {
         sendSpeedCmd();
         /*int data = 0x00 |
@@ -90,7 +95,7 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
          ( f4 ? 0x08 : 0);
         
          data = data + 0x80;*/
-        /*Mx1Message m = Mx1Message.getSendFunction(1, addressLo, addressHi, data);
+ /*Mx1Message m = Mx1Message.getSendFunction(1, addressLo, addressHi, data);
          if(m!=null)
          tc.sendMx1Message(m);*/
     }
@@ -98,6 +103,7 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
     /**
      * Send the message to set the state of functions F5, F6, F7, F8.
      */
+    @Override
     protected void sendFunctionGroup2() {
         sendSpeedCmd();
         // Always need speed command before function group command to reset consist pointer
@@ -126,30 +132,30 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
     }
 
     /**
-     * Send the message to set the state of functions F13 to F20. MRC Group 4 &
-     * 5
+     * Send the message to set the state of functions F13 to F20 in function
+     * Group 4 {@literal &} 5
      */
     @Override
     protected void sendFunctionGroup4() {
         // The NCE USB doesn't support the NMRA packet format
         // Always need speed command before function group command to reset consist pointer
-        int data = 0x00
-                | (f16 ? 0x08 : 0)
-                | (f15 ? 0x04 : 0)
-                | (f14 ? 0x02 : 0)
-                | (f13 ? 0x01 : 0);
-
-        data = data + 0xD0;
+//         int data = 0x00
+//                 | (f16 ? 0x08 : 0)
+//                 | (f15 ? 0x04 : 0)
+//                 | (f14 ? 0x02 : 0)
+//                 | (f13 ? 0x01 : 0);
+// 
+//         data = data + 0xD0;
 
         /*Mx1Message m = Mx1Message.getSendFunction(4, addressLo, addressHi, data);
          if(m!=null)
          tc.sendMx1Message(m);*/
-        data = 0x00
-                | (f20 ? 0x08 : 0)
-                | (f19 ? 0x04 : 0)
-                | (f18 ? 0x02 : 0)
-                | (f17 ? 0x01 : 0);
-        data = data + 0xC0;
+//         data = 0x00
+//                 | (f20 ? 0x08 : 0)
+//                 | (f19 ? 0x04 : 0)
+//                 | (f18 ? 0x02 : 0)
+//                 | (f17 ? 0x01 : 0);
+//         data = data + 0xC0;
 
         /*m = Mx1Message.getSendFunction(5, addressLo, addressHi, data);
          if(m!=null)
@@ -159,6 +165,7 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
     /**
      * Send the message to set the state of functions F21 to F28. MRC Group 6
      */
+    @Override
     protected void sendFunctionGroup5() {
         /* int data = 0x00 |
          (f28 ? 0x80 : 0) |
@@ -170,18 +177,19 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
          (f22 ? 0x02 : 0) |
          (f21 ? 0x01 : 0); */
 
-        /*Mx1Message m = Mx1Message.getSendFunction(6, addressLo, addressHi, data);
+ /*Mx1Message m = Mx1Message.getSendFunction(6, addressLo, addressHi, data);
          if(m!=null)
          tc.sendMx1Message(m);   */
     }
 
     /**
-     * Set the speed & direction.
+     * Set the speed {@literal &} direction.
      * <P>
      *
      * @param speed Number from 0 to 1; less than zero is emergency stop
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "FE_FLOATING_POINT_EQUALITY") // OK to compare floating point, notify on any change
+    @SuppressFBWarnings(value = "FE_FLOATING_POINT_EQUALITY") // OK to compare floating point, notify on any change
+    @Override
     public void setSpeedSetting(float speed) {
         float oldSpeed = this.speedSetting;
         this.speedSetting = speed;
@@ -258,6 +266,7 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
         return data;
     }
 
+    @Override
     public void setIsForward(boolean forward) {
         boolean old = isForward;
         isForward = forward;
@@ -268,15 +277,17 @@ public class Mx1Throttle extends AbstractThrottle implements Mx1Listener {
         }
     }
 
+    @Override
     protected void throttleDispose() {
         finishRecord();
     }
 
+    @Override
     public void message(Mx1Message m) {
 
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(Mx1Throttle.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Mx1Throttle.class);
 
 }

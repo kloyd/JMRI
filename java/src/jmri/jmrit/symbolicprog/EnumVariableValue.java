@@ -1,4 +1,3 @@
-// EnumVariableValue.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.Color;
@@ -28,8 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Extends VariableValue to represent a enumerated variable.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002, 2003, 2013, 2014
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002, 2003, 2013, 2014
  *
  */
 public class EnumVariableValue extends VariableValue implements ActionListener, PropertyChangeListener {
@@ -52,6 +50,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
     public EnumVariableValue() {
     }
 
+    @Override
     public CvValue[] usesCVs() {
         return new CvValue[]{_cvMap.get(getCvNum())};
     }
@@ -114,6 +113,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         cv.setState(CvValue.FROMFILE);
     }
 
+    @Override
     public void setToolTipText(String t) {
         super.setToolTipText(t);   // do default stuff
         _value.setToolTipText(t);  // set our value
@@ -134,6 +134,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
     int _minVal;
     Color _defaultColor;
 
+    @Override
     public void setAvailable(boolean a) {
         _value.setVisible(a);
         for (ComboCheckBox c : comboCBs) {
@@ -148,10 +149,12 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         super.setAvailable(a);
     }
 
+    @Override
     public Object rangeVal() {
         return "enum: " + _minVal + " - " + _maxVal;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         // see if this is from _value itself, or from an alternate rep.
         // if from an alternate rep, it will contain the value to select
@@ -166,7 +169,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
             }
             // match and select in tree
             for (int i = 0; i < _valueArray.length; i++) {
-                if (e.getActionCommand().toString().equals(_itemArray[i])) {
+                if (e.getActionCommand().equals(_itemArray[i])) {
                     // now select in the tree
                     TreePath path = _pathArray[i];
                     for (JTree tree : trees) {
@@ -206,18 +209,22 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
 
     // to complete this class, fill in the routines to handle "Value" parameter
     // and to read/write/hear parameter changes.
+    @Override
     public String getValueString() {
         return "" + _value.getSelectedIndex();
     }
 
+    @Override
     public void setIntValue(int i) {
         selectValue(i);
     }
 
+    @Override
     public String getTextValue() {
         return _value.getSelectedItem().toString();
     }
 
+    @Override
     public Object getValueObject() {
         return Integer.valueOf(_value.getSelectedIndex());
     }
@@ -231,7 +238,6 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
      * <P>
      * If the value is larger than any defined, a new one is created.
      *
-     * @param value
      */
     protected void selectValue(int value) {
         for (int i = 0; i < _valueArray.length; i++) {
@@ -278,6 +284,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         }
     }
 
+    @Override
     public int getIntValue() {
         if (_value.getSelectedIndex() >= _valueArray.length || _value.getSelectedIndex() < 0) {
             log.error("trying to get value " + _value.getSelectedIndex() + " too large"
@@ -286,6 +293,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         return _valueArray[_value.getSelectedIndex()];
     }
 
+    @Override
     public Component getCommonRep() {
         return _value;
     }
@@ -299,13 +307,14 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         }
     }
 
+    @Override
     public Component getNewRep(String format) {
         // sort on format type
         if (format.equals("checkbox")) {
             // this only makes sense if there are exactly two options
             ComboCheckBox b = new ComboCheckBox(_value, this);
             comboCBs.add(b);
-            if (getReadOnly()) {
+            if (getReadOnly() || getInfoOnly()) {
                 b.setEnabled(false);
             }
             updateRepresentation(b);
@@ -313,7 +322,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         } else if (format.equals("radiobuttons")) {
             ComboRadioButtons b = new ComboRadioButtons(_value, this);
             comboRBs.add(b);
-            if (getReadOnly()) {
+            if (getReadOnly() || getInfoOnly()) {
                 b.setEnabled(false);
             }
             updateRepresentation(b);
@@ -321,7 +330,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         } else if (format.equals("onradiobutton")) {
             ComboRadioButtons b = new ComboOnRadioButton(_value, this);
             comboRBs.add(b);
-            if (getReadOnly()) {
+            if (getReadOnly() || getInfoOnly()) {
                 b.setEnabled(false);
             }
             updateRepresentation(b);
@@ -329,7 +338,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         } else if (format.equals("offradiobutton")) {
             ComboRadioButtons b = new ComboOffRadioButton(_value, this);
             comboRBs.add(b);
-            if (getReadOnly()) {
+            if (getReadOnly() || getInfoOnly()) {
                 b.setEnabled(false);
             }
             updateRepresentation(b);
@@ -346,6 +355,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
             dTree.getSelectionModel().setSelectionMode(DefaultTreeSelectionModel.SINGLE_TREE_SELECTION);
             // arrange for only leaf nodes can be selected
             dTree.addTreeSelectionListener(new TreeSelectionListener() {
+                @Override
                 public void valueChanged(TreeSelectionEvent e) {
                     TreePath[] paths = e.getPaths();
                     for (int i = 0; i < paths.length; i++) {
@@ -370,7 +380,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
             // ensure selection is in visible portion of JScrollPane
             dTree.scrollPathToVisible(path);
 
-            if (getReadOnly()) {
+            if (getReadOnly() || getInfoOnly()) {
                 log.error("read only variables cannot use tree format: {}", item());
             }
             updateRepresentation(dScroll);
@@ -379,7 +389,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
             // return a new JComboBox representing the same model
             VarComboBox b = new VarComboBox(_value.getModel(), this);
             comboVars.add(b);
-            if (getReadOnly()) {
+            if (getReadOnly() || getInfoOnly()) {
                 b.setEnabled(false);
             }
             updateRepresentation(b);
@@ -393,6 +403,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
     private List<JTree> trees = new ArrayList<JTree>();
 
     // implement an abstract member to set colors
+    @Override
     void setColor(Color c) {
         if (c != null) {
             _value.setBackground(c);
@@ -405,17 +416,19 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
     /**
      * Notify the connected CVs of a state change from above
      *
-     * @param state
      */
+    @Override
     public void setCvState(int state) {
         _cvMap.get(getCvNum()).setState(state);
     }
 
+    @Override
     public boolean isChanged() {
         CvValue cv = _cvMap.get(getCvNum());
         return considerChanged(cv);
     }
 
+    @Override
     public void readChanges() {
         if (isToRead() && !isChanged()) {
             log.debug("!!!!!!! unacceptable combination in readChanges: " + label());
@@ -425,6 +438,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         }
     }
 
+    @Override
     public void writeChanges() {
         if (isToWrite() && !isChanged()) {
             log.debug("!!!!!! unacceptable combination in writeChanges: " + label());
@@ -434,15 +448,17 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         }
     }
 
+    @Override
     public void readAll() {
         setToRead(false);
         setBusy(true);  // will be reset when value changes
         _cvMap.get(getCvNum()).read(_status);
     }
 
+    @Override
     public void writeAll() {
         setToWrite(false);
-        if (getReadOnly()) {
+        if (getReadOnly() || getInfoOnly()) {
             log.error("unexpected write operation when readOnly is set");
         }
         setBusy(true);  // will be reset when value changes
@@ -450,6 +466,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
     }
 
     // handle incoming parameter notification
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         // notification from CV; check for Value being changed
         if (e.getPropertyName().equals("Busy")) {
@@ -487,20 +504,15 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
      * value changes.  Those are handled automagically since we're sharing the same
      * model between this object and the real JComboBox value.
      *
-     * @author			Bob Jacobsen   Copyright (C) 2001
-     * @version         $Revision$
-     */
-    public static class VarComboBox extends JComboBox<String> {
-
-        /**
-         *
+     * @author   Bob Jacobsen   Copyright (C) 2001
          */
-        private static final long serialVersionUID = -133896999775526954L;
+    public static class VarComboBox extends JComboBox<String> {
 
         VarComboBox(ComboBoxModel<String> m, EnumVariableValue var) {
             super(m);
             _var = var;
             _l = new java.beans.PropertyChangeListener() {
+                @Override
                 public void propertyChange(java.beans.PropertyChangeEvent e) {
                     if (log.isDebugEnabled()) {
                         log.debug("VarComboBox saw property change: " + e);
@@ -536,6 +548,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
     }
 
     // clean up connections when done
+    @Override
     public void dispose() {
         if (log.isDebugEnabled()) {
             log.debug("dispose");
@@ -564,12 +577,7 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
         }
     }
 
-    class TreeLeafNode extends DefaultMutableTreeNode {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = 4826729728567652557L;
+    static class TreeLeafNode extends DefaultMutableTreeNode {
 
         TreeLeafNode(String name, int index) {
             super(name);
@@ -580,6 +588,6 @@ public class EnumVariableValue extends VariableValue implements ActionListener, 
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(EnumVariableValue.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(EnumVariableValue.class);
 
 }

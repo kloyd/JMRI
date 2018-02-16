@@ -2,8 +2,10 @@ package jmri.jmrit.operations;
 
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Objects;
+import javax.annotation.Nullable;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -17,7 +19,7 @@ import javax.swing.border.EmptyBorder;
  * Dialog to display the details of an Exception. The Exception and additional
  * details about what was happening when the exception occurred are passed in
  * using an ExceptionContext object.
- *
+ * <p>
  * This is a preliminary version that is incomplete, but works. Copy to the
  * clipboard needs to be added.
  *
@@ -26,12 +28,7 @@ import javax.swing.border.EmptyBorder;
  */
 public class ExceptionDisplayFrame extends JDialog {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6188978764804662351L;
-
-    private ExceptionContext context;
+    private final transient ExceptionContext context;
 
     // This needs MAJOR clean-up to better organize the controls and their
     // hierarchy.
@@ -76,32 +73,30 @@ public class ExceptionDisplayFrame extends JDialog {
     /**
      * Create the frame.
      *
+     * @param context the ExceptionContext
+     * @param owner   the associated window, or none if null
+     *
      */
-    public ExceptionDisplayFrame(ExceptionContext context) {
-        if (context == null) {
-            throw new IllegalArgumentException(
-                    "ExceptionContext argument passed to ErrorDisplayFrame constructor cannot be null."); // NOI18N
-        }
+    public ExceptionDisplayFrame(ExceptionContext context, @Nullable Window owner) {
+        super(owner, context.getTitle(), ModalityType.DOCUMENT_MODAL);
+        Objects.requireNonNull(context, "ExceptionContext argument passed to ErrorDisplayFrame constructor cannot be null."); // NOI18N
         this.context = context;
 
-        InitComponents();
+        initComponents();
     }
 
     /**
      * Constructor that takes just an Exception and defaults everything else.
      *
-     * @param ex
+     * @param ex    the Exception
+     * @param owner the associated window, or none if null
+     *
      */
-    public ExceptionDisplayFrame(Exception ex) {
-        this.context = new ExceptionContext(ex, "Operation unavailable", // NOI18N
-                "Hint unavailable"); // NOI18N
-
-        InitComponents();
+    public ExceptionDisplayFrame(Exception ex, @Nullable Window owner) {
+        this(new ExceptionContext(ex, "Operation unavailable", "Hint unavailable"), owner); // NOI18N
     }
 
-    private void InitComponents() {
-        setTitle(context.getTitle());
-
+    private void initComponents() {
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
@@ -125,11 +120,9 @@ public class ExceptionDisplayFrame extends JDialog {
 
         showDetailsButton = new JButton("Show details"); // NOI18N
         showDetailsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        showDetailsButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent arg0) {
-                detailsPanel.setVisible(true);
-                pack();
-            }
+        showDetailsButton.addActionListener((ActionEvent arg0) -> {
+            detailsPanel.setVisible(true);
+            pack();
         });
         contentPane.add(showDetailsButton);
 
@@ -212,10 +205,8 @@ public class ExceptionDisplayFrame extends JDialog {
         buttonPanel.add(copyButton);
 
         closeButton = new JButton("Close"); // NOI18N
-        closeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent arg0) {
-                dispose();
-            }
+        closeButton.addActionListener((ActionEvent arg0) -> {
+            dispose();
         });
         buttonPanel.add(closeButton);
 
@@ -241,9 +232,7 @@ public class ExceptionDisplayFrame extends JDialog {
 
         pack();
 
-        setModalityType(ModalityType.DOCUMENT_MODAL);
         setModal(true);
-        setLocationRelativeTo(null);
-        setVisible(true);
+        setLocationRelativeTo(getOwner());
     }
 }

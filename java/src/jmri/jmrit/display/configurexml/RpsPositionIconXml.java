@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
  * Handle configuration for rps.RpsPositionIcon objects
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2006
- * @version $Revision$
  */
 public class RpsPositionIconXml extends PositionableLabelXml {
 
@@ -25,6 +24,7 @@ public class RpsPositionIconXml extends PositionableLabelXml {
      * @param o Object to store, of type RpsPositionIcon
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
 
         RpsPositionIcon p = (RpsPositionIcon) o;
@@ -63,6 +63,7 @@ public class RpsPositionIconXml extends PositionableLabelXml {
      * @param element Top level Element to unpack.
      * @param o       an Editor as an Object
      */
+    @Override
     public void load(Element element, Object o) {
         Editor ed = (Editor) o;
         RpsPositionIcon l = new RpsPositionIcon(ed);
@@ -148,6 +149,6 @@ public class RpsPositionIconXml extends PositionableLabelXml {
         loadCommonAttributes(l, Editor.SENSORS, element);
     }
 
-    static Logger log = LoggerFactory.getLogger(RpsPositionIconXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RpsPositionIconXml.class);
 
 }

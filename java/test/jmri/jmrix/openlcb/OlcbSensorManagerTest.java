@@ -1,49 +1,86 @@
-// OlcbSensorManagerTest.java
 package jmri.jmrix.openlcb;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.Sensor;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the jmri.jmrix.openlcb.OlcbSensorManager class.
  *
  * @author	Bob Jacobsen Copyright 2008, 2010
- * @version $Revision$
  */
-public class OlcbSensorManagerTest extends TestCase {
+public class OlcbSensorManagerTest extends jmri.managers.AbstractSensorMgrTestBase {
 
-    public void testDummy() {
+    @Override
+    public String getSystemName(int i) {
+        return "MSX010203040506070" + i;
     }
 
-    // from here down is testing infrastructure
-    public OlcbSensorManagerTest(String s) {
-        super(s);
+    @Test
+    public void testCtor() {
+        Assert.assertNotNull("exists", l);
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {OlcbSensorManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    @Override
+    @Test
+    public void testDefaultSystemName() {
+        // create
+        // olcb addresses are hex values requirng 16 digits.
+        Sensor t = l.provideSensor("MSx010203040506070" + getNumToTest1());
+        // check
+        Assert.assertTrue("real object returned ", t != null);
+        Assert.assertTrue("system name correct " + t.getSystemName(), t == l.getBySystemName(getSystemName(getNumToTest1())));
     }
 
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(OlcbSensorManagerTest.class);
-        return suite;
+    @Override
+    @Test
+    public void testUpperLower() {
+        // olcb addresses are hex values requirng 16 digits.
+        Sensor t = l.provideSensor("MSx010203040506070" + getNumToTest2());
+        String name = t.getSystemName();
+        Assert.assertNull(l.getSensor(name.toLowerCase()));
     }
 
-    static Logger log = LoggerFactory.getLogger(OlcbSensorManagerTest.class.getName());
+    @Override
+    @Test
+    public void testMoveUserName() {
+        Sensor t1 = l.provideSensor("MSx010203040506070" + getNumToTest1());
+        Sensor t2 = l.provideSensor("MSx010203040506070" + getNumToTest2());
+        t1.setUserName("UserName");
+        Assert.assertTrue(t1 == l.getByUserName("UserName"));
+
+        t2.setUserName("UserName");
+        Assert.assertTrue(t2 == l.getByUserName("UserName"));
+
+        Assert.assertTrue(null == t1.getUserName());
+    }
+
+    @Test
+    public void testDotted() {
+        // olcb addresses are hex values requirng 16 digits.
+        Sensor t = l.provideSensor("MS01.02.03.04.05.06.07.0" + getNumToTest2());
+        String name = t.getSystemName();
+        Assert.assertNull(l.getSensor(name.toLowerCase()));
+    }
 
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Override
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
+
+        OlcbSystemConnectionMemo m = OlcbTestInterface.createForLegacyTests();
+
+        l = new OlcbSensorManager(m);
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        l.dispose();
+        JUnitUtil.tearDown();
     }
 
 }

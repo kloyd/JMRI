@@ -6,29 +6,28 @@ import jmri.jmrix.ecos.EcosPreferences;
 import jmri.jmrix.ecos.networkdriver.ConnectionConfig;
 import jmri.jmrix.ecos.networkdriver.NetworkDriverAdapter;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistance of layout connections by persistening the
  * NetworkDriverAdapter (and connections).
- * <P>
+ * <p>
  * Note this is named as the XML version of a ConnectionConfig object, but it's
  * actually persisting the NetworkDriverAdapter.
- * <P>
+ * <p>
  * This class is invoked from jmrix.JmrixConfigPaneXml on write, as that class
  * is the one actually registered. Reads are brought here directly via the class
  * attribute in the XML.
  *
- * @author Bob Jacobsen Copyright: Copyright (c) 2003, 208
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (c) 2003, 208
  */
 public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
 
+    @Override
     protected void getInstance() {
         adapter = new NetworkDriverAdapter();
     }
 
+    @Override
     protected void getInstance(Object object) {
         adapter = ((ConnectionConfig) object).getAdapter();
     }
@@ -116,12 +115,11 @@ public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
 
         ecosPrefElem.setAttribute("ecosRosterAttribute", p.getRosterAttribute());
         e.addContent(ecosPrefElem);
-
     }
 
     @Override
-    protected void unpackElement(Element e) {
-        List<Element> ecosPref = e.getChildren("commandStationPreferences");
+    protected void unpackElement(Element shared, Element perNode) {
+        List<Element> ecosPref = shared.getChildren("commandStationPreferences");
         EcosPreferences p = ((jmri.jmrix.ecos.EcosSystemConnectionMemo) adapter.getSystemConnectionMemo()).getPreferenceManager();
         for (int i = 0; i < ecosPref.size(); i++) {
             if (ecosPref.get(i).getAttribute("addTurnoutToCS") != null) {
@@ -253,15 +251,11 @@ public class ConnectionConfigXml extends AbstractNetworkConnectionConfigXml {
             p.resetChangeMade();
         }
         p.setPreferencesLoaded();
-
     }
 
     @Override
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

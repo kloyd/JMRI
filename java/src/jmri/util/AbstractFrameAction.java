@@ -1,4 +1,3 @@
-// AbstractFrameAction.java
 package jmri.util;
 
 import java.awt.event.ActionEvent;
@@ -17,14 +16,8 @@ import org.slf4j.LoggerFactory;
  * two JFrame objects.
  *
  * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
  */
 abstract public class AbstractFrameAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3154020951934948120L;
 
     public AbstractFrameAction(String actionName, String className) {
         super(actionName);
@@ -33,6 +26,7 @@ abstract public class AbstractFrameAction extends AbstractAction {
 
     String className;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         try {
             JFrame f = (JFrame) Class.forName(className).newInstance();
@@ -41,7 +35,6 @@ abstract public class AbstractFrameAction extends AbstractAction {
             log.error("Error starting JFrame " + className + ": " + ex);
         }
     }
-    static Logger log = LoggerFactory.getLogger(AbstractFrameAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractFrameAction.class);
 
 }
-/* @(#)AbstractFrameAction.java */

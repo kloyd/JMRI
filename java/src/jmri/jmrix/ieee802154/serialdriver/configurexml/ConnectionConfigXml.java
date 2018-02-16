@@ -8,8 +8,6 @@ import jmri.jmrix.ieee802154.serialdriver.SerialNode;
 import jmri.jmrix.ieee802154.serialdriver.SerialSystemConnectionMemo;
 import jmri.jmrix.ieee802154.serialdriver.SerialTrafficController;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistance of layout connections by persisting the
@@ -22,7 +20,6 @@ import org.slf4j.LoggerFactory;
  * attribute in the XML.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003, 2006, 2007, 2008
- * @version $Revision$
  */
 public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
 
@@ -35,6 +32,7 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
      *
      * @param e Element being extended
      */
+    @Override
     protected void extendElement(Element e) {
         SerialSystemConnectionMemo scm;
         try {
@@ -72,21 +70,19 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
         return p;
     }
 
+    @Override
     protected void getInstance() {
         adapter = new SerialDriverAdapter();
     }
 
+    @Override
     protected void getInstance(Object object) {
         adapter = ((ConnectionConfig) object).getAdapter();
     }
 
-    /**
-     * Unpack the node information when reading the "connection" element
-     *
-     * @param e Element containing the connection info
-     */
-    protected void unpackElement(Element e) {
-        List<Element> l = e.getChildren("node");
+    @Override
+    protected void unpackElement(Element shared, Element perNode) {
+        List<Element> l = shared.getChildren("node");
         for (int i = 0; i < l.size(); i++) {
             Element n = l.get(i);
             //int addr = Integer.parseInt(n.getAttributeValue("name"));
@@ -127,8 +123,5 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class);
 
 }

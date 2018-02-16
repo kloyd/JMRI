@@ -1,4 +1,3 @@
-// StagingEditFrame.java
 package jmri.jmrit.operations.locations;
 
 import java.awt.GridBagLayout;
@@ -6,21 +5,19 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.jmrit.operations.locations.tools.ShowCarsByLocationAction;
+import jmri.jmrit.operations.locations.tools.ShowTrainsServingLocationAction;
+import jmri.jmrit.operations.locations.tools.TrackDestinationEditAction;
+import jmri.jmrit.operations.routes.Route;
+import jmri.jmrit.operations.trains.Train;
 
 /**
  * Frame for user edit of a staging track
  *
  * @author Dan Boudreau Copyright (C) 2008, 2011
- * @version $Revision$
  */
 public class StagingEditFrame extends TrackEditFrame implements java.beans.PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1540001164578122992L;
     // check boxes
     JCheckBox swapLoadsCheckBox = new JCheckBox(Bundle.getMessage("SwapCarLoads"));
     JCheckBox emptyCheckBox = new JCheckBox(Bundle.getMessage("EmptyDefaultCarLoads"));
@@ -36,7 +33,9 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
         super();
     }
 
+    @Override
     public void initComponents(Location location, Track track) {
+        _type = Track.STAGING;
 
         // setup the optional panel with staging stuff
         panelLoad.setLayout(new BoxLayout(panelLoad, BoxLayout.X_AXIS));
@@ -69,7 +68,6 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
         panelLoad.add(p3);
 
         super.initComponents(location, track);
-        _type = Track.STAGING;
 
         _toolMenu.add(new TrackDestinationEditAction(this));
         _toolMenu.add(new ShowTrainsServingLocationAction(Bundle.getMessage("MenuItemShowTrainsTrack"), _location, _track));
@@ -96,13 +94,10 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
             loadCheckBox.setSelected(_track.isAddCustomLoadsEnabled());
             loadAnyCheckBox.setSelected(_track.isAddCustomLoadsAnySpurEnabled());
             loadAnyStagingCheckBox.setSelected(_track.isAddCustomLoadsAnyStagingTrackEnabled());
-            pShipLoadOption.setVisible(loadCheckBox.isSelected()
-                    || loadAnyCheckBox.isSelected() || loadAnyStagingCheckBox.isSelected());	// show which loads this track can ship
             blockCarsCheckBox.setSelected(_track.isBlockCarsEnabled());
             if (loadCheckBox.isSelected() || loadAnyCheckBox.isSelected()
                     || loadAnyStagingCheckBox.isSelected()) {
                 blockCarsCheckBox.setSelected(false);
-                blockCarsCheckBox.setEnabled(false);
             }
         }
 
@@ -118,6 +113,7 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
         setVisible(true);
     }
 
+    @Override
     protected void saveTrack(Track track) {
         track.setLoadSwapEnabled(swapLoadsCheckBox.isSelected());
         track.setLoadEmptyEnabled(emptyCheckBox.isSelected());
@@ -129,6 +125,7 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
         super.saveTrack(track);
     }
 
+    @Override
     protected void enableButtons(boolean enabled) {
         swapLoadsCheckBox.setEnabled(enabled);
         emptyCheckBox.setEnabled(enabled);
@@ -136,17 +133,62 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
         loadCheckBox.setEnabled(enabled);
         loadAnyCheckBox.setEnabled(enabled);
         loadAnyStagingCheckBox.setEnabled(enabled);
-        if (!loadCheckBox.isSelected() && !loadAnyCheckBox.isSelected()
-                && !loadAnyStagingCheckBox.isSelected() && enabled) {
-            blockCarsCheckBox.setEnabled(true);
-            pShipLoadOption.setVisible(false);
-        } else {
-            blockCarsCheckBox.setEnabled(false);
-            pShipLoadOption.setVisible(true);
-        }
+        blockCarsCheckBox.setEnabled(_track != null && !_track.isAddCustomLoadsEnabled() && !_track.isAddCustomLoadsAnySpurEnabled()
+                && !_track.isAddCustomLoadsAnyStagingTrackEnabled() && enabled);
+        // show ship loads
+        pShipLoadOption.setVisible(_track == null || _track.isAddCustomLoadsEnabled()
+                || _track.isAddCustomLoadsAnySpurEnabled() || _track.isAddCustomLoadsAnyStagingTrackEnabled()
+                || !_track.getShipLoadOption().equals(Track.ALL_LOADS));
         super.enableButtons(enabled);
     }
+    
+    @Override
+    protected void updateTrainComboBox() {
+        super.updateTrainComboBox();
+        // only show trains that depart from this staging location
+        if (autoPickupCheckBox.isSelected()) {
+            for (int i = 1; i < comboBoxPickupTrains.getItemCount(); i++) {
+                Train train = comboBoxPickupTrains.getItemAt(i);
+                if (!train.getTrainDepartsName().equals(_location.getName())) {
+                    comboBoxPickupTrains.removeItemAt(i--);
+                }
+            }
+        }
+        // only show trains that terminate into this staging location
+        if (autoDropCheckBox.isSelected()) {
+            for (int i = 1; i < comboBoxDropTrains.getItemCount(); i++) {
+                Train train = comboBoxDropTrains.getItemAt(i);
+                if (!train.getTrainTerminatesName().equals(_location.getName())) {
+                    comboBoxDropTrains.removeItemAt(i--);
+                }
+            }
+        }
+    }
+    
+    @Override
+    protected void updateRouteComboBox() {
+        super.updateRouteComboBox();
+        // only show routes that depart from this staging location
+        if (autoPickupCheckBox.isSelected()) {
+            for (int i = 1; i < comboBoxPickupRoutes.getItemCount(); i++) {
+                Route route = comboBoxPickupRoutes.getItemAt(i);
+                if (route.getLocationsBySequenceList().get(0).getLocation() != _location) {
+                    comboBoxPickupRoutes.removeItemAt(i--);
+                }
+            }
+        }
+        // only show routes that terminate into this staging location
+        if (autoDropCheckBox.isSelected()) {
+            for (int i = 1; i < comboBoxDropRoutes.getItemCount(); i++) {
+                Route route = comboBoxDropRoutes.getItemAt(i);
+                if (route.getLocationsBySequenceList().get(route.getLocationsBySequenceList().size()-1).getLocation() != _location) {
+                    comboBoxDropRoutes.removeItemAt(i--);
+                }
+            }
+        }
+    }
 
+    @Override
     public void checkBoxActionPerformed(java.awt.event.ActionEvent ae) {
         if (ae.getSource() == swapLoadsCheckBox) {
             if (swapLoadsCheckBox.isSelected()) {
@@ -174,6 +216,7 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
             }
         } else if (ae.getSource() == loadAnyStagingCheckBox) {
             if (loadAnyStagingCheckBox.isSelected()) {
+                blockCarsCheckBox.setSelected(false);
                 blockCarsCheckBox.setEnabled(false);
             } else if (!loadCheckBox.isSelected() && !loadAnyCheckBox.isSelected()) {
                 blockCarsCheckBox.setEnabled(true);
@@ -183,6 +226,5 @@ public class StagingEditFrame extends TrackEditFrame implements java.beans.Prope
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(StagingEditFrame.class
-            .getName());
+//    private final static Logger log = LoggerFactory.getLogger(StagingEditFrame.class);
 }

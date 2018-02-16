@@ -1,12 +1,11 @@
-// CatalogTreeModel.java
 package jmri.jmrit.catalog;
 
 import java.io.File;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import jmri.InstanceManager;
+import jmri.InstanceManagerAutoDefault;
 import jmri.util.FileUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * TreeModel used by CatalogPane to create a tree of resources.
@@ -23,26 +22,20 @@ import org.slf4j.LoggerFactory;
  * As a special case "simplification", the catalog tree will not contain CVS
  * directories, or files whose name starts with a "."
  *
- * @author	Bob Jacobsen Copyright 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright 2002
  */
-public class CatalogTreeModel extends DefaultTreeModel {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2743570810771604153L;
+public class CatalogTreeModel extends DefaultTreeModel implements InstanceManagerAutoDefault {
 
     public CatalogTreeModel() {
 
         super(new DefaultMutableTreeNode("Root"));
-        dRoot = (DefaultMutableTreeNode) getRoot();  // this is used because we can't store the DMTN we just made during the super() call
+        dRoot = (DefaultMutableTreeNode) super.getRoot();  // this is used because we can't store the DMTN we just made during the super() call
 
         // we manually create the first node, rather than use
         // the routine, so we can name it.
-        insertResourceNodes("resources", resourceRoot, dRoot);
+        CatalogTreeModel.this.insertResourceNodes("resources", resourceRoot, dRoot);
         FileUtil.createDirectory(FileUtil.getUserFilesPath() + "resources");
-        insertFileNodes("files", fileRoot, dRoot);
+        CatalogTreeModel.this.insertFileNodes("files", fileRoot, dRoot);
 
     }
 
@@ -57,10 +50,6 @@ public class CatalogTreeModel extends DefaultTreeModel {
      *                where in the tree to insert it.
      */
     void insertResourceNodes(String pName, String pPath, DefaultMutableTreeNode pParent) {
-        // the following (commented) line only worked in JBuilder (July 27 2002)
-        // so we switched to storing this info in the resource/ filetree in
-        // the application directory, using the 2nd two lines (uncommented)
-        // File fp = new File(ClassLoader.getSystemResource(pPath).getFile());
         File fp = new File(pPath);
         if (!fp.exists()) {
             return;
@@ -81,9 +70,15 @@ public class CatalogTreeModel extends DefaultTreeModel {
         if (fp.isDirectory()) {
             // work on the kids
             String[] sp = fp.list();
-            for (int i = 0; i < sp.length; i++) {
-                //if (log.isDebugEnabled()) log.debug("Descend into resource: "+sp[i]);
-                insertResourceNodes(sp[i], pPath + "/" + sp[i], newElement);
+
+            if (sp == null) {
+                log.warn("unexpected null list() in insertResourceNodes from \"{}\"", pPath);
+                return;
+            }
+
+            for (String item : sp) {
+                log.trace("Descend into resource: {}", item);
+                insertResourceNodes(item, pPath + "/" + item, newElement);
             }
         }
     }
@@ -92,6 +87,7 @@ public class CatalogTreeModel extends DefaultTreeModel {
      * Recursively add a representation of the files below a particular file
      *
      * @param name   Name of the file to be scanned
+     * @param path   the path to the file
      * @param parent Node for the parent of the file to be scanned
      */
     void insertFileNodes(String name, String path, DefaultMutableTreeNode parent) {
@@ -116,23 +112,25 @@ public class CatalogTreeModel extends DefaultTreeModel {
         if (fp.isDirectory()) {
             // work on the kids
             String[] sp = fp.list();
-            for (int i = 0; i < sp.length; i++) {
+            for (String sp1 : sp) {
                 //if (log.isDebugEnabled()) log.debug("Descend into file: "+sp[i]);
-                insertFileNodes(sp[i], path + "/" + sp[i], newElement);
+                insertFileNodes(sp1, path + "/" + sp1, newElement);
             }
         }
     }
 
     DefaultMutableTreeNode dRoot;
 
+    /**
+     *
+     * @return the managed instance
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
+     */
+    @Deprecated
     static public CatalogTreeModel instance() {
-        if (instanceValue == null) {
-            instanceValue = new CatalogTreeModel();
-        }
-        return instanceValue;
+        return InstanceManager.getDefault(CatalogTreeModel.class);
     }
-
-    static private CatalogTreeModel instanceValue = null;
 
     /**
      * Starting point in the .jar file for the "icons" part of the tree
@@ -140,5 +138,6 @@ public class CatalogTreeModel extends DefaultTreeModel {
     static final String resourceRoot = "resources";
     static final String fileRoot = FileUtil.getUserFilesPath() + "resources";
 
-    static Logger log = LoggerFactory.getLogger(CatalogTreeModel.class.getName());
+    private final static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CatalogTreeModel.class);
+
 }

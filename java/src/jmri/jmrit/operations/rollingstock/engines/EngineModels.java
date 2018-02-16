@@ -1,10 +1,13 @@
-// EngineModels.java
 package jmri.jmrit.operations.rollingstock.engines;
 
 import java.util.Hashtable;
+import java.util.Set;
+import jmri.InstanceInitializer;
+import jmri.InstanceManager;
+import jmri.implementation.AbstractInstanceInitializer;
 import jmri.jmrit.operations.rollingstock.RollingStockAttribute;
-import jmri.jmrit.operations.setup.Control;
 import org.jdom2.Element;
+import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,18 +16,17 @@ import org.slf4j.LoggerFactory;
  * type, horsepower rating and length that is kept here. The program provides
  * some default models for the user. These values can be overridden by the user.
  *
- * Model Horsepower Length Type 
- * 
- * E8 2250 70 Diesel FT 1350 50 Diesel F3 1500 50
- * Diesel F7 1500 50 Diesel F9 1750 50 Diesel GP20 2000 56 Diesel GP30 2250 56
- * Diesel GP35 2500 56 Diesel GP38 2000 59 Diesel GP40 3000 59 Diesel RS1 1000
- * 51 Diesel RS2 1500 52 Diesel RS3 1600 51 Diesel RS11 1800 53 Diesel RS18 1800
- * 52 Diesel RS27 2400 57 Diesel RSD4 1600 52 Diesel SD26 2650 61 Diesel SD45
- * 3600 66 Diesel SW1200 1200 45 Diesel SW1500 1500 45 Diesel SW8 800 44 Diesel
- * TRAINMASTER 2400 66 Diesel U28B 2800 60 Diesel
+ * Model Horsepower Length Type
+ *
+ * E8 2250 70 Diesel FT 1350 50 Diesel F3 1500 50 Diesel F7 1500 50 Diesel F9
+ * 1750 50 Diesel GP20 2000 56 Diesel GP30 2250 56 Diesel GP35 2500 56 Diesel
+ * GP38 2000 59 Diesel GP40 3000 59 Diesel RS1 1000 51 Diesel RS2 1500 52 Diesel
+ * RS3 1600 51 Diesel RS11 1800 53 Diesel RS18 1800 52 Diesel RS27 2400 57
+ * Diesel RSD4 1600 52 Diesel SD26 2650 61 Diesel SD45 3600 66 Diesel SW1200
+ * 1200 45 Diesel SW1500 1500 45 Diesel SW8 800 44 Diesel TRAINMASTER 2400 66
+ * Diesel U28B 2800 60 Diesel
  *
  * @author Daniel Boudreau Copyright (C) 2008
- * @version $Revision$
  */
 public class EngineModels extends RollingStockAttribute {
 
@@ -39,39 +41,33 @@ public class EngineModels extends RollingStockAttribute {
     public static final String ENGINEMODELS_NAME_CHANGED_PROPERTY = "EngineModelsName"; // NOI18N
 
     // protected List<String> _list = new ArrayList<String>();
-    protected Hashtable<String, String> _engineHorsepowerHashTable = new Hashtable<String, String>();
-    protected Hashtable<String, String> _engineLengthHashTable = new Hashtable<String, String>();
-    protected Hashtable<String, String> _engineTypeHashTable = new Hashtable<String, String>();
-    protected Hashtable<String, String> _engineWeightHashTable = new Hashtable<String, String>();
-    protected Hashtable<String, Boolean> _engineBunitHashTable = new Hashtable<String, Boolean>();
+    protected Hashtable<String, String> _engineHorsepowerHashTable = new Hashtable<>();
+    protected Hashtable<String, String> _engineLengthHashTable = new Hashtable<>();
+    protected Hashtable<String, String> _engineTypeHashTable = new Hashtable<>();
+    protected Hashtable<String, String> _engineWeightHashTable = new Hashtable<>();
+    protected Hashtable<String, Boolean> _engineBunitHashTable = new Hashtable<>();
 
     public EngineModels() {
     }
 
     /**
-     * record the single instance *
+     * Get the default instance of this class.
+     *
+     * @return the default instance of this class
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
      */
-    private static EngineModels _instance = null;
-
+    @Deprecated
     public static synchronized EngineModels instance() {
-        if (_instance == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("EngineModels creating instance");
-            }
-            // create and load
-            _instance = new EngineModels();
-            _instance.loadDefaults();
-        }
-        if (Control.showInstance) {
-            log.debug("EngineModels returns instance {}", _instance);
-        }
-        return _instance;
+        return InstanceManager.getDefault(EngineModels.class);
     }
 
+    @Override
     protected String getDefaultNames() {
         return MODELS;
     }
 
+    @Override
     public void dispose() {
         _engineHorsepowerHashTable.clear();
         _engineLengthHashTable.clear();
@@ -82,11 +78,13 @@ public class EngineModels extends RollingStockAttribute {
         loadDefaults();
     }
 
+    @Override
     public void addName(String model) {
         super.addName(model);
         setDirtyAndFirePropertyChange(ENGINEMODELS_CHANGED_PROPERTY, null, model);
     }
 
+    @Override
     public void deleteName(String model) {
         super.deleteName(model);
         setDirtyAndFirePropertyChange(ENGINEMODELS_CHANGED_PROPERTY, model, null);
@@ -121,11 +119,11 @@ public class EngineModels extends RollingStockAttribute {
     public String getModelType(String model) {
         return _engineTypeHashTable.get(model);
     }
-    
+
     public void setModelBunit(String model, boolean bUnit) {
         _engineBunitHashTable.put(model, bUnit);
     }
-    
+
     public boolean isModelBunit(String model) {
         if (_engineBunitHashTable.containsKey(model))
             return _engineBunitHashTable.get(model);
@@ -151,11 +149,20 @@ public class EngineModels extends RollingStockAttribute {
         String[] lengths = ENGINELENGTHS.split(","); // NOI18N
         String[] types = ENGINETYPES.split(","); // NOI18N
         String[] weights = ENGINEWEIGHTS.split(","); // NOI18N
-        if (models.length != hps.length || models.length != lengths.length || models.length != types.length
-                || models.length != weights.length) {
-            log.error("Defaults do not have the right number of items, " + "models=" + models.length + " hps="
-                    + hps.length + " lengths=" + lengths.length // NOI18N
-                    + " types=" + types.length); // NOI18N
+        if (models.length != hps.length ||
+                models.length != lengths.length ||
+                models.length != types.length ||
+                models.length != weights.length) {
+            log.error("Defaults do not have the right number of items, " +
+                    "models=" +
+                    models.length +
+                    " hps=" +
+                    hps.length +
+                    " lengths=" +
+                    lengths.length // NOI18N
+                    +
+                    " types=" +
+                    types.length); // NOI18N
             return;
         }
 
@@ -171,6 +178,7 @@ public class EngineModels extends RollingStockAttribute {
     /**
      * Create an XML element to represent this Entry. This member has to remain
      * synchronized with the detailed DTD in operations-engines.dtd.
+     * @param root The common Element for operations-engines.dtd.
      *
      */
     public void store(Element root) {
@@ -183,10 +191,31 @@ public class EngineModels extends RollingStockAttribute {
 
     protected void setDirtyAndFirePropertyChange(String p, Object old, Object n) {
         // Set dirty
-        EngineManagerXml.instance().setDirty(true);
+        InstanceManager.getDefault(EngineManagerXml.class).setDirty(true);
         super.firePropertyChange(p, old, n);
     }
 
-    static Logger log = LoggerFactory.getLogger(EngineModels.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(EngineModels.class);
 
+    @ServiceProvider(service = InstanceInitializer.class)
+    public static class Initializer extends AbstractInstanceInitializer {
+
+        @Override
+        public <T> Object getDefault(Class<T> type) throws IllegalArgumentException {
+            if (type.equals(EngineModels.class)) {
+                EngineModels instance = new EngineModels();
+                instance.loadDefaults();
+                return instance;
+            }
+            return super.getDefault(type);
+        }
+
+        @Override
+        public Set<Class<?>> getInitalizes() {
+            Set<Class<?>> set = super.getInitalizes();
+            set.add(EngineModels.class);
+            return set;
+        }
+
+    }
 }

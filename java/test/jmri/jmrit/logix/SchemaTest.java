@@ -1,10 +1,10 @@
-// SchemaTest.java
 package jmri.jmrit.logix;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.File;
+import jmri.configurexml.SchemaTestBase;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 //import jmri.InstanceManager;
 /**
@@ -12,29 +12,17 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright 2009
  * @since 2.5.5
- * @version $Revision$
  */
-public class SchemaTest extends jmri.configurexml.SchemaTestBase {
+@RunWith(Parameterized.class)
+public class SchemaTest extends SchemaTestBase {
 
-    // from here down is testing infrastructure
-    public SchemaTest(String s) {
-        super(s);
+    @Parameters(name = "{0} (pass={1})")
+    public static Iterable<Object[]> data() {
+        // the following are just tested for schema pass/fail, not load/store
+        return getFiles(new File("java/test/jmri/jmrit/logix/valid"), true, true);
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", SchemaTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    public SchemaTest(File file, boolean pass) {
+        super(file, pass);
     }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite("jmri.jmrit.logix.SchemaTest");
-
-        validateDirectory(suite, "java/test/jmri/jmrit/logix/valid");
-
-        return suite;
-    }
-
-    static Logger log = LoggerFactory.getLogger(SchemaTest.class.getName());
 }

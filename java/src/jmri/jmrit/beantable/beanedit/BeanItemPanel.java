@@ -6,14 +6,9 @@ import javax.swing.AbstractAction;
 import javax.swing.JPanel;
 
 /**
- * Hold the information for each bean panel in a structured mannor.
+ * Hold the information for each bean panel in a structured manner.
  */
 public class BeanItemPanel extends JPanel {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -5160179371427193315L;
 
     public BeanItemPanel() {
         super();
@@ -29,18 +24,21 @@ public class BeanItemPanel extends JPanel {
         if (reset != null) {
             reset.actionPerformed(null);
         }
-
     }
 
     /**
-     * Set the action to be performed when the save button is pressed
+     * Set the action to be performed when the Save button is pressed.
+     *
+     * @param save the new save action
      */
     public void setSaveItem(AbstractAction save) {
         this.save = save;
     }
 
     /**
-     * Set the action to be performed when the cancel button is pressed
+     * Set the action to be performed when the Cancel button is pressed.
+     *
+     * @param reset the new reset action
      */
     public void setResetItem(AbstractAction reset) {
         this.reset = reset;
@@ -61,10 +59,12 @@ public class BeanItemPanel extends JPanel {
 
     String name;
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    @Override
     public String getName() {
         return name;
     }

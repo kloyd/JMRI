@@ -1,53 +1,51 @@
-// AlignmentPanelTest.java
 package jmri.jmrix.rps.reversealign;
 
+import java.awt.GraphicsEnvironment;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import jmri.InstanceManager;
+import jmri.jmrit.roster.RosterConfigManager;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.netbeans.jemmy.operators.JFrameOperator;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * JUnit tests for the rps.AlignmentPanel class.
  *
  * @author	Bob Jacobsen Copyright 2006
- * @version	$Revision$
  */
-public class AlignmentPanelTest extends TestCase {
+public class AlignmentPanelTest {
 
+    private RpsSystemConnectionMemo memo = null;
+
+    @Test
     public void testShow() {
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         jmri.util.JmriJFrame f = new jmri.util.JmriJFrame("RPS Alignment");
         f.getContentPane().setLayout(new BoxLayout(f.getContentPane(), BoxLayout.Y_AXIS));
 
-        AlignmentPanel panel = new AlignmentPanel();
+        AlignmentPanel panel = new AlignmentPanel(memo);
         panel.initComponents();
         f.getContentPane().add(panel);
         f.pack();
         f.setVisible(true);
-//    }
-//  test order isn't guaranteed!
-//    public void testXFrameCreation() {
-        JFrame f2 = jmri.util.JmriJFrame.getFrame("RPS Alignment");
-        Assert.assertTrue("found frame", f2 != null);
+        JFrame f2 = JFrameOperator.waitJFrame("RPS Alignment", true, true);
+        Assert.assertNotNull("found frame", f2);
         f2.dispose();
     }
 
-    // from here down is testing infrastructure
-    public AlignmentPanelTest(String s) {
-        super(s);
+    @Before
+    public void setUp() throws Exception {
+        JUnitUtil.setUp();
+        memo = new RpsSystemConnectionMemo();
+        InstanceManager.setDefault(RosterConfigManager.class, new RosterConfigManager());
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {AlignmentPanelTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(AlignmentPanelTest.class);
-        return suite;
-    }
-
+    @After
+    public void tearDown() throws Exception {        JUnitUtil.tearDown();    }
 }

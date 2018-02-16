@@ -1,18 +1,22 @@
 package jmri.jmrit.operations;
 
 import java.io.File;
+import java.io.IOException;
 import jmri.InstanceManager;
+import jmri.InstanceManagerAutoDefault;
+import jmri.InstanceManagerAutoInitialize;
+import jmri.ShutDownManager;
 import jmri.ShutDownTask;
 import jmri.implementation.QuietShutDownTask;
 import jmri.jmrit.operations.locations.LocationManager;
-import jmri.jmrit.operations.locations.ScheduleManager;
+import jmri.jmrit.operations.locations.schedules.ScheduleManager;
 import jmri.jmrit.operations.rollingstock.cars.CarManager;
 import jmri.jmrit.operations.rollingstock.engines.EngineManager;
 import jmri.jmrit.operations.routes.RouteManager;
 import jmri.jmrit.operations.setup.AutoBackup;
 import jmri.jmrit.operations.setup.Setup;
 import jmri.jmrit.operations.trains.TrainManager;
-import jmri.jmrit.operations.trains.TrainScheduleManager;
+import jmri.jmrit.operations.trains.timetable.TrainScheduleManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,61 +25,25 @@ import org.slf4j.LoggerFactory;
  *
  * @author Randall Wood 2014
  */
-public final class OperationsManager {
+public final class OperationsManager implements InstanceManagerAutoDefault, InstanceManagerAutoInitialize {
 
     private ShutDownTask shutDownTask = null;
-    protected final String operationsFolderName;
 
-    static private OperationsManager instance = null;
     static private final Logger log = LoggerFactory.getLogger(OperationsManager.class);
 
-    private OperationsManager() {
-        this("operations"); // NOI18N
-    }
-
-    private OperationsManager(String operationsFolderName) {
-        this.operationsFolderName = operationsFolderName;
-        // ensure the default instance of all operations managers
-        // are initialized by calling their instance() methods
-        // Is there a different, more optimal order for this?
-        CarManager.instance();
-        EngineManager.instance();
-        TrainManager.instance();
-        LocationManager.instance();
-        RouteManager.instance();
-        ScheduleManager.instance();
-        TrainScheduleManager.instance();
-        this.setShutDownTask(this.getDefaultShutDownTask());
-        // auto backup?
-        if (Setup.isAutoBackupEnabled()) {
-            try {
-                AutoBackup backup = new AutoBackup();
-                backup.autoBackup();
-            } catch (Exception ex) {
-                log.debug("Auto backup after enabling Auto Backup flag.", ex);
-            }
-        }
+    public OperationsManager() {
     }
 
     /**
-     * Get the OperationsManager.
+     * Get the default instance of this class.
      *
-     * @return The OperationsManager default instance.
+     * @return the default instance of this class
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
      */
-    public static OperationsManager getInstance() {
-        if (instance == null) {
-            instance = new OperationsManager();
-        }
-        return instance;
-    }
-
-    /**
-     * Override the default OperationsManager. Used for unit testing.
-     *
-     * @param operationsFolderName
-     */
-    protected static void setInstance(String operationsFolderName) {
-        instance = new OperationsManager(operationsFolderName);
+    @Deprecated
+    public synchronized static OperationsManager getInstance() {
+        return InstanceManager.getDefault(OperationsManager.class);
     }
 
     /**
@@ -83,13 +51,9 @@ public final class OperationsManager {
      * a String.
      *
      * @return A path
-     * @see #getOperationsFolderName()
      */
     public String getPath() {
-        if (this.getOperationsFolderName().endsWith(File.separator)) {
-            return OperationsXml.getFileLocation() + this.getOperationsFolderName();
-        }
-        return OperationsXml.getFileLocation() + this.getOperationsFolderName() + File.separator;
+        return OperationsXml.getFileLocation() + OperationsXml.getOperationsDirectoryName() + File.separator;
     }
 
     /**
@@ -119,7 +83,7 @@ public final class OperationsManager {
 
     /**
      * Register the non-default {@link jmri.ShutDownTask}.
-     *
+     * <p>
      * Replaces the existing operations ShutDownTask with the new task. Use a
      * null value to prevent an operations ShutDownTask from being run when JMRI
      * shuts down. Use {@link #getDefaultShutDownTask() } to use the default
@@ -128,15 +92,15 @@ public final class OperationsManager {
      * @param shutDownTask The new ShutDownTask or null
      */
     public void setShutDownTask(ShutDownTask shutDownTask) {
-        if (InstanceManager.shutDownManagerInstance() != null) {
+        InstanceManager.getOptionalDefault(ShutDownManager.class).ifPresent((manager) -> {
             if (this.shutDownTask != null) {
-                InstanceManager.shutDownManagerInstance().deregister(this.shutDownTask);
+                manager.deregister(this.shutDownTask);
             }
             this.shutDownTask = shutDownTask;
             if (this.shutDownTask != null) {
-                InstanceManager.shutDownManagerInstance().register(this.shutDownTask);
+                manager.register(this.shutDownTask);
             }
-        }
+        });
     }
 
     /**
@@ -153,7 +117,7 @@ public final class OperationsManager {
                 try {
                     OperationsXml.save();
                 } catch (Exception ex) {
-                    log.warn("Error saving operations state: {}", ex);
+                    log.warn("Error saving operations state: {}", ex.getMessage());
                     log.debug("Details follow: ", ex);
                 }
                 return true;
@@ -161,10 +125,27 @@ public final class OperationsManager {
         };
     }
 
-    /**
-     * @return the operationsFolderName
-     */
-    public String getOperationsFolderName() {
-        return operationsFolderName;
+    @Override
+    public void initialize() {
+        // ensure the default instance of all operations managers
+        // are initialized by calling their instance() methods
+        // Is there a different, more optimal order for this?
+        InstanceManager.getDefault(CarManager.class);
+        InstanceManager.getDefault(EngineManager.class);
+        InstanceManager.getDefault(TrainManager.class);
+        InstanceManager.getDefault(LocationManager.class);
+        InstanceManager.getDefault(RouteManager.class);
+        InstanceManager.getDefault(ScheduleManager.class);
+        InstanceManager.getDefault(TrainScheduleManager.class);
+        this.setShutDownTask(this.getDefaultShutDownTask());
+        // auto backup?
+        if (Setup.isAutoBackupEnabled()) {
+            try {
+                AutoBackup backup = new AutoBackup();
+                backup.autoBackup();
+            } catch (IOException ex) {
+                log.debug("Auto backup after enabling Auto Backup flag.", ex);
+            }
+        }
     }
 }

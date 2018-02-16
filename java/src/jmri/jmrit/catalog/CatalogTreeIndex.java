@@ -1,4 +1,3 @@
-// CatalogTreeIndex.java
 package jmri.jmrit.catalog;
 
 import java.util.HashMap;
@@ -11,15 +10,10 @@ import org.slf4j.LoggerFactory;
  * <P>
  * Source of the tree content is an XML file.
  *
- * @author	Pete Cressman Copyright 2009
+ * @author Pete Cressman Copyright 2009
  *
  */
 public class CatalogTreeIndex extends AbstractCatalogTree {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -421977014689495815L;
 
     public CatalogTreeIndex(String sysName, String userName) {
 
@@ -35,6 +29,7 @@ public class CatalogTreeIndex extends AbstractCatalogTree {
      * @param pParent Node for the parent of the resource to be scanned, e.g.
      *                where in the tree to insert it.
      */
+    @Override
     public void insertNodes(String pName, String pPath, CatalogTreeNode pParent) {
         CatalogTreeNode newNode = null;
         if (pPath == null) {
@@ -48,42 +43,40 @@ public class CatalogTreeIndex extends AbstractCatalogTree {
         }
         insertNodeInto(newNode, pParent, pParent.getChildCount());
     }
-    /*
-     public void insertNodes(String rootName, String pathToRoot) {
-     CatalogTreeNode root = (CatalogTreeNode)getRoot();
-     insertNodes(rootName, pathToRoot, root);
-     }
-     */
 
-    public void setProperty(Object key, Object value) {
+    @Override
+    public void setProperty(String key, Object value) {
         if (parameters == null) {
-            parameters = new HashMap<Object, Object>();
+            parameters = new HashMap<String, Object>();
         }
         parameters.put(key, value);
     }
 
-    public Object getProperty(Object key) {
+    @Override
+    public Object getProperty(String key) {
         if (parameters == null) {
-            return null;
+            parameters = new HashMap<String, Object>();
         }
         return parameters.get(key);
     }
 
-    public java.util.Set<Object> getPropertyKeys() {
+    @Override
+    public java.util.Set<String> getPropertyKeys() {
         if (parameters == null) {
-            return null;
+            parameters = new HashMap<String, Object>();
         }
         return parameters.keySet();
     }
 
-    public void removeProperty(Object key) {
+    @Override
+    public void removeProperty(String key) {
         if (parameters == null || key == null) {
             return;
         }
         parameters.remove(key);
     }
 
-    HashMap<Object, Object> parameters = null;
+    HashMap<String, Object> parameters = null;
 
-    static Logger log = LoggerFactory.getLogger(CatalogTreeIndex.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CatalogTreeIndex.class);
 }

@@ -1,9 +1,6 @@
-// JMRIClientTurnoutManager.java
 package jmri.jmrix.jmriclient;
 
 import jmri.Turnout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implement turnout manager for JMRIClient systems
@@ -11,9 +8,8 @@ import org.slf4j.LoggerFactory;
  * System names are "prefixnnn", where prefix is the system prefix and nnn is
  * the turnout number without padding.
  *
- * @author	Paul Bender Copyright (C) 2010
- * @version	$Revision$
- */
+ * @author Paul Bender Copyright (C) 2010
+  */
 public class JMRIClientTurnoutManager extends jmri.managers.AbstractTurnoutManager {
 
     private JMRIClientSystemConnectionMemo memo = null;
@@ -24,10 +20,12 @@ public class JMRIClientTurnoutManager extends jmri.managers.AbstractTurnoutManag
         this.prefix = memo.getSystemPrefix();
     }
 
+    @Override
     public String getSystemPrefix() {
         return prefix;
     }
 
+    @Override
     public Turnout createNewTurnout(String systemName, String userName) {
         Turnout t;
         int addr = Integer.valueOf(systemName.substring(prefix.length() + 1)).intValue();
@@ -45,8 +43,9 @@ public class JMRIClientTurnoutManager extends jmri.managers.AbstractTurnoutManag
         return prefix + typeLetter() + curAddress;
     }
 
-    static Logger log = LoggerFactory.getLogger(JMRIClientTurnoutManager.class.getName());
+    @Override
+    public boolean allowMultipleAdditions(String systemName) {
+        return true;
+    }
 
 }
-
-/* @(#)JMRIClientTurnoutManager.java */

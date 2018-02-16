@@ -9,6 +9,7 @@ import jmri.JmriException;
 import jmri.NamedBean;
 import jmri.Sensor;
 import jmri.SignalMast;
+import jmri.jmrit.display.PanelMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -18,9 +19,8 @@ import org.slf4j.MDC;
  * the advanced layout block routing has been enabled. These tools can determine
  * if a path from a source to destination bean is valid. If a route between two
  * layout blocks is usable and free.
- * 
-* @author Kevin Dickerson Copyright (C) 2011
- * @version	$Revision: 19923 $
+ *
+ * @author Kevin Dickerson Copyright (C) 2011
  */
 public class LayoutBlockConnectivityTools {
 
@@ -75,17 +75,17 @@ public class LayoutBlockConnectivityTools {
      */
     public boolean checkValidDest(NamedBean sourceBean, NamedBean destBean, int pathMethod) throws jmri.JmriException {
         if (log.isDebugEnabled()) {
-            log.debug("check valid des with source/dest bean" + sourceBean.getDisplayName() + "  " + destBean.getDisplayName());
+            log.debug("check valid des with source/dest bean {} {}", sourceBean.getDisplayName(), destBean.getDisplayName());
         }
         LayoutBlock facingBlock = null;
         LayoutBlock protectingBlock = null;
         LayoutBlock destFacingBlock = null;
         List<LayoutBlock> destProtectBlock = null;
-        ArrayList<LayoutEditor> layout = jmri.jmrit.display.PanelMenu.instance().getLayoutEditorPanelList();
+        List<LayoutEditor> layout = InstanceManager.getDefault(PanelMenu.class).getLayoutEditorPanelList();
         LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
         for (int i = 0; i < layout.size(); i++) {
             if (log.isDebugEnabled()) {
-                log.debug("Layout name " + layout.get(i).getLayoutName());
+                log.debug("Layout name {}", layout.get(i).getLayoutName());
             }
             if (facingBlock == null) {
                 facingBlock = lbm.getFacingBlockByNamedBean(sourceBean, layout.get(i));
@@ -113,7 +113,7 @@ public class LayoutBlockConnectivityTools {
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug("No valid route from " + sourceBean.getDisplayName() + " to " + destBean.getDisplayName());
+            log.debug("No valid route from {} to {}", sourceBean.getDisplayName(), destBean.getDisplayName());
         }
         throw new jmri.JmriException("Blocks Not Found");
     }
@@ -138,19 +138,19 @@ public class LayoutBlockConnectivityTools {
      *                     are in the path, if there are then the system will
      *                     try to find an alternative path. If set to NONE, then
      *                     no checking is performed.
-     * @return an ArrayList of all the layoutblocks in the path.
+     * @return an List of all the layoutblocks in the path.
      * @throws jmri.JmriException if it can not find a valid path or the routing
      *                            has not been enabled.
      */
-    public ArrayList<LayoutBlock> getLayoutBlocks(NamedBean sourceBean, NamedBean destBean, boolean validateOnly, int pathMethod) throws jmri.JmriException {
-        ArrayList<LayoutEditor> layout = jmri.jmrit.display.PanelMenu.instance().getLayoutEditorPanelList();
+    public List<LayoutBlock> getLayoutBlocks(NamedBean sourceBean, NamedBean destBean, boolean validateOnly, int pathMethod) throws jmri.JmriException {
+        List<LayoutEditor> layout = InstanceManager.getDefault(PanelMenu.class).getLayoutEditorPanelList();
         LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
         LayoutBlock facingBlock = null;
         LayoutBlock protectingBlock = null;
         LayoutBlock destFacingBlock = null;
         for (int i = 0; i < layout.size(); i++) {
             if (log.isDebugEnabled()) {
-                log.debug("Layout name " + layout.get(i).getLayoutName());
+                log.debug("Layout name {}", layout.get(i).getLayoutName());
             }
             if (facingBlock == null) {
                 facingBlock = lbm.getFacingBlockByNamedBean(sourceBean, layout.get(i));
@@ -172,7 +172,7 @@ public class LayoutBlockConnectivityTools {
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug("No valid route from " + sourceBean.getDisplayName() + " to " + destBean.getDisplayName());
+            log.debug("No valid route from {} to {}", sourceBean.getDisplayName(), destBean.getDisplayName());
         }
         throw new jmri.JmriException("Blocks Not Found");
     }
@@ -189,7 +189,7 @@ public class LayoutBlockConnectivityTools {
      *                  return any.
      */
     public List<NamedBean> getBeansInPath(List<LayoutBlock> blocklist, LayoutEditor panel, Class<?> T) {
-        ArrayList<NamedBean> beansInPath = new ArrayList<NamedBean>();
+        List<NamedBean> beansInPath = new ArrayList<>();
         if (blocklist.size() >= 2) {
             LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
             for (int x = 1; x < blocklist.size(); x++) {
@@ -231,7 +231,7 @@ public class LayoutBlockConnectivityTools {
      */
     public boolean checkValidDest(LayoutBlock currentBlock, LayoutBlock nextBlock, LayoutBlock destBlock, LayoutBlock destBlockn1, int pathMethod) throws jmri.JmriException {
 
-        List<LayoutBlock> destList = new ArrayList<LayoutBlock>();
+        List<LayoutBlock> destList = new ArrayList<>();
         if (destBlockn1 != null) {
             destList.add(destBlockn1);
         }
@@ -268,7 +268,7 @@ public class LayoutBlockConnectivityTools {
                 return false;
             }
             if (log.isDebugEnabled()) {
-                log.debug("dest " + destBlock.getDisplayName());
+                log.debug("dest {}", destBlock.getDisplayName());
                 /*if(destBlockn1!=null)
                  log.debug("remote prot " + destBlockn1.getDisplayName());*/
             }
@@ -283,7 +283,7 @@ public class LayoutBlockConnectivityTools {
                 desCount = currentBlock.getBlockHopCount(destBlock.getBlock(), nextBlock.getBlock());
                 proCount = currentBlock.getBlockHopCount(destBlockn1.get(0).getBlock(), nextBlock.getBlock());
                 if (log.isDebugEnabled()) {
-                    log.debug("dest " + desCount + " protecting " + proCount);
+                    log.debug("dest {} protecting {}", desCount, proCount);
                 }
             }
             if (proCount > desCount && (proCount - 1) != desCount) {
@@ -295,14 +295,14 @@ public class LayoutBlockConnectivityTools {
             }
             if (proCount < desCount) {
                 /*Need to do a more advanced check in this case as the destBlockn1
-                 could be reached via a different route and therefore have a smaller 
+                 could be reached via a different route and therefore have a smaller
                  hop count we need to therefore step through each block until we reach
                  the end.
-                 We also need to perform a more advanced check if the destBlockn1 
+                 We also need to perform a more advanced check if the destBlockn1
                  is null as this indicates that the destination signal mast is assigned
                  on an end bumper*/
                 log.debug("proCount is less than destination");
-                ArrayList<LayoutBlock> blockList = getLayoutBlocks(currentBlock, destBlock, nextBlock, true, pathMethod); //Was MASTTOMAST
+                List<LayoutBlock> blockList = getLayoutBlocks(currentBlock, destBlock, nextBlock, true, pathMethod); //Was MASTTOMAST
                 for (LayoutBlock dp : destBlockn1) {
                     if (blockList.contains(dp) && currentBlock != dp) {
                         log.debug("Signal mast in the wrong direction");
@@ -344,7 +344,7 @@ public class LayoutBlockConnectivityTools {
             return false;
         }
         if (log.isDebugEnabled()) {
-            log.debug("facing : " + facing.getDisplayName() + " protecting : " + protecting.getDisplayName() + " dest " + dest.getBean().getDisplayName());
+            log.debug("facing : {} protecting : {} dest {}" + facing.getDisplayName(), protecting.getDisplayName(), dest.getBean().getDisplayName());
         }
         try {
             //In this instance it doesn't matter what the destination protecting block is so we get the first
@@ -353,7 +353,7 @@ public class LayoutBlockConnectivityTools {
              destProt = InstanceManager.getDefault(LayoutBlockManager.class).getLayoutBlock(dest.getProtectingBlocks().get(0));
              //log.info(dest.getProtectingBlocks());
              }*/
-            List<LayoutBlock> destList = new ArrayList<LayoutBlock>();
+            List<LayoutBlock> destList = new ArrayList<>();
             for (Block b : dest.getProtectingBlocks()) {
                 destList.add(InstanceManager.getDefault(LayoutBlockManager.class).getLayoutBlock(b));
             }
@@ -388,11 +388,11 @@ public class LayoutBlockConnectivityTools {
      *                               then the system will try to find an
      *                               alternative path. If set to NONE, then no
      *                               checking is performed.
-     * @return an ArrayList of all the layoutblocks in the path.
+     * @return an List of all the layoutblocks in the path.
      * @throws jmri.JmriException if it can not find a valid path or the routing
      *                            has not been enabled.
      */
-    public ArrayList<LayoutBlock> getLayoutBlocks(LayoutBlock sourceLayoutBlock, LayoutBlock destinationLayoutBlock, LayoutBlock protectingLayoutBlock, boolean validateOnly, int pathMethod) throws jmri.JmriException {
+    public List<LayoutBlock> getLayoutBlocks(LayoutBlock sourceLayoutBlock, LayoutBlock destinationLayoutBlock, LayoutBlock protectingLayoutBlock, boolean validateOnly, int pathMethod) throws jmri.JmriException {
         lastErrorMessage = "Unknown Error Occured";
         LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
         if (!lbm.isAdvancedRoutingEnabled()) {
@@ -404,14 +404,13 @@ public class LayoutBlockConnectivityTools {
         Block currentBlock = sourceLayoutBlock.getBlock();
 
         Block destBlock = destinationLayoutBlock.getBlock();
-        if (log.isDebugEnabled()) {
-            log.debug("Destination Block " + destinationLayoutBlock.getDisplayName() + " " + destBlock);
-        }
+        log.debug("Destination Block {} {}", destinationLayoutBlock.getDisplayName(), destBlock);
+
         Block nextBlock = protectingLayoutBlock.getBlock();
         if (log.isDebugEnabled()) {
             log.debug("s:" + sourceLayoutBlock.getDisplayName() + " p:" + protectingLayoutBlock.getDisplayName() + " d:" + destinationLayoutBlock.getDisplayName());
         }
-        ArrayList<BlocksTested> blocksInRoute = new ArrayList<BlocksTested>();
+        List<BlocksTested> blocksInRoute = new ArrayList<>();
         blocksInRoute.add(new BlocksTested(sourceLayoutBlock));
 
         if (!validateOnly) {
@@ -431,20 +430,20 @@ public class LayoutBlockConnectivityTools {
             blocksInRoute.add(new BlocksTested(protectingLayoutBlock));
         }
         if (destinationLayoutBlock == protectingLayoutBlock) {
-            ArrayList<LayoutBlock> returnBlocks = new ArrayList<LayoutBlock>();
+            List<LayoutBlock> returnBlocks = new ArrayList<>();
             for (int i = 0; i < blocksInRoute.size(); i++) {
                 returnBlocks.add(blocksInRoute.get(i).getBlock());
             }
             return returnBlocks;
         }
-        LayoutBlock currentLBlock = protectingLayoutBlock;
 
         BlocksTested bt = blocksInRoute.get(blocksInRoute.size() - 1);
 
         int ttl = 1;
-        List<Integer> offSet = new ArrayList<Integer>();
+        List<Integer> offSet = new ArrayList<>();
         while (ttl < ttlSize) { //value should be higher but low for test!
-            log.debug("===== Ttl value = " + ttl + " ======\nLooking for next block");
+            log.debug("===== Ttl value = {} ======", ttl);
+            log.debug("Looking for next block");
             int nextBlockIndex = findBestHop(currentBlock, nextBlock, destBlock, directionOfTravel, offSet, validateOnly, pathMethod);
             if (nextBlockIndex != -1) {
                 bt.addIndex(nextBlockIndex);
@@ -452,9 +451,9 @@ public class LayoutBlockConnectivityTools {
                     log.debug("block index returned " + nextBlockIndex + " Blocks in route size " + blocksInRoute.size());
                 }
                 //Sets the old next block to be our current block.
-                currentLBlock = InstanceManager.getDefault(LayoutBlockManager.class).getLayoutBlock(nextBlock);
+                LayoutBlock currentLBlock = InstanceManager.getDefault(LayoutBlockManager.class).getLayoutBlock(nextBlock);
 
-                offSet = new ArrayList<Integer>();
+                offSet.clear();
 
                 directionOfTravel = currentLBlock.getRouteDirectionAtIndex(nextBlockIndex);
 
@@ -462,14 +461,14 @@ public class LayoutBlockConnectivityTools {
                 nextBlock = currentLBlock.getRouteNextBlockAtIndex(nextBlockIndex);
                 LayoutBlock nextLBlock = InstanceManager.getDefault(LayoutBlockManager.class).getLayoutBlock(nextBlock);
                 if (log.isDebugEnabled()) {
-                    log.debug("Blocks in route size " + blocksInRoute.size());
-                    log.debug(nextBlock.getDisplayName() + " " + destBlock.getDisplayName());
+                    log.debug("Blocks in route size {}", blocksInRoute.size());
+                    log.debug("{} {}", nextBlock.getDisplayName(), destBlock.getDisplayName());
                 }
                 if (nextBlock == currentBlock) {
                     nextBlock = currentLBlock.getRouteDestBlockAtIndex(nextBlockIndex);
                     log.debug("the next block to our destination we are looking for is directly connected to this one");
                 } else if (protectingLayoutBlock != nextLBlock) {
-                    log.debug("Add block " + nextLBlock.getDisplayName());
+                    log.debug("Add block {}", nextLBlock.getDisplayName());
                     bt = new BlocksTested(nextLBlock);
                     blocksInRoute.add(bt);
                 }
@@ -477,15 +476,15 @@ public class LayoutBlockConnectivityTools {
                     if (!validateOnly && !checkForLevelCrossing(destinationLayoutBlock)) {
                         throw new jmri.JmriException("Destination block is in conflict on a crossover");
                     }
-                    ArrayList<LayoutBlock> returnBlocks = new ArrayList<LayoutBlock>();
+                    List<LayoutBlock> returnBlocks = new ArrayList<>();
                     for (int i = 0; i < blocksInRoute.size(); i++) {
                         returnBlocks.add(blocksInRoute.get(i).getBlock());
                     }
                     returnBlocks.add(destinationLayoutBlock);
                     if (log.isDebugEnabled()) {
-                        log.debug("Adding destination Block " + destinationLayoutBlock.getDisplayName());
+                        log.debug("Adding destination Block {}", destinationLayoutBlock.getDisplayName());
                         log.debug("arrived at destination block");
-                        log.debug(sourceLayoutBlock.getDisplayName() + " Return as Long");
+                        log.debug("{} Return as Long", sourceLayoutBlock.getDisplayName());
                         for (int i = 0; i < returnBlocks.size(); i++) {
                             log.debug(returnBlocks.get(i).getDisplayName());
                         }
@@ -494,21 +493,21 @@ public class LayoutBlockConnectivityTools {
                     return returnBlocks;
                 }
             } else {
-            //-1 is returned when there are no more valid besthop valids found
+                //-1 is returned when there are no more valid besthop valids found
                 //Block index is -1, so we need to go back a block and find another way.
 
                 //So we have gone back as far as our starting block so we better return.
                 int birSize = blocksInRoute.size();
-                log.debug("block in route size " + birSize);
+                log.debug("block in route size {}", birSize);
                 if (birSize <= 2) {
                     log.debug("drop out here with ttl");
                     ttl = ttlSize + 1;
                 } else {
                     if (log.isDebugEnabled()) {
                         for (int t = 0; t < blocksInRoute.size(); t++) {
-                            log.debug("index " + t + " block " + blocksInRoute.get(t).getBlock().getDisplayName());
+                            log.debug("index {} block {}", t, blocksInRoute.get(t).getBlock().getDisplayName());
                         }
-                        log.debug("To remove last block " + blocksInRoute.get(birSize - 1).getBlock().getDisplayName());
+                        log.debug("To remove last block {}", blocksInRoute.get(birSize - 1).getBlock().getDisplayName());
                     }
 
                     currentBlock = blocksInRoute.get(birSize - 3).getBlock().getBlock();
@@ -531,7 +530,7 @@ public class LayoutBlockConnectivityTools {
     static class BlocksTested {
 
         LayoutBlock block;
-        ArrayList<Integer> indexNumber = new ArrayList<Integer>();
+        List<Integer> indexNumber = new ArrayList<>();
 
         BlocksTested(LayoutBlock block) {
             this.block = block;
@@ -577,7 +576,7 @@ public class LayoutBlockConnectivityTools {
         int blockindex = 0;
         Block block;
         LayoutBlock currentLBlock = InstanceManager.getDefault(LayoutBlockManager.class).getLayoutBlock(currentBlock);
-        ArrayList<Integer> blkIndexTested = new ArrayList<Integer>(5);
+        List<Integer> blkIndexTested = new ArrayList<>(5);
         if (log.isDebugEnabled()) {
             log.debug("In find best hop current " + currentLBlock.getDisplayName() + " previous " + preBlock.getDisplayName());
         }
@@ -605,7 +604,7 @@ public class LayoutBlockConnectivityTools {
                 if ((block == currentBlock) && (currentLBlock.getThroughPathIndex(preBlock, destBlock) == -1)) {
                     lastErrorMessage = "block " + block.getDisplayName() + " is directly attached, however the route to the destination block " + destBlock.getDisplayName() + " can not be directly used";
                     log.debug(lastErrorMessage);
-                } else if ((validateOnly) || ((checkForDoubleCrossOver(preBlock, currentLBlock, blocktoCheck) && checkForLevelCrossing(currentLBlock)) && canLBlockBeUsed(lBlock))) {
+                } else if ((validateOnly) || ((checkForDoubleCrossover(preBlock, currentLBlock, blocktoCheck) && checkForLevelCrossing(currentLBlock)) && canLBlockBeUsed(lBlock))) {
                     if (log.isDebugEnabled()) {
                         log.debug(block.getDisplayName() + " not occupied & not reserved but we need to check if the anchor point between the two contains a signal or not");
                         log.debug(currentBlock.getDisplayName() + " " + block.getDisplayName());
@@ -656,15 +655,14 @@ public class LayoutBlockConnectivityTools {
         return -1;
     }
 
-    private boolean checkForDoubleCrossOver(Block prevBlock, LayoutBlock curBlock, Block nextBlock) {
+    private boolean checkForDoubleCrossover(Block prevBlock, LayoutBlock curBlock, Block nextBlock) {
         LayoutEditor le = curBlock.getMaxConnectedPanel();
         ConnectivityUtil ct = le.getConnectivityUtil();
-        ArrayList<LayoutTurnout> turnoutList = ct.getTurnoutList(curBlock.getBlock(), prevBlock, nextBlock);
-        ArrayList<Integer> settingsList = ct.getTurnoutSettingList();
+        List<LayoutTrackExpectedState<LayoutTurnout>> turnoutList = ct.getTurnoutList(curBlock.getBlock(), prevBlock, nextBlock);
         for (int i = 0; i < turnoutList.size(); i++) {
-            LayoutTurnout lt = turnoutList.get(i);
+            LayoutTurnout lt = turnoutList.get(i).getObject();
             if (lt.getTurnoutType() == LayoutTurnout.DOUBLE_XOVER) {
-                if (settingsList.get(i) == jmri.Turnout.THROWN) {
+                if (turnoutList.get(i).getExpectedState() == jmri.Turnout.THROWN) {
                     jmri.Turnout t = lt.getTurnout();
                     if (t.getKnownState() == jmri.Turnout.THROWN) {
                         if (lt.getLayoutBlock() == curBlock || lt.getLayoutBlockC() == curBlock) {
@@ -685,11 +683,12 @@ public class LayoutBlockConnectivityTools {
 
     private boolean checkForLevelCrossing(LayoutBlock curBlock) {
         LayoutEditor lay = curBlock.getMaxConnectedPanel();
-        for (int j = 0; j < lay.xingList.size(); j++) {
-            //Looking for a crossing that both layout blocks defined and they are individual.
-            LevelXing lx = lay.xingList.get(j);
-            if (lx.getLayoutBlockAC() == curBlock || lx.getLayoutBlockBD() == curBlock) {
-                if ((lx.getLayoutBlockAC() != null) && (lx.getLayoutBlockBD() != null) && (lx.getLayoutBlockAC() != lx.getLayoutBlockBD())) {
+        for (LevelXing lx : lay.getLevelXings()) {
+            if (lx.getLayoutBlockAC() == curBlock
+                    || lx.getLayoutBlockBD() == curBlock) {
+                if ((lx.getLayoutBlockAC() != null)
+                        && (lx.getLayoutBlockBD() != null)
+                        && (lx.getLayoutBlockAC() != lx.getLayoutBlockBD())) {
                     if (lx.getLayoutBlockAC() == curBlock) {
                         return canLBlockBeUsed(lx.getLayoutBlockBD());
                     } else if (lx.getLayoutBlockBD() == curBlock) {
@@ -710,10 +709,10 @@ public class LayoutBlockConnectivityTools {
      *                   there are other beans in the way. Constant values of
      *                   NONE, ANY, MASTTOMAST, HEADTOHEAD
      */
-    public Hashtable<NamedBean, ArrayList<NamedBean>> discoverValidBeanPairs(LayoutEditor editor, Class<?> T, int pathMethod) {
+    public Hashtable<NamedBean, List<NamedBean>> discoverValidBeanPairs(LayoutEditor editor, Class<?> T, int pathMethod) {
         LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
-        Hashtable<NamedBean, ArrayList<NamedBean>> retPairs = new Hashtable<NamedBean, ArrayList<NamedBean>>();
-        ArrayList<FacingProtecting> beanList = generateBlocksWithBeans(editor, T);
+        Hashtable<NamedBean, List<NamedBean>> retPairs = new Hashtable<NamedBean, List<NamedBean>>();
+        List<FacingProtecting> beanList = generateBlocksWithBeans(editor, T);
         for (FacingProtecting fp : beanList) {
             for (Block block : fp.getProtectingBlocks()) {
                 if (log.isDebugEnabled()) {
@@ -759,8 +758,8 @@ public class LayoutBlockConnectivityTools {
         LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
         LayoutBlock lFacing = lbm.getFacingBlockByNamedBean(source, editor);
         List<LayoutBlock> lProtecting = lbm.getProtectingBlocksByNamedBean(source, editor);
-        ArrayList<NamedBean> ret = new ArrayList<NamedBean>();
-        ArrayList<FacingProtecting> beanList = generateBlocksWithBeans(editor, T);
+        List<NamedBean> ret = new ArrayList<>();
+        List<FacingProtecting> beanList = generateBlocksWithBeans(editor, T);
         try {
             for (LayoutBlock lb : lProtecting) {
                 ret.addAll(discoverPairDest(source, lb, lFacing, beanList, pathMethod));
@@ -771,15 +770,15 @@ public class LayoutBlockConnectivityTools {
         return ret;
     }
 
-    ArrayList<NamedBean> discoverPairDest(NamedBean source, LayoutBlock lProtecting, LayoutBlock lFacing, ArrayList<FacingProtecting> blockList, int pathMethod) throws JmriException {
+    List<NamedBean> discoverPairDest(NamedBean source, LayoutBlock lProtecting, LayoutBlock lFacing, List<FacingProtecting> blockList, int pathMethod) throws JmriException {
         LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
         if (!lbm.isAdvancedRoutingEnabled()) {
             throw new JmriException("advanced routing not enabled");
         }
         if (!lbm.routingStablised()) {
-            throw new JmriException("routing not stablised");
+            throw new JmriException("routing not stabilised");
         }
-        ArrayList<NamedBean> validDestBean = new ArrayList<NamedBean>();
+        List<NamedBean> validDestBean = new ArrayList<>();
         for (int j = 0; j < blockList.size(); j++) {
             if (blockList.get(j).getBean() != source) {
                 NamedBean destObj = blockList.get(j).getBean();
@@ -793,7 +792,7 @@ public class LayoutBlockConnectivityTools {
                         }
                         LayoutBlock ldstBlock = lbm.getLayoutBlock(blockList.get(j).getFacing());
                         try {
-                            ArrayList<LayoutBlock> lblks = getLayoutBlocks(lFacing, ldstBlock, lProtecting, true, pathMethod);
+                            List<LayoutBlock> lblks = getLayoutBlocks(lFacing, ldstBlock, lProtecting, true, pathMethod);
                             if (log.isDebugEnabled()) {
                                 log.debug("Adding block " + destObj.getDisplayName() + " to paths, current size " + lblks.size());
                             }
@@ -810,9 +809,9 @@ public class LayoutBlockConnectivityTools {
         return validDestBean;
     }
 
-    ArrayList<FacingProtecting> generateBlocksWithBeans(LayoutEditor editor, Class<?> T) {
+    List<FacingProtecting> generateBlocksWithBeans(LayoutEditor editor, Class<?> T) {
         LayoutBlockManager lbm = InstanceManager.getDefault(LayoutBlockManager.class);
-        ArrayList<FacingProtecting> beanList = new ArrayList<FacingProtecting>();
+        List<FacingProtecting> beanList = new ArrayList<>();
 
         List<String> lblksSysName = lbm.getSystemNameList();
         for (int i = 0; i < lblksSysName.size(); i++) {
@@ -826,7 +825,7 @@ public class LayoutBlockConnectivityTools {
                 int noNeigh = curLblk.getNumberOfNeighbours();
                 for (int x = 0; x < noNeigh; x++) {
                     Block blk = curLblk.getNeighbourAtIndex(x);
-                    ArrayList<Block> proBlk = new ArrayList<Block>();
+                    List<Block> proBlk = new ArrayList<>();
                     NamedBean bean = null;
                     if (T == null) {
                         proBlk.add(blk);
@@ -910,13 +909,13 @@ public class LayoutBlockConnectivityTools {
     static class FacingProtecting {
 
         Block facing;
-        ArrayList<Block> protectingBlocks;
+        List<Block> protectingBlocks;
         NamedBean bean;
 
-        FacingProtecting(Block facing, ArrayList<Block> protecting, NamedBean bean) {
+        FacingProtecting(Block facing, List<Block> protecting, NamedBean bean) {
             this.facing = facing;
             if (protecting == null) {
-                this.protectingBlocks = new ArrayList<Block>(0);
+                this.protectingBlocks = new ArrayList<>(0);
             } else {
                 this.protectingBlocks = protecting;
             }
@@ -972,6 +971,6 @@ public class LayoutBlockConnectivityTools {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(LayoutBlockConnectivityTools.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LayoutBlockConnectivityTools.class);
 
 }

@@ -1,4 +1,3 @@
-// SampleAutomaton.java
 package jmri.jmrit.automat;
 
 import jmri.InstanceManager;
@@ -23,8 +22,7 @@ import org.slf4j.LoggerFactory;
  * <a href="http://jmri.org/help/en/html/tools/automation/viaJava.shtml">JMRI
  * Layout Automation in Java page</a>.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  * @see jmri.jmrit.automat.SampleAutomatonAction
  */
 public class SampleAutomaton extends AbstractAutomaton {
@@ -53,6 +51,7 @@ public class SampleAutomaton extends AbstractAutomaton {
      * This also sets the turnout to the current (initial) state to make sure
      * everything is consistent at the start.
      */
+    @Override
     protected void init() {
 
         log.info("SampleAutomaton monitors sensor " + sensorName
@@ -61,20 +60,13 @@ public class SampleAutomaton extends AbstractAutomaton {
         // get references to sample layout objects
         turnout = InstanceManager.turnoutManagerInstance().
                 provideTurnout(turnoutName);
-        if (turnout == null) {
-            log.error("Failure to provide turnout " + turnoutName + " when initialized");
-        }
 
         sensor = InstanceManager.sensorManagerInstance().
                 provideSensor(sensorName);
 
-        if (sensor != null) {
-            // set up the initial correlation
-            now = sensor.getKnownState();
-            setTurnout(now);
-        } else {
-            log.error("Failure to provide sensor " + sensorName + " when initialized");
-        }
+        // set up the initial correlation
+        now = sensor.getKnownState();
+        setTurnout(now);
     }
 
     int now;
@@ -84,6 +76,7 @@ public class SampleAutomaton extends AbstractAutomaton {
      *
      * @return Always returns true to continue operation
      */
+    @Override
     protected boolean handle() {
         log.debug("Waiting for state change");
 
@@ -114,9 +107,6 @@ public class SampleAutomaton extends AbstractAutomaton {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(SampleAutomaton.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SampleAutomaton.class);
 
 }
-
-
-/* @(#)SampleAutomaton.java */

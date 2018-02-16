@@ -15,23 +15,20 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import jmri.util.FileUtil;
 import jmri.util.swing.WindowInterface;
 import org.jdom2.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Reload the JMRI Roster ({@link jmri.jmrit.roster.Roster}) from a file
  * previously stored by {@link jmri.jmrit.roster.FullBackupExportAction}.
- *
+ * <p>
  * Does not currently handle importing the group(s) that the entry belongs to.
  *
  * @author Bob Jacobsen Copyright 2014
  */
 public class FullBackupImportAction extends ImportRosterItemAction {
 
-    /**
-     * Load from a file exported by {@link FullBackupImportAction}
-     *
-     * @author Bob Jacobsen Copyright 2014
-     */
-    private static final long serialVersionUID = 1L;
+    private final static Logger log = LoggerFactory.getLogger(FullBackupImportAction.class);
 
     //private Component _who;
     public FullBackupImportAction(String s, WindowInterface wi) {
@@ -51,36 +48,38 @@ public class FullBackupImportAction extends ImportRosterItemAction {
         super(title, parent);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         // ensure preferences will be found for read
         FileUtil.createDirectory(LocoFile.getFileLocation());
 
         // make sure instance loaded
-        Roster.instance();
+        Roster.getDefault();
 
         // set up to read import file
         ZipInputStream zipper = null;
         FileInputStream inputfile = null;
 
+        JFileChooser chooser = new JFileChooser();
+
+        String roster_filename_extension = "roster";
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                "JMRI full roster files", roster_filename_extension);
+        chooser.addChoosableFileFilter(filter);
+
+        int returnVal = chooser.showOpenDialog(mParent);
+        if (returnVal != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        String filename = chooser.getSelectedFile().getAbsolutePath();
+
         try {
-
-            JFileChooser chooser = new JFileChooser();
-
-            String roster_filename_extension = "roster";
-            FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                    "JMRI full roster files", roster_filename_extension);
-            chooser.addChoosableFileFilter(filter);
-
-            int returnVal = chooser.showOpenDialog(mParent);
-            if (returnVal != JFileChooser.APPROVE_OPTION) {
-                return;
-            }
-
-            String filename = chooser.getSelectedFile().getAbsolutePath();
 
             inputfile = new FileInputStream(filename);
             zipper = new ZipInputStream(inputfile) {
+                @Override
                 public void close() {
                 } // SaxReader calls close when reading XML stream, ignore
                 // and close directly later
@@ -115,7 +114,7 @@ public class FullBackupImportAction extends ImportRosterItemAction {
                             null,
                             new Object[]{Bundle.getMessage("CancelImports"),
                                 Bundle.getMessage("Skip"),
-                                Bundle.getMessage("OK")},
+                                Bundle.getMessage("ButtonOK")},
                             null);
                     if (retval == 0) {
                         break;
@@ -125,7 +124,7 @@ public class FullBackupImportAction extends ImportRosterItemAction {
                     }
 
                     // see if duplicate
-                    RosterEntry currentEntry = Roster.instance().getEntryForId(mToID);
+                    RosterEntry currentEntry = Roster.getDefault().getEntryForId(mToID);
 
                     if (currentEntry != null) {
                         retval = JOptionPane.showOptionDialog(mParent,
@@ -136,7 +135,7 @@ public class FullBackupImportAction extends ImportRosterItemAction {
                                 null,
                                 new Object[]{Bundle.getMessage("CancelImports"),
                                     Bundle.getMessage("Skip"),
-                                    Bundle.getMessage("OK")},
+                                    Bundle.getMessage("ButtonOK")},
                                 null);
                         if (retval == 0) {
                             break;
@@ -150,7 +149,7 @@ public class FullBackupImportAction extends ImportRosterItemAction {
                         df.makeBackupFile(LocoFile.getFileLocation() + currentEntry.getFileName());
 
                         // delete entry
-                        Roster.instance().removeEntry(currentEntry);
+                        Roster.getDefault().removeEntry(currentEntry);
 
                     }
 
@@ -158,22 +157,22 @@ public class FullBackupImportAction extends ImportRosterItemAction {
                     addToEntryToRoster();
 
                     // use the new roster
-                    Roster.instance().reloadRosterFile();
+                    Roster.getDefault().reloadRosterFile();
                 } catch (org.jdom2.JDOMException ex) {
-                    ex.printStackTrace();
+                    log.error("Unable to parse entry", ex);
                 }
             }
 
         } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
+            log.error("Unable to find {}", filename, ex);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            log.error("Unable to read {}", filename, ex);
         } finally {
             if (inputfile != null) {
                 try {
                     inputfile.close(); // zipper.close() is meaningless, see above, but this will do
                 } catch (IOException ex) {
-                    ex.printStackTrace();
+                    log.error("Unable to close {}", filename, ex);
                 }
             }
         }

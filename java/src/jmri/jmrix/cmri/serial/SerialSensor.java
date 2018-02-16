@@ -1,22 +1,17 @@
-// SerialSensor.java
 package jmri.jmrix.cmri.serial;
 
 import jmri.implementation.AbstractSensor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.jmrix.cmri.CMRISystemConnectionMemo;
+
+import javax.annotation.Nonnull;
+import javax.annotation.CheckReturnValue;
 
 /**
  * Extend jmri.AbstractSensor for C/MRI serial systems
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  */
 public class SerialSensor extends AbstractSensor {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7109954914253152537L;
 
     public SerialSensor(String systemName) {
         super(systemName);
@@ -35,11 +30,18 @@ public class SerialSensor extends AbstractSensor {
      * Eventually, we may want to have this move the related AIU to the top of
      * the polling queue.
      */
+    @Override
     public void requestUpdateFromLayout() {
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialSensor.class.getName());
+    /**
+     * {@inheritDoc} 
+     * 
+     * Sorts by node number and then by bit
+     */
+    @CheckReturnValue
+    public int compareSystemNameSuffix(@Nonnull String suffix1, @Nonnull String suffix2, @Nonnull jmri.NamedBean n) {
+        return CMRISystemConnectionMemo.compareSystemNameSuffix(suffix1, suffix2);
+    }
 
 }
-
-/* @(#)SerialSensor.java */

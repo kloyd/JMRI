@@ -7,16 +7,18 @@ import java.util.Set;
 import java.util.prefs.Preferences;
 import jmri.profile.Profile;
 import jmri.profile.ProfileUtils;
-import jmri.spi.AbstractPreferencesProvider;
-import jmri.spi.InitializationException;
-import jmri.spi.PreferencesProvider;
+import jmri.spi.PreferencesManager;
 import jmri.util.FileUtil;
+import jmri.util.prefs.AbstractPreferencesManager;
+import jmri.util.prefs.InitializationException;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author Randall Wood (C) 2015
  */
-public class FileLocationsPreferences extends AbstractPreferencesProvider {
+@ServiceProvider(service = PreferencesManager.class)
+public class FileLocationsPreferences extends AbstractPreferencesManager {
 
     public static final String USER_FILES = "user-files"; // NOI18N
     public static final String SCRIPTS = "scripts"; // NOI18N
@@ -36,7 +38,7 @@ public class FileLocationsPreferences extends AbstractPreferencesProvider {
                 scripts = perNode.get(SCRIPTS, scripts);
             }
             FileUtil.setScriptsPath(FileUtil.getAbsoluteFilename(scripts));
-            this.setIsInitialized(profile, true);
+            this.setInitialized(profile, true);
             try {
                 if (!FileUtil.getFile(userFiles).isDirectory()) {
                     String message = "UserFilesIsNotDir"; // NOI18N
@@ -63,7 +65,7 @@ public class FileLocationsPreferences extends AbstractPreferencesProvider {
     }
 
     @Override
-    public Set<Class<? extends PreferencesProvider>> getRequires() {
+    public Set<Class<? extends PreferencesManager>> getRequires() {
         return new HashSet<>();
     }
 

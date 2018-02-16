@@ -1,4 +1,3 @@
-// JMRIClientSensor.java
 package jmri.jmrix.jmriclient;
 
 import jmri.Sensor;
@@ -10,18 +9,13 @@ import org.slf4j.LoggerFactory;
  * JMRIClient implementation of the Sensor interface.
  * <P>
  *
- * Description:	extend jmri.AbstractSensor for JMRIClient layouts
+ * Description: extend jmri.AbstractSensor for JMRIClient layouts
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2008
- * @author	Paul Bender Copyright (C) 2010
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2008
+ * @author Paul Bender Copyright (C) 2010
  */
 public class JMRIClientSensor extends AbstractSensor implements JMRIClientListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7705766903549405578L;
     // data members
     private int _number;   // sensor number
     private JMRIClientTrafficController tc = null;
@@ -47,11 +41,12 @@ public class JMRIClientSensor extends AbstractSensor implements JMRIClientListen
 
     // Handle a request to change state by sending a formatted packet
     // to the server.
+    @Override
     public void setKnownState(int s) throws jmri.JmriException {
         // sort out states
-        if ((s & Sensor.ACTIVE) > 0) {
+        if ((s & Sensor.ACTIVE) != 0) {
             // first look for the double case, which we can't handle
-            if ((s & Sensor.INACTIVE) > 0) {
+            if ((s & Sensor.INACTIVE) != 0) {
                 // this is the disaster case!
                 log.error("Cannot command both ACTIVE and INACTIVE " + s);
                 return;
@@ -70,6 +65,7 @@ public class JMRIClientSensor extends AbstractSensor implements JMRIClientListen
         }
     }
 
+    @Override
     public void requestUpdateFromLayout() {
         // get the message text
         String text = "SENSOR " + transmitName + "\n";
@@ -93,6 +89,7 @@ public class JMRIClientSensor extends AbstractSensor implements JMRIClientListen
     }
 
     // to listen for status changes from JMRIClient system
+    @Override
     public void reply(JMRIClientReply m) {
         String message = m.toString();
         log.debug("Message Received: " + m);
@@ -108,12 +105,13 @@ public class JMRIClientSensor extends AbstractSensor implements JMRIClientListen
         }
     }
 
+    @Override
     public void message(JMRIClientMessage m) {
     }
 
-    static Logger log = LoggerFactory.getLogger(JMRIClientSensor.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(JMRIClientSensor.class);
 
 }
 
 
-/* @(#)JMRIClientSensor.java */
+

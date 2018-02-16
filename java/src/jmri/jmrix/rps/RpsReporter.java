@@ -1,4 +1,3 @@
-// RpsReporter.java
 package jmri.jmrix.rps;
 
 import java.util.ArrayList;
@@ -15,10 +14,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * RPS implementation of the Reporter interface.
- * <P>
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
  * @since 2.3.1
  */
 public class RpsReporter extends AbstractReporter implements MeasurementListener {
@@ -37,9 +34,10 @@ public class RpsReporter extends AbstractReporter implements MeasurementListener
         Model.instance().addRegion(region);
     }
 
+    @Override
     public void notify(Measurement r) {
         Point3d p = new Point3d(r.getX(), r.getY(), r.getZ());
-        Integer id = Integer.valueOf(r.getReading().getID());
+        Integer id = Integer.valueOf(r.getReading().getId());
 
         // ignore if code not OK
         if (!r.isOkPoint()) {
@@ -77,8 +75,6 @@ public class RpsReporter extends AbstractReporter implements MeasurementListener
         }
     }
 
-    private static final long serialVersionUID = 1L;
-
     transient Region region;
     ArrayList<Integer> contents = new ArrayList<Integer>();
 
@@ -103,13 +99,16 @@ public class RpsReporter extends AbstractReporter implements MeasurementListener
     /**
      * Numerical state is the number of transmitters in the region
      */
+    @Override
     public int getState() {
         return contents.size();
     }
 
+    @Override
     public void setState(int i) {
     }
 
+    @Override
     public void dispose() {
         Model.instance().removeRegion(region);
     }
@@ -190,7 +189,5 @@ public class RpsReporter extends AbstractReporter implements MeasurementListener
 
     }
 
-    static Logger log = LoggerFactory.getLogger(RpsReporter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RpsReporter.class);
 }
-
-/* @(#)AbstractReporter.java */

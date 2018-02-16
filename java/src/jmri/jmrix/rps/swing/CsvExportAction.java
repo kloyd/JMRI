@@ -1,4 +1,3 @@
-// CsvExportAction.java
 package jmri.jmrix.rps.swing;
 
 import java.awt.event.ActionEvent;
@@ -13,6 +12,7 @@ import javax.swing.JMenuItem;
 import jmri.jmrix.rps.Distributor;
 import jmri.jmrix.rps.Reading;
 import jmri.jmrix.rps.ReadingListener;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,22 +20,19 @@ import org.slf4j.LoggerFactory;
  * Action to export the incoming raw data to a CSV-format file
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
  * @since 2.3.1
  */
 public class CsvExportAction extends AbstractAction implements ReadingListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2188047459182097454L;
+    RpsSystemConnectionMemo memo = null;
 
-    public CsvExportAction(String actionName) {
+    public CsvExportAction(String actionName,RpsSystemConnectionMemo _memo) {
         super(actionName);
+        memo = _memo;
     }
 
-    public CsvExportAction() {
-        this("Start CSV Export Reading...");
+    public CsvExportAction(RpsSystemConnectionMemo _memo) {
+        this("Start CSV Export Reading...",_memo);
     }
 
     JFrame mParent;
@@ -44,6 +41,7 @@ public class CsvExportAction extends AbstractAction implements ReadingListener {
     PrintStream str;
     JFileChooser fileChooser;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (logging) {
             stopLogging(e);
@@ -98,16 +96,17 @@ public class CsvExportAction extends AbstractAction implements ReadingListener {
         }
     }
 
+    @Override
     public void notify(Reading r) {
         if (!logging || str == null) {
             return;
         }
-        str.print(r.getID() + ",");
+        str.print(r.getId() + ",");
         for (int i = 0; i < r.getNValues() - 1; i++) {
             str.print(r.getValue(i) + ",");
         }
         str.println(r.getValue(r.getNValues() - 1));
     }
 
-    static Logger log = LoggerFactory.getLogger(CsvExportAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CsvExportAction.class);
 }

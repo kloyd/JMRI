@@ -1,4 +1,3 @@
-// ConnectionConfig.java
 package jmri.jmrix.grapevine.serialdriver;
 
 import java.util.ResourceBundle;
@@ -10,7 +9,6 @@ import jmri.jmrix.grapevine.nodeconfig.NodeConfigAction;
  * Definition of objects to handle configuring a Grapevine layout connection
  *
  * @author Bob Jacobsen Copyright (C) 2003, 2006, 2007
- * @version	$Revision$
  */
 public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig {
 
@@ -31,9 +29,12 @@ public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig 
 
     JButton b = new JButton("Configure nodes");
 
+    @Override
     public void loadDetails(JPanel details) {
 
-        b.addActionListener(new NodeConfigAction());
+        jmri.jmrix.grapevine.GrapevineSystemConnectionMemo memo = (jmri.jmrix.grapevine.GrapevineSystemConnectionMemo)adapter.getSystemConnectionMemo();
+
+        b.addActionListener(new NodeConfigAction(memo));
         if (!additionalItems.contains(b)) {
             additionalItems.add(b);
         }
@@ -41,6 +42,7 @@ public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig 
 
     }
 
+    @Override
     public String name() {
         return "Grapevine (ProTrak) Layout Bus";
     }
@@ -50,7 +52,10 @@ public class ConnectionConfig extends jmri.jmrix.AbstractSerialConnectionConfig 
         return ResourceBundle.getBundle("jmri.jmrix.grapevine.GrapevineActionListBundle");
     }
 
+    @Override
     protected void setInstance() {
-        adapter = SerialDriverAdapter.instance();
+        if(adapter == null) { 
+           adapter = new SerialDriverAdapter();
+        }
     }
 }

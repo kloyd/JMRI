@@ -1,4 +1,3 @@
-// IconDialog.java
 package jmri.jmrit.display.palette;
 
 import java.awt.Color;
@@ -32,10 +31,6 @@ import org.slf4j.LoggerFactory;
  */
 public class IconDialog extends ItemDialog {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3594751185136377740L;
     protected FamilyItemPanel _parent;
     protected String _family;
     protected HashMap<String, NamedIcon> _iconMap;
@@ -44,12 +39,12 @@ public class IconDialog extends ItemDialog {
 
     /**
      * Constructor for existing family to change icons, add/delete icons, or to
-     * delete the family
+     * delete the family.
      */
     public IconDialog(String type, String family, FamilyItemPanel parent, HashMap<String, NamedIcon> iconMap) {
         super(type, Bundle.getMessage("ShowIconsTitle", family));
         if (log.isDebugEnabled()) {
-            log.debug("IconDialog ctor: for " + type + " Family " + family);
+            log.debug("IconDialog ctor: for {}, family = {}", type, family);
         }
         _family = family;
         _parent = parent;
@@ -64,7 +59,7 @@ public class IconDialog extends ItemDialog {
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         if (iconMap != null) {
             _iconMap = clone(iconMap);
-            makeDoneButtonPanel(buttonPanel, "doneButton");
+            makeDoneButtonPanel(buttonPanel, "ButtonDone");
         } else {
             _iconMap = ItemPanel.makeNewIconMap(type);
             makeDoneButtonPanel(buttonPanel, "addNewFamily");
@@ -76,7 +71,7 @@ public class IconDialog extends ItemDialog {
             ItemPanel.checkIconMap(type, _iconMap);
         }
         _iconPanel = makeIconPanel(_iconMap);
-        panel.add(_iconPanel);	// put icons above buttons
+        panel.add(_iconPanel); // put icons above buttons
         panel.add(buttonPanel);
         //panel.setMaximumSize(panel.getPreferredSize());
 
@@ -96,13 +91,13 @@ public class IconDialog extends ItemDialog {
     }
 
     /**
-     * Action for both create new family and change existing family
+     * Action for both create new family and change existing family.
      */
     protected boolean doDoneAction() {
         _parent.reset();
 //        checkIconSizes();
         _parent._currentIconMap = _iconMap;
-        if (!_parent.isUpdate()) {  // don't touch palette's maps.  just modify individual device icons
+        if (!_parent.isUpdate()) {  // don't touch palette's maps. just modify individual device icons
             ItemPalette.removeIconMap(_type, _family);
             if (!ItemPalette.addFamily(_parent._paletteFrame, _type, _family, _iconMap)) {
                 return false;
@@ -119,6 +114,7 @@ public class IconDialog extends ItemDialog {
         panel.setLayout(new FlowLayout());
         JButton doneButton = new JButton(Bundle.getMessage(text));
         doneButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 if (doDoneAction()) {
                     dispose();
@@ -127,8 +123,9 @@ public class IconDialog extends ItemDialog {
         });
         panel.add(doneButton);
 
-        JButton cancelButton = new JButton(Bundle.getMessage("cancelButton"));
+        JButton cancelButton = new JButton(Bundle.getMessage("ButtonCancel"));
         cancelButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 dispose();
             }
@@ -139,7 +136,7 @@ public class IconDialog extends ItemDialog {
 
     protected JPanel makeIconPanel(HashMap<String, NamedIcon> iconMap) {
         if (iconMap == null) {
-            log.error("iconMap is null for type " + _type + " family " + _family);
+            log.error("iconMap is null for type {}, family {}", _type, _family);
             return null;
         }
         JPanel iconPanel = new JPanel();
@@ -163,7 +160,7 @@ public class IconDialog extends ItemDialog {
         c.gridy = 0;
 
         if (log.isDebugEnabled()) {
-            log.debug("makeIconPanel: for " + iconMap.size() + " icons. gridwidth= " + gridwidth);
+            log.debug("makeIconPanel: for {} icons. gridwidth = {}", iconMap.size(), gridwidth);
         }
         int panelWidth = 0;
         Iterator<Entry<String, NamedIcon>> it = iconMap.entrySet().iterator();
@@ -250,5 +247,5 @@ public class IconDialog extends ItemDialog {
         pack();
     }
 
-    static Logger log = LoggerFactory.getLogger(IconDialog.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(IconDialog.class);
 }

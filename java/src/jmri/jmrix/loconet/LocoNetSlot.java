@@ -1,6 +1,6 @@
-// LocoNetSlot.java
 package jmri.jmrix.loconet;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
  * algorithm or these message formats outside of JMRI, please contact Digitrax
  * Inc for separate permission.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2001
- * @author	Stephen Williams Copyright (C) 2008
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2001
+ * @author Stephen Williams Copyright (C) 2008
+ * @author B. Milhaupt, Copyright (C) 2018
  */
 public class LocoNetSlot {
 
@@ -235,7 +235,7 @@ public class LocoNetSlot {
     }
 
     public LocoNetSlot(LocoNetMessage l) throws LocoNetException {
-        slot = l.getElement(1);
+        slot = l.getElement(2);
         setSlot(l);
     }
 
@@ -262,7 +262,7 @@ public class LocoNetSlot {
 
     // methods to interact with LocoNet
     @SuppressWarnings("fallthrough")
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SF_SWITCH_FALLTHROUGH")
+    @SuppressFBWarnings(value = "SF_SWITCH_FALLTHROUGH")
     public void setSlot(LocoNetMessage l) throws LocoNetException { // exception if message can't be parsed
         // sort out valid messages, handle
         switch (l.getOpCode()) {
@@ -311,14 +311,29 @@ public class LocoNetSlot {
                 return;
             }
             case LnConstants.OPC_LOCO_DIRF: {
-                // set direction, functions in slot - first, clear bits
-                dirf &= ~(LnConstants.DIRF_DIR | LnConstants.DIRF_F0
-                        | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
-                        | LnConstants.DIRF_F3 | LnConstants.DIRF_F4);
-                // and set them as masked
-                dirf += ((LnConstants.DIRF_DIR | LnConstants.DIRF_F0
-                        | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
-                        | LnConstants.DIRF_F3 | LnConstants.DIRF_F4) & l.getElement(2));
+                // When slot is consist-mid or consist-sub, this LocoNet Opcode 
+                // can only change the functions; direction cannot be changed.
+                if (((stat & LnConstants.CONSIST_MASK) == LnConstants.CONSIST_MID) ||
+                        ((stat & LnConstants.CONSIST_MASK) == LnConstants.CONSIST_SUB)) {
+                    // set functions in slot - first, clear bits, preserving DIRF_DIR bit
+                    dirf &= LnConstants.DIRF_DIR | (~(LnConstants.DIRF_F0
+                            | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
+                            | LnConstants.DIRF_F3 | LnConstants.DIRF_F4));
+                    // and set the function bits from the LocoNet message
+                    dirf += ((LnConstants.DIRF_F0
+                            | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
+                            | LnConstants.DIRF_F3 | LnConstants.DIRF_F4) & l.getElement(2));
+                } else {
+                    // set direction, functions in slot - first, clear bits
+                    dirf &= ~(LnConstants.DIRF_DIR | LnConstants.DIRF_F0
+                            | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
+                            | LnConstants.DIRF_F3 | LnConstants.DIRF_F4);
+                    // and set them as masked
+                    dirf += ((LnConstants.DIRF_DIR | LnConstants.DIRF_F0
+                            | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
+                            | LnConstants.DIRF_F3 | LnConstants.DIRF_F4) & l.getElement(2));
+                    
+                }
                 notifySlotListeners();
                 lastUpdateTime = System.currentTimeMillis();
                 return;
@@ -327,17 +342,44 @@ public class LocoNetSlot {
                 // change in slot status will be reported by the reply,
                 // so don't need to do anything here (but could)
                 lastUpdateTime = System.currentTimeMillis();
+                notifySlotListeners();
                 return;
             }
             case LnConstants.OPC_LOCO_SPD: {
-                // set speed
-                spd = l.getElement(2);
-                notifySlotListeners();
-                lastUpdateTime = System.currentTimeMillis();
+                // This opcode has no effect on the slot's speed setting if the
+                // slot is mid-consist or sub-consist.
+                if (((stat & LnConstants.CONSIST_MASK) != LnConstants.CONSIST_MID) &&
+                        ((stat & LnConstants.CONSIST_MASK) != LnConstants.CONSIST_SUB)) {
+                    
+                    spd = l.getElement(2);
+                    notifySlotListeners();
+                    lastUpdateTime = System.currentTimeMillis();
+                } else {
+                    log.info("Ignoring speed change for slot {} marked as consist-mid or consist-sub.", slot);
+                }
+                return;
+            }
+            case LnConstants.OPC_CONSIST_FUNC: {
+                // This opcode can be sent to a slot which is marked as mid-consist 
+                // or sub-consist.  Do not pay attention to this message if the
+                // slot is not mid-consist or sub-consist.
+                if (((stat & LnConstants.CONSIST_MASK) == LnConstants.CONSIST_MID) ||
+                        ((stat & LnConstants.CONSIST_MASK) == LnConstants.CONSIST_SUB)) {
+                    // set functions in slot - first, clear bits, preserving DIRF_DIR bit
+                    dirf &= LnConstants.DIRF_DIR | (~(LnConstants.DIRF_F0
+                            | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
+                            | LnConstants.DIRF_F3 | LnConstants.DIRF_F4));
+                    // and set the function bits from the LocoNet message
+                    dirf += ((LnConstants.DIRF_F0
+                            | LnConstants.DIRF_F1 | LnConstants.DIRF_F2
+                            | LnConstants.DIRF_F3 | LnConstants.DIRF_F4) & l.getElement(2));
+                    notifySlotListeners();
+                    lastUpdateTime = System.currentTimeMillis();
+                }
                 return;
             }
             default: {
-                throw new LocoNetException("message can't be parsed");
+                throw new LocoNetException("message can't be parsed"); // NOI18N
             }
         }
     }
@@ -392,6 +434,11 @@ public class LocoNetSlot {
         l.setElement(2, (stat & ~LnConstants.DEC_MODE_MASK) | status);
         return l;
     }
+    
+    public LocoNetMessage writeThrottleID(int newID) {
+        id = (newID & 0x17F);
+        return writeSlot();
+    }
 
     /**
      * Update the status mode bits in STAT1 (D5, D4)
@@ -407,12 +454,49 @@ public class LocoNetSlot {
         return l;
     }
 
+    /**
+     * Update the status mode bits in STAT1 (D5, D4)
+     *
+     * @param status New values for STAT1 (D5, D4)
+     */
+    public void sendWriteStatus(int status) {
+        LocoNetMessage l = new LocoNetMessage(4);
+        l.setOpCode(LnConstants.OPC_SLOT_STAT1);
+        l.setElement(1, slot);
+        l.setElement(2, (stat & ~LnConstants.LOCOSTAT_MASK) | status);
+        
+    }
+
+    /**
+     * Create LocoNet message which dispatches this slot
+     * 
+     * Note that the invoking method ought to invoke the slot's NotifySlotListeners 
+     * method to inform any other interested parties that the slot status has changed.
+     * 
+     * @return LocoNet message which "dispatches" the slot
+    */
     public LocoNetMessage dispatchSlot() {
         LocoNetMessage l = new LocoNetMessage(4);
         l.setOpCode(LnConstants.OPC_MOVE_SLOTS);
         l.setElement(1, slot);
         l.setElement(2, 0);
         return l;
+    }
+
+    /**
+     * Create a LocoNet OPC_SLOT_STAT1 message which releases this slot to the 
+     * "Common" state
+     * 
+     * The invoking method must send the returned LocoNet message to LocoNet in
+     * order to have a useful effect.  
+     * 
+     * Upon receipt of the echo of the transmitted OPC_SLOT_STAT1 message, the 
+     * LocoNetSlot object will notify its listeners.
+     * 
+     * @return LocoNet message which "releases" the slot to the "Common" state
+    */
+    public LocoNetMessage releaseSlot() {
+        return writeStatus(LnConstants.LOCO_COMMON);
     }
 
     public LocoNetMessage writeSlot() {
@@ -436,16 +520,16 @@ public class LocoNetSlot {
 
     // data values to echo slot contents
     final private int slot;   // <SLOT#> is the number of the slot that was read.
-    private int stat;	// <STAT> is the status of the slot
-    private int addr;	// full address of the loco, made from
+    private int stat; // <STAT> is the status of the slot
+    private int addr; // full address of the loco, made from
     //    <ADDR> is the low 7 (0-6) bits of the Loco address
     //    <ADD2> is the high 7 bits (7-13) of the 14-bit loco address
-    private int spd;	// <SPD> is the current speed (0-127)
-    private int dirf;	// <DIRF> is the current Direction and the setting for functions F0-F4
-    private int trk = 7;	// <TRK> is the global track status
-    private int ss2;	// <SS2> is the an additional slot status
-    private int snd; 	// <SND> is the settings for functions F5-F8
-    private int id;		// throttle id, made from
+    private int spd; // <SPD> is the current speed (0-127)
+    private int dirf; // <DIRF> is the current Direction and the setting for functions F0-F4
+    private int trk = 7; // <TRK> is the global track status
+    private int ss2; // <SS2> is the an additional slot status
+    private int snd;  // <SND> is the settings for functions F5-F8
+    private int id;  // throttle id, made from
     //     <ID1> and <ID2> normally identify the throttle controlling the loco
 
     private int _pcmd;  // hold pcmd and pstat for programmer
@@ -472,16 +556,13 @@ public class LocoNetSlot {
         return lastUpdateTime;
     }
 
-    protected void notifySlotListeners() {
+    public void notifySlotListeners() {
         // make a copy of the listener list to synchronized not needed for transmit
         List<SlotListener> v;
         synchronized (this) {
             v = new ArrayList<SlotListener>(slotListeners);
         }
-        if (log.isDebugEnabled()) {
-            log.debug("notify " + v.size()
-                    + " SlotListeners");
-        }
+        log.debug("notify {} SlotListeners",v.size()); // NOI18N
         // forward to all listeners
         int cnt = v.size();
         for (int i = 0; i < cnt; i++) {
@@ -606,8 +687,5 @@ public class LocoNetSlot {
         stat = val & 0x7F;
     }
 
-    static Logger log = LoggerFactory.getLogger(LocoNetSlot.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LocoNetSlot.class);
 }
-
-
-/* @(#)LocoNetSlot.java */

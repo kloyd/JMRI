@@ -1,10 +1,9 @@
-// Apps3.java
 package apps.gui3;
 
 import apps.AppsBase;
-import apps.CreateButtonModel;
 import apps.SplashWindow;
 import apps.SystemConsole;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.AWTEvent;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -16,7 +15,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.EventObject;
 import java.util.ResourceBundle;
 import javax.help.SwingHelpUtilities;
@@ -26,7 +24,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.WindowConstants;
-import jmri.InstanceManager;
 import jmri.plaf.macosx.AboutHandler;
 import jmri.plaf.macosx.PreferencesHandler;
 import jmri.plaf.macosx.QuitHandler;
@@ -48,20 +45,24 @@ import org.slf4j.LoggerFactory;
  * This is a complete re-implementation of the apps.Apps support for JMRI
  * applications.
  * <p>
- * Each using application provides it's own main() method. See e.g.
- * apps.gui3.demo3.Demo3 for an example.
+ * Each using application provides it's own main() method.
  * <p>
  * There are a large number of missing features marked with TODO in comments
  * including code from the earlier implementation.
  * <P>
- * @author	Bob Jacobsen Copyright 2009, 2010
- * @version $Revision$
+ * @author Bob Jacobsen Copyright 2009, 2010
  */
 public abstract class Apps3 extends AppsBase {
 
     /**
      * Initial actions before frame is created, invoked in the applications
      * main() routine.
+     * <ul>
+     * <li> Operations from {@link AppsBase#preInit(String)}
+     * <li> Initialize the console support
+     * </ul>
+     *
+     * @param applicationName application name
      */
     static public void preInit(String applicationName) {
         AppsBase.preInit(applicationName);
@@ -81,6 +82,10 @@ public abstract class Apps3 extends AppsBase {
      * Create and initialize the application object.
      * <p>
      * Expects initialization from preInit() to already be done.
+     *
+     * @param applicationName application name
+     * @param configFileDef   default configuration file name
+     * @param args            command line arguments set at application launch
      */
     public Apps3(String applicationName, String configFileDef, String[] args) {
         // pre-GUI work
@@ -89,7 +94,6 @@ public abstract class Apps3 extends AppsBase {
         // Prepare font lists
         prepareFontLists();
 
-        addToActionModel();
         // create GUI
         initializeHelpSystem();
         if (SystemType.isMacOSX()) {
@@ -108,7 +112,7 @@ public abstract class Apps3 extends AppsBase {
      * For compatability with adding in buttons to the toolbar using the
      * existing createbuttonmodel
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
             justification = "only one application at a time")
     protected static void setButtonSpace() {
         _buttonSpace = new JPanel();
@@ -119,7 +123,7 @@ public abstract class Apps3 extends AppsBase {
      * Provide access to a place where applications can expect the configuration
      * code to build run-time buttons.
      *
-     * @see apps.CreateButtonPanel
+     * @see apps.startup.CreateButtonModelFactory
      * @return null if no such space exists
      */
     static public JComponent buttonSpace() {
@@ -130,18 +134,13 @@ public abstract class Apps3 extends AppsBase {
     protected JmriJFrame mainFrame;
 
     protected void initializeHelpSystem() {
-        try {
+        // initialize help system
+        HelpUtil.initOK();
 
-            // initialize help system
-            HelpUtil.initOK();
+        // tell help to use default browser for external types
+        SwingHelpUtilities.setContentViewerUI("jmri.util.ExternalLinkContentViewerUI");
 
-            // tell help to use default browser for external types
-            SwingHelpUtilities.setContentViewerUI("jmri.util.ExternalLinkContentViewerUI");
-
-            // help items are set in the various Tree/Menu/Toolbar constructors        
-        } catch (Throwable e3) {
-            log.error("Unexpected error creating help: " + e3);
-        }
+        // help items are set in the various Tree/Menu/Toolbar constructors
     }
 
     abstract protected void createMainFrame();
@@ -154,27 +153,28 @@ public abstract class Apps3 extends AppsBase {
         displayMainFrame(mainFrame.getMaximumSize());
     }
 
+    /**
+     * Provides a list of {@link apps.startup.AbstractActionModel} objects that
+     * could be used with the implementing class in {@link #addToActionModel()}.
+     *
+     * @return the list of action models.
+     * @deprecated since 4.5.3
+     */
+    @Deprecated
     abstract protected ResourceBundle getActionModelResourceBundle();
 
-    protected void addToActionModel() {
-        CreateButtonModel bm = InstanceManager.getDefault(apps.CreateButtonModel.class);
-        ResourceBundle rb = getActionModelResourceBundle();
-        if (rb == null || bm == null) {
-            return;
-        }
-        Enumeration<String> e = rb.getKeys();
-        while (e.hasMoreElements()) {
-            String key = e.nextElement();
-            try {
-                bm.addAction(key, rb.getString(key));
-            } catch (ClassNotFoundException ex) {
-                log.error("Did not find class " + key);
-            }
-        }
+    /**
+     * @deprecated since 4.5.1
+     */
+    @Deprecated
+    protected final void addToActionModel() {
+        // StartupActionModelUtil populates itself, so do nothing
     }
 
     /**
      * Set a toolbar to be initially floating. This doesn't quite work right.
+     *
+     * @param toolBar the toolbar to float
      */
     protected void setFloating(JToolBar toolBar) {
         //((javax.swing.plaf.basic.BasicToolBarUI) toolBar.getUI()).setFloatingLocation(100,100);
@@ -212,16 +212,15 @@ public abstract class Apps3 extends AppsBase {
             debugListener = new AWTEventListener() {
 
                 @Override
+                @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "debugmsg write is semi-global")
                 public void eventDispatched(AWTEvent e) {
                     if (!debugFired) {
                         /*We set the debugmsg flag on the first instance of the user pressing any button
                          and the if the debugFired hasn't been set, this allows us to ensure that we don't
                          miss the user pressing F8, while we are checking*/
                         debugmsg = true;
-                        if (e.getID() == KeyEvent.KEY_PRESSED) {
-                            if (((KeyEvent) e).getKeyCode() == 119) {
-                                startupDebug();
-                            }
+                        if (e.getID() == KeyEvent.KEY_PRESSED && e instanceof KeyEvent && ((KeyEvent) e).getKeyCode() == 119) {
+                            startupDebug();
                         } else {
                             debugmsg = false;
                         }
@@ -246,7 +245,7 @@ public abstract class Apps3 extends AppsBase {
     }
 
     static protected JPanel splashDebugMsg() {
-        JLabel panelLabel = new JLabel("Press F8 to disable logixs");
+        JLabel panelLabel = new JLabel(Bundle.getMessage("PressF8ToDebug"));
         panelLabel.setFont(panelLabel.getFont().deriveFont(9f));
         JPanel panel = new JPanel();
         panel.add(panelLabel);
@@ -320,15 +319,15 @@ public abstract class Apps3 extends AppsBase {
         }
         ProfileManager.getDefault().setConfigFile(profileFile);
         // See if the profile to use has been specified on the command line as
-        // a system property jmri.profile as a profile id.
+        // a system property org.jmri.profile as a profile id.
         if (System.getProperties().containsKey(ProfileManager.SYSTEM_PROPERTY)) {
             ProfileManager.getDefault().setActiveProfile(System.getProperty(ProfileManager.SYSTEM_PROPERTY));
         }
-        // @see jmri.profile.ProfileManager#migrateToProfiles JavaDoc for conditions handled here
-        if (!ProfileManager.getDefault().getConfigFile().exists()) { // no profile config for this app
+        // @see jmri.profile.ProfileManager#migrateToProfiles Javadoc for conditions handled here
+        if (!profileFile.exists()) { // no profile config for this app
             try {
                 if (ProfileManager.getDefault().migrateToProfiles(getConfigFileName())) { // migration or first use
-                    // notify user of change only if migration occured
+                    // notify user of change only if migration occurred
                     // TODO: a real migration message
                     JOptionPane.showMessageDialog(sp,
                             Bundle.getMessage("ConfigMigratedToProfile"),
@@ -348,7 +347,8 @@ public abstract class Apps3 extends AppsBase {
             // Manually setting the configFilename property since calling
             // Apps.setConfigFilename() does not reset the system property
             System.setProperty("org.jmri.Apps.configFilename", Profile.CONFIG_FILENAME);
-            log.info("Starting with profile {}", ProfileManager.getDefault().getActiveProfile().getId());
+            Profile profile = ProfileManager.getDefault().getActiveProfile();
+            log.info("Starting with profile {}", profile != null ? profile.getId() : "<none>");
         } catch (IOException ex) {
             log.info("Profiles not configurable. Using fallback per-application configuration. Error: {}", ex.getMessage());
         }
@@ -368,15 +368,16 @@ public abstract class Apps3 extends AppsBase {
         super.setAndLoadPreferenceFile();
         if (sharedConfig == null && configOK == true && configDeferredLoadOK == true) {
             // this was logged in the super method
+            Profile profile = ProfileManager.getDefault().getActiveProfile();
             if (!GraphicsEnvironment.isHeadless()) {
                 JOptionPane.showMessageDialog(sp,
-                        Bundle.getMessage("SingleConfigMigratedToSharedConfig", ProfileManager.getDefault().getActiveProfile().getName()),
+                        Bundle.getMessage("SingleConfigMigratedToSharedConfig", profile != null ? profile.getName() : "<none>"),
                         jmri.Application.getApplicationName(),
                         JOptionPane.INFORMATION_MESSAGE);
             }
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(Apps3.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Apps3.class);
 
 }

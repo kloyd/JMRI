@@ -1,4 +1,3 @@
-// ReportContextAction.java
 package apps;
 
 import java.awt.BorderLayout;
@@ -21,17 +20,11 @@ import jmri.util.swing.WindowInterface;
 /**
  * Swing action to display the JMRI context for the user
  *
- * @author	Bob Jacobsen Copyright (C) 2007
+ * @author Bob Jacobsen Copyright (C) 2007
  * @author Matt Harris Copyright (C) 2008
  *
- * @version $Revision$
  */
 public class ReportContextAction extends jmri.util.swing.JmriAbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -483497612204078175L;
 
     public ReportContextAction(String s, WindowInterface wi) {
         super(s, wi);
@@ -47,6 +40,7 @@ public class ReportContextAction extends jmri.util.swing.JmriAbstractAction {
 
     JTextArea pane;
 
+    @Override
     public void actionPerformed(ActionEvent ev) {
 
         final JFrame frame = new JmriJFrame(Bundle.getMessage("TitleContext"));  // JmriJFrame to ensure fits on screen
@@ -72,6 +66,7 @@ public class ReportContextAction extends jmri.util.swing.JmriAbstractAction {
         JPanel p = new JPanel();
         JButton copy = new JButton(Bundle.getMessage("ButtonCopyClip"));
         copy.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 StringSelection text = new StringSelection(pane.getText());
                 clipboard.setContents(text, text);
@@ -80,6 +75,7 @@ public class ReportContextAction extends jmri.util.swing.JmriAbstractAction {
         p.add(copy);
         JButton close = new JButton(Bundle.getMessage("ButtonClose"));
         close.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 frame.setVisible(false);
                 frame.dispose();
@@ -108,10 +104,9 @@ public class ReportContextAction extends jmri.util.swing.JmriAbstractAction {
     }
 
     // never invoked, because we overrode actionPerformed above
+    @Override
     public JmriPanel makePanel() {
         throw new IllegalArgumentException("Should not be invoked");
     }
 
 }
-
-/* @(#)ReportContextAction.java */

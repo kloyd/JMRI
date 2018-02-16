@@ -1,6 +1,6 @@
-// AllTest.java
 package apps.tests;
 
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -20,7 +20,6 @@ import junit.framework.TestSuite;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
  * @author	Bob Jacobsen
- * @version	$Revision$
  */
 public class AllTest extends TestCase {
 
@@ -35,7 +34,7 @@ public class AllTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", AllTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite
@@ -43,9 +42,10 @@ public class AllTest extends TestCase {
         // all tests from here down in heirarchy
         TestSuite suite = new TestSuite("AllTest");  // no tests in this class itself
         // all tests from other classes
-        suite.addTest(jmri.PackageTest.suite());
-        suite.addTest(apps.PackageTest.suite());
-
+        suite.addTest(new junit.framework.JUnit4TestAdapter(jmri.PackageTest.class));
+        suite.addTest(new junit.framework.JUnit4TestAdapter(apps.PackageTest.class));
+        // at the end, we check for Log4J messages again
+        suite.addTest(new junit.framework.JUnit4TestAdapter(jmri.util.Log4JErrorIsErrorTest.class));
         return suite;
     }
 
@@ -54,12 +54,14 @@ public class AllTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

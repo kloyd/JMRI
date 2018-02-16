@@ -1,4 +1,3 @@
-// ConstrainedBean.java
 package jmri.beans;
 
 import java.beans.IndexedPropertyChangeEvent;
@@ -18,42 +17,42 @@ public class ConstrainedArbitraryBean extends ConstrainedBean {
     @Override
     public void setProperty(String key, Object value) {
         try {
-            this.vetoableChangeSupport.fireVetoableChange(key, getProperty(key), value);
+            this.fireVetoableChange(key, getProperty(key), value);
             if (Beans.hasIntrospectedProperty(this, key)) {
                 Beans.setIntrospectedProperty(this, key, value);
             } else {
                 Object oldValue = this.arbitraryPropertySupport.getProperty(key);
                 this.arbitraryPropertySupport.setProperty(key, value);
-                this.propertyChangeSupport.firePropertyChange(key, oldValue, value);
+                this.firePropertyChange(key, oldValue, value);
             }
         } catch (PropertyVetoException ex) {
             // use the logger for the implementing class instead of a logger for ConstrainedBean
-            LoggerFactory.getLogger(this.getClass().getName()).warn("Property {} change vetoed.", key, ex);
+            LoggerFactory.getLogger(this.getClass()).warn("Property {} change vetoed.", key, ex);
             // fire a property change that does not have the new value to indicate
             // to any other listeners that the property was "reset" back to its
             // orginal value as a result of the veto
-            super.propertyChangeSupport.firePropertyChange(key, getProperty(key), getProperty(key));
+            this.firePropertyChange(key, getProperty(key), getProperty(key));
         }
     }
 
     @Override
     public void setIndexedProperty(String key, int index, Object value) {
         try {
-            this.vetoableChangeSupport.fireVetoableChange(new IndexedPropertyChangeEvent(this, key, this.getIndexedProperty(key, index), value, index));
+            this.fireVetoableChange(new IndexedPropertyChangeEvent(this, key, this.getIndexedProperty(key, index), value, index));
             if (Beans.hasIntrospectedIndexedProperty(this, key)) {
                 Beans.setIntrospectedIndexedProperty(this, key, index, value);
             } else {
                 Object oldValue = this.arbitraryPropertySupport.getIndexedProperty(key, index);
                 this.arbitraryPropertySupport.setIndexedProperty(key, index, value);
-                this.propertyChangeSupport.fireIndexedPropertyChange(key, index, oldValue, value);
+                this.fireIndexedPropertyChange(key, index, oldValue, value);
             }
         } catch (PropertyVetoException ex) {
             // use the logger for the implementing class instead of a logger for ConstrainedBean
-            LoggerFactory.getLogger(this.getClass().getName()).warn("Property {} change vetoed.", key, ex);
+            LoggerFactory.getLogger(this.getClass()).warn("Property {} change vetoed.", key, ex);
             // fire a property change that does not have the new value to indicate
             // to any other listeners that the property was "reset" back to its
             // orginal value as a result of the veto
-            super.propertyChangeSupport.fireIndexedPropertyChange(key, index, getProperty(key), getProperty(key));
+            this.fireIndexedPropertyChange(key, index, getProperty(key), getProperty(key));
         }
     }
 

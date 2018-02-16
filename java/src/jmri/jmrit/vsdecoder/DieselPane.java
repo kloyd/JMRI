@@ -15,8 +15,8 @@ package jmri.jmrit.vsdecoder;
  * for more details.
  * <P>
  *
- * @author			Mark Underwood Copyright (C) 2011
- * @version			$Revision$
+ * @author   Mark Underwood Copyright (C) 2011
+ * 
  */
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -28,8 +28,6 @@ import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 class DieselPane extends EnginePane {
@@ -57,10 +55,12 @@ class DieselPane extends EnginePane {
         this(null);
     }
 
+    @Override
     public void initContext(Object context) {
         initComponents();
     }
 
+    @Override
     public void initComponents() {
         listenerList = new javax.swing.event.EventListenerList();
 
@@ -74,6 +74,7 @@ class DieselPane extends EnginePane {
         throttle_slider.setMinimumSize(new Dimension(400, 0));
         throttle_slider.setSnapToTicks(true);
         throttle_slider.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 throttleChange(e);
             }
@@ -84,6 +85,7 @@ class DieselPane extends EnginePane {
         start_button = new JToggleButton();
         start_button.setText("Engine Start");
         start_button.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 startButtonChange(e);
             }
@@ -117,10 +119,9 @@ class DieselPane extends EnginePane {
         return (throttle_slider.getValue());
     }
 
+    @Override
     public void setThrottle(int t) {
         throttle_slider.setValue(t);
     }
-
-    static Logger log = LoggerFactory.getLogger(DieselPane.class.getName());
 
 }

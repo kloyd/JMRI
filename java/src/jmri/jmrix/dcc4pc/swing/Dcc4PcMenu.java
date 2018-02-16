@@ -5,28 +5,22 @@ import javax.swing.JMenu;
 import jmri.jmrix.dcc4pc.Dcc4PcSystemConnectionMemo;
 
 /**
+ * Create a "Systems" menu containing the Jmri DCC4PC-specific tools
  *
  * @author Kevin Dickerson
  */
 public class Dcc4PcMenu extends JMenu {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4819102295260652770L;
-
     public Dcc4PcMenu(Dcc4PcSystemConnectionMemo memo) {
         super();
 
         ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.dcc4pc.Dcc4PcBundle");
-        String title;
-        if (memo != null) {
-            title = memo.getUserName();
-        } else {
-            title = rb.getString("MenuDcc4Pc");
-        }
 
-        setText(title);
+        if (memo != null) {
+            setText(memo.getUserName());
+        } else {
+            setText(rb.getString("MenuDcc4Pc"));
+        }
 
         jmri.util.swing.WindowInterface wi = new jmri.util.swing.sdi.JmriJFrameInterface();
 
@@ -38,7 +32,7 @@ public class Dcc4PcMenu extends JMenu {
             }
         }
 
-        if (jmri.InstanceManager.getDefault(jmri.jmrit.beantable.ListedTableFrame.class) == null) {
+        if (jmri.InstanceManager.getNullableDefault(jmri.jmrit.beantable.ListedTableFrame.class) == null) {
             new jmri.jmrit.beantable.ListedTableFrame();
         }
     }
@@ -61,4 +55,5 @@ public class Dcc4PcMenu extends JMenu {
         String name;
         String load;
     }
+
 }

@@ -1,4 +1,3 @@
-// AbstractMRReply.java
 package jmri.jmrix;
 
 import org.slf4j.Logger;
@@ -6,14 +5,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Abstract base class for replies in a message/reply protocol.
- * <P>
+ * <p>
  * Handles the character manipulation.
  * <p>
  * This is a variable length reply, which can grow as needed. The length is
  * given by the largest index written so far.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  */
 abstract public class AbstractMRReply extends AbstractMessage {
     // is this logically an abstract class?
@@ -48,6 +46,7 @@ abstract public class AbstractMRReply extends AbstractMessage {
     }
 
     // keep track of length
+    @Override
     public void setElement(int n, int v) {
         _dataChars[n] = (char) v;
         _nDataChars = Math.max(_nDataChars, n + 1);
@@ -95,6 +94,7 @@ abstract public class AbstractMRReply extends AbstractMessage {
     }
 
     // display format
+    @Override
     public String toString() {
         String s = "";
         for (int i = 0; i < _nDataChars; i++) {
@@ -121,7 +121,7 @@ abstract public class AbstractMRReply extends AbstractMessage {
         int val = -1;
         try {
             val = Integer.parseInt(s);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Unable to get number from reply: \"" + s + "\" index: " + index
                     + " message: \"" + toString() + "\"");
         }
@@ -138,7 +138,7 @@ abstract public class AbstractMRReply extends AbstractMessage {
         int val = -1;
         try {
             val = Integer.parseInt(s, 16);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Unable to get number from reply: \"" + s + "\" index: " + index
                     + " message: \"" + toString() + "\"");
         }
@@ -160,10 +160,6 @@ abstract public class AbstractMRReply extends AbstractMessage {
         }
 
         return -1;
-
-        // find a specific string in the reply
-        //String rep = new String(_dataChars, 0, _nDataChars);
-        //return rep.indexOf(s);
     }
 
     public int skipWhiteSpace(int index) {
@@ -183,9 +179,6 @@ abstract public class AbstractMRReply extends AbstractMessage {
     // contents (private)
     private boolean unsolicited;
 
-    static Logger log = LoggerFactory.getLogger(AbstractMRReply.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractMRReply.class);
 
 }
-
-
-/* @(#)AbstractMRReply.java */

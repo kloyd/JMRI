@@ -1,36 +1,50 @@
-// SerialTurnoutTest.java
 package jmri.jmrix.cmri.serial;
 
-import jmri.implementation.AbstractTurnoutTest;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.implementation.AbstractTurnoutTestBase;
+import jmri.*;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the jmri.jmrix.cmri.serial.SerialTurnout class
  *
  * @author	Bob Jacobsen
- * @version	$Revision$
  */
-public class SerialTurnoutTest extends AbstractTurnoutTest {
+public class SerialTurnoutTest extends AbstractTurnoutTestBase {
 
+    private jmri.jmrix.cmri.CMRISystemConnectionMemo memo = null;
     private SerialTrafficControlScaffold tcis = null;
-    private SerialNode n = new SerialNode();
+    private SerialNode n = null;
 
+    @Test
+    public void testCtor() {
+        new SerialTurnout("5", "to5", memo);
+    }
+    
+    @Override
+    @Before
     public void setUp() {
+        apps.tests.Log4JFixture.setUp();
+        jmri.util.JUnitUtil.resetInstanceManager();
+        
         // prepare an interface
         tcis = new SerialTrafficControlScaffold();
-        n = new SerialNode(0, SerialNode.SMINI);
-        t = new SerialTurnout("CT4", "t4");
-        Assert.assertNotNull("exists", n);
+        memo = new jmri.jmrix.cmri.CMRISystemConnectionMemo();
+        memo.setTrafficController(tcis);
+        n = new SerialNode(0, SerialNode.SMINI,tcis);
+        Assert.assertNotNull("node exists", n);
+        t = memo.getTurnoutManager().provideTurnout("4");
+        Assert.assertNotNull("turnout exists", t);
     }
 
+    @Override
     public int numListeners() {
         return tcis.numListeners();
     }
 
+    @Override
     public void checkThrownMsgSent() {
 
 //                tcis.sendSerialMessage(tcis.nextWrite(), null); // force outbound message; normally done by poll loop
@@ -38,29 +52,70 @@ public class SerialTurnoutTest extends AbstractTurnoutTest {
 //		Assert.assertEquals("content", "41 54 08", tcis.outbound.elementAt(tcis.outbound.size()-1).toString());  // THROWN message
     }
 
+    @Override
     public void checkClosedMsgSent() {
 //                tcis.sendSerialMessage(tcis.nextWrite(), null); // force outbound message; normally done by poll loop
 //		Assert.assertTrue("message sent", tcis.outbound.size()>0);
 //		Assert.assertEquals("content", "41 54 00", tcis.outbound.elementAt(tcis.outbound.size()-1).toString());  // CLOSED message
     }
 
-    // from here down is testing infrastructure
-    public SerialTurnoutTest(String s) {
-        super(s);
+    @Test
+    public void testSystemSpecificComparisonOfStandardNames() {
+        jmri.util.NamedBeanComparator t = new jmri.util.NamedBeanComparator();
+        
+        Turnout t1 = new SerialTurnout("CT1", "to1", memo);
+        Turnout t2 = new SerialTurnout("CT2", "to2", memo);
+        Turnout t10 = new SerialTurnout("CT10", "to10", memo);
+
+        Assert.assertEquals("T1 == T1", 0, t.compare(t1, t1));
+
+        Assert.assertEquals("T1 < T2", -1, t.compare(t1, t2));
+        Assert.assertEquals("T2 > T1", +1, t.compare(t2, t1));
+
+        Assert.assertEquals("T10 > T2", +1, t.compare(t10, t2));
+        Assert.assertEquals("T2 < T10", -1, t.compare(t2, t10));    
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", SerialTurnoutTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
+    @Test
+    public void testSystemSpecificComparisonOfSpecificFormats() {
+        // test by putting into a tree set, then extracting and checking order
+        java.util.TreeSet<Turnout> set = new java.util.TreeSet<>(new jmri.util.NamedBeanComparator());
+        
+        set.add(new SerialTurnout("CT3B4",    "to3004", memo));
+        set.add(new SerialTurnout("CT3003",    "to3003", memo));
+        set.add(new SerialTurnout("CT3B2",    "to3002", memo));
+        set.add(new SerialTurnout("CT3001",    "to3001", memo));
 
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(SerialTurnoutTest.class);
-        return suite;
-    }
+        set.add(new SerialTurnout("CT005",    "to1", memo));
 
-    static Logger log = LoggerFactory.getLogger(SerialTurnoutTest.class.getName());
+        set.add(new SerialTurnout("CT1:5",    "to1005", memo));
+        set.add(new SerialTurnout("CT01004",    "to1004", memo));
+        set.add(new SerialTurnout("CT1003",    "to1003", memo));
+        set.add(new SerialTurnout("CT1002",    "to1002", memo));
+        set.add(new SerialTurnout("CT01001",    "to1001", memo));
+
+        set.add(new SerialTurnout("CT2",    "to2", memo));
+        set.add(new SerialTurnout("CT10",   "to10", memo));
+        set.add(new SerialTurnout("CT1",    "to1", memo));
+        
+        
+        java.util.Iterator<Turnout> it = set.iterator();
+        
+        Assert.assertEquals("CT1", it.next().getSystemName());
+        Assert.assertEquals("CT2", it.next().getSystemName());
+        Assert.assertEquals("CT005", it.next().getSystemName());
+        Assert.assertEquals("CT10", it.next().getSystemName());
+
+        Assert.assertEquals("CT01001", it.next().getSystemName());
+        Assert.assertEquals("CT1002", it.next().getSystemName());
+        Assert.assertEquals("CT1003", it.next().getSystemName());
+        Assert.assertEquals("CT01004", it.next().getSystemName());
+        Assert.assertEquals("CT1:5", it.next().getSystemName());
+
+        Assert.assertEquals("CT3001", it.next().getSystemName());
+        Assert.assertEquals("CT3B2", it.next().getSystemName());
+        Assert.assertEquals("CT3003", it.next().getSystemName());
+        Assert.assertEquals("CT3B4", it.next().getSystemName());
+    }
 
 }

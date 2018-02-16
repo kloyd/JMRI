@@ -1,4 +1,3 @@
-// NceProgrammerTest.java
 package jmri.jmrix.nce;
 
 import java.io.DataInputStream;
@@ -7,11 +6,11 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Vector;
 import jmri.JmriException;
-import jmri.managers.DefaultProgrammerManager;
-import junit.framework.Assert;
+import jmri.ProgrammingMode;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,15 +21,16 @@ import org.slf4j.LoggerFactory;
  * was done would have been good!
  *
  * @author	Bob Jacobsen
- * @version $Revision$
  */
 public class NceProgrammerTest extends TestCase {
 
+    @Override
     public void setUp() {
         tc = new NceTrafficController();
         saveCommandOptions = tc.getCommandOptions();
     }
 
+    @Override
     public void tearDown() {
         tc.setCommandOptions(saveCommandOptions);
     }
@@ -71,9 +71,9 @@ public class NceProgrammerTest extends TestCase {
         Assert.assertEquals(" listener invoked", 1, rcvdInvoked);
     }
 
-    // Test names ending with "String" are for the new writeCV(String, ...) 
-    // etc methods.  If you remove the older writeCV(int, ...) tests, 
-    // you can rename these. Note that not all (int,...) tests may have a 
+    // Test names ending with "String" are for the new writeCV(String, ...)
+    // etc methods.  If you remove the older writeCV(int, ...) tests,
+    // you can rename these. Note that not all (int,...) tests may have a
     // String(String, ...) test defined, in which case you should create those.
     public void xtestWriteCvSequenceAsciiString() throws JmriException, Exception {
 
@@ -153,7 +153,7 @@ public class NceProgrammerTest extends TestCase {
         NceProgrammer p = new NceProgrammer(tc);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the write
         p.writeCV(3, 12, l);
@@ -177,7 +177,7 @@ public class NceProgrammerTest extends TestCase {
         NceProgrammer p = new NceProgrammer(tc);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the write
         p.writeCV("3", 12, l);
@@ -201,7 +201,7 @@ public class NceProgrammerTest extends TestCase {
         NceProgrammer p = new NceProgrammer(tc);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the write
         p.writeCV(3, 12, l);
@@ -225,7 +225,7 @@ public class NceProgrammerTest extends TestCase {
         NceProgrammer p = new NceProgrammer(tc);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the write
         p.writeCV("3", 12, l);
@@ -327,7 +327,7 @@ public class NceProgrammerTest extends TestCase {
         NceProgrammer p = new NceProgrammer(tc);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the read
         p.readCV(3, l);
@@ -356,7 +356,7 @@ public class NceProgrammerTest extends TestCase {
         NceProgrammer p = new NceProgrammer(tc);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the read
         p.readCV(3, l);
@@ -385,6 +385,7 @@ public class NceProgrammerTest extends TestCase {
             rcvdStatus = 0;
         }
 
+        @Override
         public void programmingOpReply(int value, int status) {
             rcvdValue = value;
             rcvdStatus = status;
@@ -402,6 +403,7 @@ public class NceProgrammerTest extends TestCase {
         }
 
         // override some NceInterfaceController methods for test purposes
+        @Override
         public boolean status() {
             return true;
         }
@@ -411,6 +413,7 @@ public class NceProgrammerTest extends TestCase {
          */
         public Vector<NceMessage> outbound = new Vector<NceMessage>();  // public OK here, so long as this is a test class
 
+        @Override
         public void sendNceMessage(NceMessage m, jmri.jmrix.nce.NceListener l) {
             if (log.isDebugEnabled()) {
                 log.debug("sendNceMessage [" + m + "]");
@@ -454,17 +457,21 @@ public class NceProgrammerTest extends TestCase {
     // internal class to simulate a NcePortController
     class NcePortControllerScaffold extends NcePortController {
 
+        @Override
         public java.util.Vector<String> getPortNames() {
             return null;
         }
 
+        @Override
         public String openPort(String portName, String appName) {
             return null;
         }
 
+        @Override
         public void configure() {
         }
 
+        @Override
         public String[] validBaudRates() {
             return null;
         }
@@ -481,16 +488,19 @@ public class NceProgrammerTest extends TestCase {
         }
 
         // returns the InputStream from the port
+        @Override
         public DataInputStream getInputStream() {
             return istream;
         }
 
         // returns the outputStream to the port
+        @Override
         public DataOutputStream getOutputStream() {
             return ostream;
         }
 
         // check that this object is ready to operate
+        @Override
         public boolean status() {
             return true;
         }
@@ -510,7 +520,7 @@ public class NceProgrammerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {NceProgrammerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -523,6 +533,6 @@ public class NceProgrammerTest extends TestCase {
     // apps.tests.Log4JFixture log4jfixtureInst = new apps.tests.Log4JFixture(this);
     // protected void setUp() { log4jfixtureInst.setUp(); }
     // protected void tearDown() { log4jfixtureInst.tearDown(); }
-    static Logger log = LoggerFactory.getLogger(NceProgrammerTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(NceProgrammerTest.class);
 
 }

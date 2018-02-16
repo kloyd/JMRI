@@ -1,38 +1,30 @@
-// AddSensorPanel.java
 package jmri.jmrit.beantable;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ResourceBundle;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * JPanel to create a new JMRI devices HiJacked to serve other beantable tables.
  *
- * @author	Bob Jacobsen Copyright (C) 2009
+ * @author Bob Jacobsen Copyright (C) 2009
  * @author Pete Cressman Copyright (C) 2010
- * @version $Revision$
  */
 public class AddNewBeanPanel extends jmri.util.swing.JmriPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7238135491102630527L;
-
-    public AddNewBeanPanel(JTextField sys, JTextField userName, JTextField endRange, JCheckBox addRange, JCheckBox autoSystem,
-            String addButtonLabel, ActionListener listener) {
+    public AddNewBeanPanel(JTextField sys, JTextField userName, JSpinner endRange, JCheckBox addRange, JCheckBox autoSystem,
+            String addButtonLabel, ActionListener okListener, ActionListener cancelListener, JLabel statusBar) {
         sysName = sys;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         _endRange = endRange;
@@ -66,6 +58,7 @@ public class AddNewBeanPanel extends jmri.util.swing.JmriPanel {
         c.gridx = 2;
         c.gridy = 1;
         p.add(sys, c);
+        sys.setToolTipText(Bundle.getMessage("SysNameToolTip", "Y"));
         c.gridx = 3;
         p.add(finishLabel, c);
         c.gridx = 4;
@@ -78,17 +71,36 @@ public class AddNewBeanPanel extends jmri.util.swing.JmriPanel {
         finishLabel.setEnabled(false);
         _endRange.setEnabled(false);
 
-        add(ok = new JButton(rb.getString(addButtonLabel)));
-        ok.addActionListener(listener);
+        // add status bar above buttons
+        JPanel panelStatus = new JPanel();
+        panelStatus.setLayout(new FlowLayout());
+        statusBar.setFont(statusBar.getFont().deriveFont(0.9f * sysNameLabel.getFont().getSize())); // a bit smaller
+        statusBar.setForeground(Color.gray);
+        panelStatus.add(statusBar);
+        add(panelStatus);
+
+        // cancel + add buttons at bottom of window
+        JPanel panelBottom = new JPanel();
+        panelBottom.setLayout(new FlowLayout(FlowLayout.TRAILING));
+
+        panelBottom.add(cancel = new JButton(Bundle.getMessage("ButtonCancel")));
+        cancel.addActionListener(cancelListener);
+
+        panelBottom.add(ok = new JButton(Bundle.getMessage(addButtonLabel)));
+        ok.addActionListener(okListener);
+
+        add(panelBottom);
 
         addRange.addItemListener(
                 new ItemListener() {
+                    @Override
                     public void itemStateChanged(ItemEvent e) {
                         rangeState();
                     }
                 });
 
         sysName.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyReleased(KeyEvent a) {
                 if (sysName.getText().length() > 0) {
                     ok.setEnabled(true);
@@ -101,6 +113,7 @@ public class AddNewBeanPanel extends jmri.util.swing.JmriPanel {
 
         autoSystem.addItemListener(
                 new ItemListener() {
+                    @Override
                     public void itemStateChanged(ItemEvent e) {
                         autoSystemName();
                     }
@@ -134,19 +147,14 @@ public class AddNewBeanPanel extends jmri.util.swing.JmriPanel {
         }
     }
 
+    JButton cancel;
     JButton ok;
     JTextField sysName;
-    JLabel sysNameLabel = new JLabel(rb.getString("LabelSystemName"));
-    JLabel userNameLabel = new JLabel(rb.getString("LabelUserName"));
+    JLabel sysNameLabel = new JLabel(Bundle.getMessage("LabelSystemName"));
+    JLabel userNameLabel = new JLabel(Bundle.getMessage("LabelUserName"));
 
-    JTextField _endRange;
+    JSpinner _endRange;
     JCheckBox _range;
     JCheckBox _autoSys;
-    JLabel finishLabel = new JLabel(rb.getString("LabelNumberToAdd"));
-
-    static final ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrit.beantable.BeanTableBundle");
-    static final Logger log = LoggerFactory.getLogger(AddNewBeanPanel.class.getName());
+    JLabel finishLabel = new JLabel(Bundle.getMessage("LabelNumberToAdd"));
 }
-
-
-/* @(#)AddNewBeanPanel.java */

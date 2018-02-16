@@ -1,4 +1,3 @@
-// DeleteRosterItemAction.java
 package jmri.jmrit.roster;
 
 import java.awt.Component;
@@ -8,6 +7,7 @@ import javax.swing.Icon;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import jmri.beans.Beans;
+import jmri.jmrit.roster.rostergroup.RosterGroupSelector;
 import jmri.jmrit.roster.swing.RosterEntryComboBox;
 import jmri.util.FileUtil;
 import jmri.util.swing.JmriAbstractAction;
@@ -23,28 +23,10 @@ import org.slf4j.LoggerFactory;
  * posts a dialog box to select the loco to be deleted, and then posts an "are
  * you sure" dialog box before acting.
  *
- *
- * <hr> This file is part of JMRI.
- * <P>
- * JMRI is free software; you can redistribute it and/or modify it under the
- * terms of version 2 of the GNU General Public License as published by the Free
- * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
- * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
- *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002
  * @see jmri.jmrit.XmlFile
  */
 public class DeleteRosterItemAction extends JmriAbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -1566611248270959245L;
 
     public DeleteRosterItemAction(String s, WindowInterface wi) {
         super(s, wi);
@@ -68,14 +50,14 @@ public class DeleteRosterItemAction extends JmriAbstractAction {
     @Override
     public void actionPerformed(ActionEvent event) {
 
-        Roster roster = Roster.instance();
-        String rosterGroup = Roster.instance().getDefaultRosterGroup();
+        Roster roster = Roster.getDefault();
+        String rosterGroup = Roster.getDefault().getDefaultRosterGroup();
         RosterEntry[] entries;
         // rosterGroup may legitimately be null
         // but getProperty returns null if the property cannot be found, so
         // we test that the property exists before attempting to get its value
-        if (Beans.hasProperty(wi, "selectedRosterGroup")) {
-            rosterGroup = (String) Beans.getProperty(wi, "selectedRosterGroup");
+        if (Beans.hasProperty(wi, RosterGroupSelector.SELECTED_ROSTER_GROUP)) {
+            rosterGroup = (String) Beans.getProperty(wi, RosterGroupSelector.SELECTED_ROSTER_GROUP);
             log.debug("selectedRosterGroup was {}", rosterGroup);
         }
         if (Beans.hasProperty(wi, "selectedRosterEntries")) {
@@ -120,7 +102,7 @@ public class DeleteRosterItemAction extends JmriAbstractAction {
                 re.deleteAttribute(group);
                 re.updateFile();
             }
-            Roster.writeRosterFile();
+            Roster.getDefault().writeRoster();
 
             // backup the file & delete it
             if (rosterGroup == null) {
@@ -146,9 +128,9 @@ public class DeleteRosterItemAction extends JmriAbstractAction {
         int retval = JOptionPane.showOptionDialog(_who,
                 "Select one roster entry", "Delete roster entry",
                 0, JOptionPane.INFORMATION_MESSAGE, null,
-                new Object[]{"Cancel", "OK", selections}, null);
+                new Object[]{Bundle.getMessage("ButtonCancel"), Bundle.getMessage("ButtonOK"), selections}, null);
         log.debug("Dialog value " + retval + " selected " + selections.getSelectedIndex() + ":"
-                + selections.getSelectedItem());
+                + selections.getSelectedItem()); // TODO I18N
         if (retval != 1) {
             return null;
         }
@@ -159,7 +141,7 @@ public class DeleteRosterItemAction extends JmriAbstractAction {
 
     /**
      * Can provide some mechanism to prompt for user for one last chance to
-     * change his/her mind
+     * change his/her mind.
      *
      * @return true if user says to continue
      */
@@ -173,7 +155,7 @@ public class DeleteRosterItemAction extends JmriAbstractAction {
                         JOptionPane.YES_NO_OPTION));
     }
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(DeleteRosterItemAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DeleteRosterItemAction.class);
 
     // never invoked, because we overrode actionPerformed above
     @Override

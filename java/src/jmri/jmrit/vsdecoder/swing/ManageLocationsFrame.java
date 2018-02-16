@@ -1,23 +1,6 @@
 package jmri.jmrit.vsdecoder.swing;
 
-/*
- * <hr>
- * This file is part of JMRI.
- * <P>
- * JMRI is free software; you can redistribute it and/or modify it under 
- * the terms of version 2 of the GNU General Public License as published 
- * by the Free Software Foundation. See the "COPYING" file for a copy
- * of this license.
- * <P>
- * JMRI is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License 
- * for more details.
- * <P>
- *
- * @author			Mark Underwood Copyright (C) 2011
- * @version			$Revision: 21510 $
- */
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -57,18 +40,28 @@ import jmri.jmrit.vsdecoder.VSDecoderManager;
 import jmri.jmrit.vsdecoder.listener.ListeningSpot;
 import jmri.util.JmriJFrame;
 import jmri.util.PhysicalLocation;
-import jmri.util.WindowMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/*
+ * <hr>
+ * This file is part of JMRI.
+ * <P>
+ * JMRI is free software; you can redistribute it and/or modify it under 
+ * the terms of version 2 of the GNU General Public License as published 
+ * by the Free Software Foundation. See the "COPYING" file for a copy
+ * of this license.
+ * <P>
+ * JMRI is distributed in the hope that it will be useful, but WITHOUT 
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License 
+ * for more details.
+ * <P>
+ *
+ * @author   Mark Underwood Copyright (C) 2011
+ */
 public class ManageLocationsFrame extends JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 9159687443567118015L;
-
-    // Uncomment this when we add labels...
     public static enum PropertyChangeID {
 
         MUTE, VOLUME_CHANGE, ADD_DECODER, REMOVE_DECODER
@@ -119,7 +112,7 @@ public class ManageLocationsFrame extends JmriJFrame {
 
     private List<JMenu> menuList;
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP2",
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "2D array of different types passed as complex parameter. "
             + "Better to switch to passing use-specific objects rather than "
             + "papering this over with a deep copy of the arguments. "
@@ -149,6 +142,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         b1.setToolTipText(Bundle.getMessage("ToolTipButtonAudioModeRoom"));
         b1.setMnemonic(Mnemonics.get("RoomMode")); // NOI18N
         b1.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 modeRadioButtonPressed(e);
             }
@@ -157,6 +151,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         b2.setMnemonic(Mnemonics.get("HeadphoneMode")); // NOI18N
         b2.setToolTipText(Bundle.getMessage("ToolTipButtonAudioModeHeadphone"));
         b2.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 modeRadioButtonPressed(e);
             }
@@ -231,10 +226,10 @@ public class ManageLocationsFrame extends JmriJFrame {
         opsScrollPanel.getViewport().add(opsTable);
 
         tabbedPane = new JTabbedPane();
-        tabbedPane.addTab(Bundle.getMessage("FieldReportersTabTitle"), reporterScrollPanel);
+        tabbedPane.addTab(Bundle.getMessage("Reporters"), reporterScrollPanel); // Reporters Tab Title
         tabbedPane.setToolTipTextAt(0, Bundle.getMessage("ToolTipReporterTab"));
         tabbedPane.setMnemonicAt(0, Mnemonics.get("ReporterTab")); // NOI18N
-        tabbedPane.addTab(Bundle.getMessage("FieldBlockTabTitle"), blockScrollPanel);
+        tabbedPane.addTab(Bundle.getMessage("Blocks"), blockScrollPanel);
         tabbedPane.setToolTipTextAt(0, Bundle.getMessage("ToolTipBlockTab"));
         tabbedPane.setMnemonicAt(0, Mnemonics.get("BlockTab")); // NOI18N
         tabbedPane.addTab(Bundle.getMessage("FieldOpsTabTitle"), opsScrollPanel);
@@ -246,10 +241,11 @@ public class ManageLocationsFrame extends JmriJFrame {
 
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
-        JButton closeButton = new JButton(Bundle.getMessage("ButtonClose"));
+        JButton closeButton = new JButton(Bundle.getMessage("ButtonCancel"));
         closeButton.setToolTipText(Bundle.getMessage("ToolTipButtonMLFClose"));
         closeButton.setMnemonic(Mnemonics.get("CloseButton")); // NOI18N
         closeButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 closeButtonPressed(e);
             }
@@ -258,6 +254,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         saveButton.setToolTipText(Bundle.getMessage("ToolTipButtonMLFSave"));
         saveButton.setMnemonic(Mnemonics.get("SaveButton")); // NOI18N
         saveButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 saveButtonPressed(e);
             }
@@ -275,12 +272,12 @@ public class ManageLocationsFrame extends JmriJFrame {
     private void buildMenu() {
         JMenu fileMenu = new JMenu(Bundle.getMessage("MenuFile"));
 
-        fileMenu.add(new LoadVSDFileAction(Bundle.getMessage("MenuItemLoadVSDFile")));
-        fileMenu.add(new StoreXmlVSDecoderAction(Bundle.getMessage("MenuItemSaveProfile")));
-        fileMenu.add(new LoadXmlVSDecoderAction(Bundle.getMessage("MenuItemLoadProfile")));
+        fileMenu.add(new LoadVSDFileAction(Bundle.getMessage("VSDecoderFileMenuLoadVSDFile")));
+        fileMenu.add(new StoreXmlVSDecoderAction(Bundle.getMessage("VSDecoderFileMenuSaveProfile")));
+        fileMenu.add(new LoadXmlVSDecoderAction(Bundle.getMessage("VSDecoderFileMenuLoadProfile")));
 
         JMenu editMenu = new JMenu(Bundle.getMessage("MenuEdit"));
-        editMenu.add(new VSDPreferencesAction(Bundle.getMessage("MenuItemEditPreferences")));
+        editMenu.add(new VSDPreferencesAction(Bundle.getMessage("VSDecoderFileMenuPreferences")));
 
         fileMenu.getItem(1).setEnabled(false); // disable XML store
         fileMenu.getItem(2).setEnabled(false); // disable XML load
@@ -297,28 +294,6 @@ public class ManageLocationsFrame extends JmriJFrame {
 
     }
 
-    /**
-     * Add a standard help menu, including window specific help item.
-     *
-     * @param ref    JHelp reference for the desired window-specific help page
-     * @param direct true if the help menu goes directly to the help system,
-     *               e.g. there are no items in the help menu
-     *
-     * WARNING: BORROWED FROM JmriJFrame.
-     */
-    public void addHelpMenu(String ref, boolean direct) {
-        // only works if no menu present?
-        JMenuBar bar = getJMenuBar();
-        if (bar == null) {
-            bar = new JMenuBar();
-        }
-        // add Window menu
-        bar.add(new WindowMenu(this)); // * GT 28-AUG-2008 Added window menu
-        // add Help menu
-        jmri.util.HelpUtil.helpMenu(bar, ref, direct);
-        setJMenuBar(bar);
-    }
-
     private void saveButtonPressed(ActionEvent e) {
         int value = JOptionPane.showConfirmDialog(null, Bundle.getMessage("FieldMLFSaveDialogConfirmMessage"),
                 Bundle.getMessage("FieldMLFSaveDialogTitle"),
@@ -332,7 +307,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "WMI_WRONG_MAP_ITERATOR", justification = "only in slow debug")
+    @SuppressFBWarnings(value = "WMI_WRONG_MAP_ITERATOR", justification = "only in slow debug")
     private void saveTableValues() {
         if ((Boolean) locModel.getValueAt(0, 1)) {
             listenerLoc.setLocation((Double) locModel.getValueAt(0, 2),
@@ -344,7 +319,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         }
 
         HashMap<String, PhysicalLocation> data = reporterModel.getDataMap();
-        ReporterManager mgr = jmri.InstanceManager.reporterManagerInstance();
+        ReporterManager mgr = jmri.InstanceManager.getDefault(jmri.ReporterManager.class);
         for (String s : data.keySet()) {
             log.debug("Reporter: " + s + " Location: " + data.get(s));
             Reporter r = mgr.getByDisplayName(s);
@@ -352,7 +327,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         }
 
         data = blockModel.getDataMap();
-        BlockManager bmgr = jmri.InstanceManager.blockManagerInstance();
+        BlockManager bmgr = jmri.InstanceManager.getDefault(jmri.BlockManager.class);
         for (String s : data.keySet()) {
             log.debug("Block: " + s + " Location: " + data.get(s));
             Block b = bmgr.getByDisplayName(s);
@@ -375,17 +350,13 @@ public class ManageLocationsFrame extends JmriJFrame {
         dispose();
     }
 
-    static private Logger log = LoggerFactory.getLogger(ManageLocationsFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ManageLocationsFrame.class);
 
     /**
      * Private class to serve as TableModel for Reporters and Ops Locations
      */
     private static class LocationTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = -6422871979102501443L;
         // These get internationalized at runtime in the constructor below.
         private String[] columnNames = new String[6];
         private Object[][] rowData;
@@ -393,7 +364,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         public LocationTableModel(Object[][] dataMap) {
             super();
             // Use i18n-ized column titles.
-            columnNames[0] = Bundle.getMessage("FieldTableNameColumn");
+            columnNames[0] = Bundle.getMessage("Name");
             columnNames[1] = Bundle.getMessage("FieldTableUseColumn");
             columnNames[2] = Bundle.getMessage("FieldTableXColumn");
             columnNames[3] = Bundle.getMessage("FieldTableYColumn");
@@ -414,31 +385,38 @@ public class ManageLocationsFrame extends JmriJFrame {
             return (retv);
         }
 
+        @Override
         public String getColumnName(int col) {
-            return columnNames[col].toString();
+            return columnNames[col];
         }
 
+        @Override
         public int getRowCount() {
             return rowData.length;
         }
 
+        @Override
         public int getColumnCount() {
             return columnNames.length;
         }
 
+        @Override
         public Object getValueAt(int row, int col) {
             return rowData[row][col];
         }
 
+        @Override
         public boolean isCellEditable(int row, int col) {
             return true;
         }
 
+        @Override
         public void setValueAt(Object value, int row, int col) {
             rowData[row][col] = value;
             fireTableCellUpdated(row, col);
         }
 
+        @Override
         public Class<?> getColumnClass(int columnIndex) {
             switch (columnIndex) {
                 case 1:
@@ -458,12 +436,8 @@ public class ManageLocationsFrame extends JmriJFrame {
     /**
      * Private class for use as TableModel for Listener Locations
      */
-    private class ListenerTableModel extends AbstractTableModel {
+    static private class ListenerTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = -6375914030167059399L;
         // These get internationalized at runtime in the constructor below.
         private String[] columnNames = new String[7];
         private Object[][] rowData = null;
@@ -471,7 +445,7 @@ public class ManageLocationsFrame extends JmriJFrame {
         public ListenerTableModel(Object[][] dataMap) {
             super();
             // Use i18n-ized column titles.
-            columnNames[0] = Bundle.getMessage("FieldTableNameColumn");
+            columnNames[0] = Bundle.getMessage("Name");
             columnNames[1] = Bundle.getMessage("FieldTableUseColumn");
             columnNames[2] = Bundle.getMessage("FieldTableXColumn");
             columnNames[3] = Bundle.getMessage("FieldTableYColumn");
@@ -498,31 +472,38 @@ public class ManageLocationsFrame extends JmriJFrame {
             return (retv);
         }
 
+        @Override
         public String getColumnName(int col) {
-            return columnNames[col].toString();
+            return columnNames[col];
         }
 
+        @Override
         public int getRowCount() {
             return rowData.length;
         }
 
+        @Override
         public int getColumnCount() {
             return columnNames.length;
         }
 
+        @Override
         public Object getValueAt(int row, int col) {
             return rowData[row][col];
         }
 
+        @Override
         public boolean isCellEditable(int row, int col) {
             return true;
         }
 
+        @Override
         public void setValueAt(Object value, int row, int col) {
             rowData[row][col] = value;
             fireTableCellUpdated(row, col);
         }
 
+        @Override
         public Class<?> getColumnClass(int columnIndex) {
             switch (columnIndex) {
                 case 1:

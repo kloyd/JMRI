@@ -19,18 +19,18 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Table Model for the Warrant List
- * <P>
+ * <BR>
  * <hr>
  * This file is part of JMRI.
  * <P>
  * JMRI is free software; you can redistribute it and/or modify it under the
  * terms of version 2 of the GNU General Public License as published by the Free
  * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
+ * </P><P>
  * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
+ * </P>
  *
  * @author Pete Cressman Copyright (C) 2009, 2010
  */
@@ -39,7 +39,6 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
                                                                         // implements
                                                                         // PropertyChangeListener
 {
-    private static final long serialVersionUID = 6318203351014416147L;
     public static final int WARRANT_COLUMN = 0;
     public static final int ROUTE_COLUMN = 1;
     public static final int TRAIN_NAME_COLUMN = 2;
@@ -143,18 +142,29 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
     }
 
     protected void haltAllTrains() {
+        ArrayList<Warrant> abortList = new ArrayList<Warrant>();
         Iterator<Warrant> iter = _warList.iterator();
         while (iter.hasNext()) {
-            iter.next().controlRunTrain(Warrant.HALT);
+            Warrant w = iter.next();
+            if (w.getState() >= 0) {
+                abortList.add(w);
+            }
         }
         iter = _warNX.iterator();
         while (iter.hasNext()) {
-            iter.next().controlRunTrain(Warrant.HALT);
+            Warrant w = iter.next();
+            if (w.getState() >= 0) {
+                abortList.add(w);
+            }
+        }
+        iter = abortList.iterator();
+        while (iter.hasNext()) {
+            iter.next().controlRunTrain(Warrant.STOP);
         }
         fireTableDataChanged();
     }
 
-    public void addNXWarrant(Warrant w) {
+    protected void addNXWarrant(Warrant w) {
         _warList.add(w);
         _warNX.add(w);
         w.addPropertyChangeListener(this);
@@ -163,10 +173,10 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
 
     /**
      * Removes any warrant, not just NXWarrant
-     * 
-     * @param w
+     * @param w Warrant
      */
-    public void removeNXWarrant(Warrant w) {
+    public void removeWarrant(Warrant w) {
+        log.debug("removeWarrant "+w.getDisplayName());
         w.removePropertyChangeListener(this);
         _warList.remove(w);
         _warNX.remove(w);
@@ -243,6 +253,9 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
             return Bundle.getMessage("MRun");
         case CONTROL_COLUMN:
             return Bundle.getMessage("Control");
+        default:
+            // fall out
+            break;
         }
         return "";
     }
@@ -264,6 +277,9 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
         case EDIT_COLUMN:
         case DELETE_COLUMN:
             return true;
+        default:
+            // fall out
+            break;
         }
         return false;
     }
@@ -295,6 +311,9 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
             return JButton.class;
         case DELETE_COLUMN:
             return JButton.class;
+        default:
+            // fall out
+            break;
         }
         return String.class;
     }
@@ -320,6 +339,9 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
         case EDIT_COLUMN:
         case DELETE_COLUMN:
             return new JButton("DELETE").getPreferredSize().width;
+        default:
+            // fall out
+            break;
         }
         return new JTextField(10).getPreferredSize().width;
     }
@@ -343,19 +365,15 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
         case WARRANT_COLUMN:
             return w.getDisplayName();
         case ROUTE_COLUMN:
-            BlockOrder bo = w.getfirstOrder();
-            if (bo != null) {
-                return Bundle.getMessage("Origin", bo.getBlock()
-                        .getDisplayName());
-            }
-            break;
+            BlockOrder bo0 = w.getfirstOrder();
+            BlockOrder bo1 = w.getLastOrder();
+            return Bundle.getMessage("WarrantRoute", 
+                        (bo0==null?"?":bo0.getBlock().getDisplayName()),
+                        (bo1==null?"?":bo1.getBlock().getDisplayName()));
         case TRAIN_NAME_COLUMN:
             return w.getTrainName();
         case ADDRESS_COLUMN:
-            if (w.getDccAddress() != null) {
-                return w.getDccAddress().toString();
-            }
-            break;
+            return w.getSpeedUtil().getAddress();
         case ALLOCATE_COLUMN:
             if (w.isTotalAllocated()) {
                 return new NamedIcon(
@@ -384,7 +402,7 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
                 return new NamedIcon(
                         "resources/icons/smallschematics/tracksegments/circuit-green.gif",
                         "off");
-            } else if (w.hasRouteSet() && w.isAllocated()) {
+            } else if (/*w.hasRouteSet() &&*/ w.isAllocated()) {
                 return new NamedIcon(
                         "resources/icons/smallschematics/tracksegments/circuit-occupied.gif",
                         "occupied");
@@ -418,15 +436,18 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
             return Bundle.getMessage("ButtonEdit");
         case DELETE_COLUMN:
             return Bundle.getMessage("ButtonDelete");
+        default:
+            // fall out
+            break;
         }
         return "";
     }
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        if (log.isDebugEnabled())
-            log.debug("setValueAt: row= " + row + ", column= " + col
-                    + ", value= " + value.getClass().getName());
+//        if (log.isDebugEnabled())
+//            log.debug("setValueAt: row= " + row + ", column= " + col
+//                    + ", value= " + (value==null ? value : (value.toString()==null ? value.getClass().getName() :value.toString())));
         Warrant w = getWarrantAt(row);
         if (w == null) {
             log.warn("setValueAt row= " + row + " Warrant is null!");
@@ -442,7 +463,7 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
             break;
         case ADDRESS_COLUMN:
             String addr = (String) value;
-            if (!w.setDccAddress(addr)) {
+            if (!w.getSpeedUtil().setDccAddress(addr)) {
                 msg = Bundle.getMessage("BadDccAddress", addr);                
             }
             break;
@@ -453,6 +474,7 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
                         Bundle.getMessage("completeAllocate",
                                 w.getDisplayName()), myGreen, false);
             } else {
+                w.deAllocate();
                 _frame.setStatusText(msg, myGold, false);
                 msg = null;
             }
@@ -466,7 +488,7 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
             }
             break;
         case SET_COLUMN:
-            msg = w.setRoute(0, null);
+            msg = w.setRoute(1, null);
             if (msg == null) {
                 _frame.setStatusText(
                         Bundle.getMessage("pathsSet", w.getDisplayName()),
@@ -478,34 +500,10 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
             }
             break;
         case AUTO_RUN_COLUMN:
-            msg = _frame.runTrain(w);
+            msg = _frame.runTrain(w, Warrant.MODE_RUN);
             break;
         case MANUAL_RUN_COLUMN:
-            if (w.getRunMode() == Warrant.MODE_NONE) {
-                if (w.getBlockOrders().size() == 0) {
-                    msg = Bundle.getMessage("EmptyRoute");
-                    break;
-                }
-                msg = w.setRoute(0, null);
-                if (msg == null) {
-                    msg = w.setRunMode(Warrant.MODE_MANUAL, null, null, null,
-                            false);
-                }
-                if (msg != null) {
-                    w.deAllocate();
-                } else {
-                    msg = w.checkStartBlock(Warrant.MODE_RUN); // notify first block occupied by
-                                                // this train
-                    if (msg != null) {
-                        _frame.setStatusText(msg, WarrantTableModel.myGold,
-                                false);
-                    }
-                }
-                if (log.isDebugEnabled())
-                    log.debug("w.runManualTrain= " + msg);
-            } else {
-                msg = w.getRunModeMessage();
-            }
+            msg = _frame.runTrain(w, Warrant.MODE_MANUAL);
             break;
         case CONTROL_COLUMN:
             // Message is set when propertyChangeEvent (below) is received from
@@ -514,9 +512,8 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
             // getRunningMessage()
             int mode = w.getRunMode();
             if (mode == Warrant.MODE_LEARN) {
-                Bundle.getMessage("Learning", w.getCurrentBlockOrder()
-                        .getBlock().getDisplayName());
-            } else {
+                msg = Bundle.getMessage("Learning", w.getCurrentBlockName());
+            } else if (value!=null) {
                 String setting = (String) value;
                 if (mode == Warrant.MODE_RUN || mode == Warrant.MODE_MANUAL) {
                     int s = -1;
@@ -526,33 +523,37 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
                         s = Warrant.RESUME;
                     } else if (setting.equals(WarrantTableFrame.retry)) {
                         s = Warrant.RETRY;
+                    } else if (setting.equals(WarrantTableFrame.stop)) {
+                        s = Warrant.ESTOP;
                     } else if (setting.equals(WarrantTableFrame.abort)) {
                         s = Warrant.ABORT;
+                    } else if (setting.equals(WarrantTableFrame.ramp)) {
+                        s = Warrant.RAMP_HALT;
                     }
                     w.controlRunTrain(s);
-                } else if (setting.equals(WarrantTableFrame.abort)) {
-                    w.deAllocate();
-                } else if (mode == Warrant.MODE_NONE) {
-                    msg = Bundle.getMessage("NotRunning", w.getDisplayName());
-                } else {
-                    getValueAt(row, col);
                 }
             }
             break;
         case EDIT_COLUMN:
-            openWarrantFrame(w);
+            openWarrantFrame(w);                
             break;
         case DELETE_COLUMN:
             if (w.getRunMode() == Warrant.MODE_NONE) {
-                removeNXWarrant(w); // removes any warrant
+                removeWarrant(w); // removes any warrant
             } else {
                 w.controlRunTrain(Warrant.ABORT);
                 if (_warNX.contains(w)) { // don't remove regular warrants
-                    removeNXWarrant(w);
+                    removeWarrant(w);
                 }
 
             }
             break;
+        default:
+           log.error("Invalid Column " + col + " requested.");
+           throw new java.lang.IllegalArgumentException("Invalid Column " + col + " requested.");
+        }
+        if (row < getRowCount()) {
+            fireTableRowsUpdated(row, row);                    
         }
         if (msg != null) {
             JOptionPane.showMessageDialog(null, msg,
@@ -560,37 +561,48 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
                     JOptionPane.WARNING_MESSAGE);
             _frame.setStatusText(msg, Color.red, true);
         }
-        fireTableRowsUpdated(row, row);
     }
 
     private void openWarrantFrame(Warrant warrant) {
-        if (WarrantTableAction._openFrame != null) {
-            WarrantTableAction._openFrame.dispose();
-        }
-        WarrantTableAction._openFrame = null;
+        WarrantFrame frame = null;
         for (int i = 0; i < _warList.size(); i++) {
             if (warrant.equals(_warList.get(i))) {
-                WarrantTableAction._openFrame = new WarrantFrame(warrant);
+                frame = new WarrantFrame(warrant);
                 break;
             }
         }
-        if (WarrantTableAction._openFrame == null) {
+        if (frame == null) {
             for (int i = 0; i < _warNX.size(); i++) {
                 if (warrant.equals(_warList.get(i))) {
-                    WarrantTableAction._openFrame = new WarrantFrame(warrant);
+                    frame= new WarrantFrame(warrant);
                     break;
                 }
             }
-            if (WarrantTableAction._openFrame != null) {
-                WarrantTableAction._openFrame.setVisible(true);
-                WarrantTableAction._openFrame.toFront();
+        }
+        if (frame != null) {
+            WarrantFrame f = WarrantTableAction.getWarrantFrame();
+            if (f != null) {
+                WarrantTableAction.closeWarrantFrame(f);
             }
+            frame.setVisible(true);
+            frame.toFront();
+            WarrantTableAction.setWarrantFrame(frame);
         }
     }
 
+    private String _lastProperty;
+    private long _propertyTime;
     @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         String property = e.getPropertyName();
+        log.debug("propertyChange "+property);
+        long time = _propertyTime;
+        _propertyTime = System.currentTimeMillis();
+        if ((_propertyTime-time)<20 && property.equals(_lastProperty) && !property.equals("length")) {
+            return;
+        }
+        _lastProperty = property;
+        
         if (property.equals("length")) {
             // a NamedBean added or deleted
             init();
@@ -598,20 +610,15 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
         } else if (e.getSource() instanceof Warrant) {
             // a value changed. Find it, to avoid complete redraw
             Warrant bean = (Warrant) e.getSource();
+            log.debug("source is warrant "+bean.getDisplayName());
             for (int i = 0; i < _warList.size(); i++) {
                 if (bean.equals(_warList.get(i))) {
 
                     if (_warNX.contains(bean)
-                            && ((property.equals("runMode") && e.getNewValue() == Integer
-                                    .valueOf(Warrant.MODE_NONE)) || (property
-                                    .equals("controlChange") && e.getNewValue() == Integer
-                                    .valueOf(Warrant.ABORT)))) {
+                            && ((property.equals("runMode") && ((Integer)e.getNewValue()).intValue() == Warrant.MODE_NONE) 
+                                    || (property.equals("controlChange") && ((Integer)e.getNewValue()).intValue() == Warrant.ABORT))) {
                         fireTableRowsDeleted(i, i);
-/*                        try { // TableSorter needs time to get its row count updated
-                            Thread.sleep(50);
-                        } catch (InterruptedException ie) {
-                        }*/
-                        removeNXWarrant(bean);
+                        removeWarrant(bean);
                     } else {
                         fireTableRowsUpdated(i, i);
                     }
@@ -641,79 +648,96 @@ class WarrantTableModel extends jmri.jmrit.beantable.BeanTableDataModel // Abstr
                         et % 60), myGreen, true);
             } else if (e.getPropertyName().equals("SpeedRestriction")) {
                 _frame.setStatusText(Bundle.getMessage("speedChange",
-                        bean.getTrainName(), bean.getCurrentBlockOrder()
-                                .getBlock().getDisplayName(), e.getNewValue()),
+                        bean.getCurrentBlockName()),
                         myGold, true);
             } else if (e.getPropertyName().equals("SpeedChange")) {
                 int row = getRow(bean);
                 if (row>=0) {
                     fireTableRowsUpdated(row, row);                    
-//                    _frame.setStatusText(bean.getRunningMessage(), myGreen, true);
                 }
             } else if (e.getPropertyName().equals("runMode")) {
                 int oldMode = ((Integer) e.getOldValue()).intValue();
                 int newMode = ((Integer) e.getNewValue()).intValue();
-                if (oldMode == Warrant.MODE_NONE) {
-                    if (newMode != Warrant.MODE_NONE) {
-                        _frame.setStatusText(Bundle.getMessage("warrantStart",
-                                bean.getTrainName(), bean.getDisplayName(),
-                                bean.getCurrentBlockOrder().getBlock()
-                                        .getDisplayName(),
-                                Bundle.getMessage(Warrant.MODES[newMode])),
-                                myGreen, true);
-                    }
-                } else if (newMode == Warrant.MODE_NONE) {
+                if (newMode == Warrant.MODE_ABORT) {
                     if (oldMode != Warrant.MODE_NONE) {
-                        OBlock block = bean.getCurrentBlockOrder().getBlock();
-                        int state = block.getState();
-                        if ((state & OBlock.OCCUPIED) > 0
-                                || (state & OBlock.DARK) > 0) {
-                            _frame.setStatusText(
-                                    Bundle.getMessage("warrantEnd",
-                                            bean.getTrainName(),
-                                            bean.getDisplayName(),
-                                            block.getDisplayName()), myGreen,
-                                    true);
-                        } else {
-                            _frame.setStatusText(
-                                    Bundle.getMessage("warrantAbort",
-                                            bean.getTrainName(),
-                                            bean.getDisplayName()), myGreen,
-                                    true);
-                        }
+                        _frame.setStatusText(
+                                Bundle.getMessage("warrantAbort",
+                                               bean.getTrainName(),
+                                               bean.getDisplayName()), myGreen,
+                                               true);                        
+                    } else {
+                        _frame.setStatusText(
+                                Bundle.getMessage("warrantAnnull",
+                                               bean.getTrainName(),
+                                               bean.getDisplayName()), myGreen,
+                                               true);
                     }
-                } else {
-                    _frame.setStatusText(Bundle.getMessage("modeChange",
+                } else if (oldMode == Warrant.MODE_NONE && newMode != Warrant.MODE_NONE) {
+                    _frame.setStatusText(Bundle.getMessage("warrantStart",
                             bean.getTrainName(), bean.getDisplayName(),
-                            Bundle.getMessage(Warrant.MODES[oldMode]),
-                            Bundle.getMessage(Warrant.MODES[newMode])), myGold,
-                            true);
+                            bean.getCurrentBlockName(),
+                            Bundle.getMessage(Warrant.MODES[newMode])),
+                            myGreen, true);                    
+                } else if (oldMode != Warrant.MODE_NONE && newMode == Warrant.MODE_NONE) {
+                    OBlock curBlock = bean.getCurrentBlockOrder().getBlock();
+                    OBlock lastBlock = bean.getLastOrder().getBlock();
+                    if (lastBlock.equals(curBlock)) {
+                        _frame.setStatusText(Bundle.getMessage("warrantComplete",
+                                bean.getTrainName(), bean.getDisplayName(), 
+                                lastBlock.getDisplayName()), myGold,
+                                true);
+                        
+                    } else {
+                        _frame.setStatusText(Bundle.getMessage("warrantEnd",
+                                bean.getTrainName(), bean.getDisplayName(), 
+                                lastBlock.getDisplayName()), myGold,
+                                true);                        
+                    }
                 }
             } else if (e.getPropertyName().equals("controlChange")) {
-                int runState = ((Integer) e.getOldValue()).intValue();
-                int newCntrl = ((Integer) e.getNewValue()).intValue();
-                String stateStr = null;
-                if (runState < 0) {
-                    stateStr = Bundle.getMessage(Warrant.MODES[-runState]);
+                String blkName = bean.getCurrentBlockName();
+                String stateStr;
+                Color color;
+                if (e.getOldValue()==null) {
+                    stateStr = Bundle.getMessage("engineerGone", blkName); 
+                    color = Color.red;
                 } else {
-                    stateStr = Bundle.getMessage(Warrant.RUN_STATE[runState],
-                            bean.getCurrentBlockOrder().getBlock()
-                                    .getDisplayName());
+                    int runState = ((Integer) e.getOldValue()).intValue();
+                    stateStr = Bundle.getMessage(Warrant.RUN_STATE[runState], blkName);
+                    color = myGold;
                 }
+                int newCntrl = ((Integer) e.getNewValue()).intValue();
                 _frame.setStatusText(Bundle.getMessage("controlChange",
                         bean.getTrainName(), stateStr,
                         Bundle.getMessage(Warrant.CNTRL_CMDS[newCntrl])),
-                        myGold, true);
+                        color, true);
+            } else if (e.getPropertyName().equals("controlFailed")) {
+                String blkName = bean.getCurrentBlockName();
+                String stateStr;
+                if (e.getOldValue()==null) {
+                    stateStr = Bundle.getMessage("engineerGone", blkName); 
+                } else {
+                    int runState = ((Integer) e.getOldValue()).intValue();
+                    stateStr = Bundle.getMessage(Warrant.RUN_STATE[runState], blkName);
+                }
+                int newCntrl = ((Integer) e.getNewValue()).intValue();
+                _frame.setStatusText(Bundle.getMessage("controlFailed",
+                        bean.getTrainName(), stateStr,
+                        Bundle.getMessage(Warrant.CNTRL_CMDS[newCntrl])),
+                        Color.red, true);
             } else if (e.getPropertyName().equals("throttleFail")) {
                 _frame.setStatusText(Bundle.getMessage("ThrottleFail",
                         bean.getTrainName(), e.getNewValue()), Color.red, true);
-            }
+            } else if (e.getPropertyName().equals("Command")) {
+                _frame.setStatusText(Bundle.getMessage("TrainReady",
+                        bean.getTrainName(), bean.getCurrentBlockName()), myGreen, true);
+           }
+            if (log.isDebugEnabled())
+                log.debug("propertyChange of \"" + e.getPropertyName() + "\" for warrant "
+                        + bean.getDisplayName());
         }
-        if (log.isDebugEnabled())
-            log.debug("propertyChange of \"" + e.getPropertyName() + "\" for "
-                    + e.getSource().getClass().getName());
     }
 
-    static Logger log = LoggerFactory.getLogger(WarrantTableModel.class
+    private final static Logger log = LoggerFactory.getLogger(WarrantTableModel.class
             .getName());
 }

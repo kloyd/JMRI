@@ -1,11 +1,8 @@
-// NetworkDriverAdapter.java
 package jmri.jmrix.nce.networkdriver;
 
 import jmri.jmrix.nce.NceNetworkPortController;
 import jmri.jmrix.nce.NceSystemConnectionMemo;
 import jmri.jmrix.nce.NceTrafficController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implements SerialPortAdapter for the NCE system network connection.
@@ -13,9 +10,8 @@ import org.slf4j.LoggerFactory;
  * This connects an NCE command station via a telnet connection. Normally
  * controlled by the NetworkDriverFrame class.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002, 2003
- * @version	$Revision$
- */
+ * @author Bob Jacobsen Copyright (C) 2001, 2002, 2003
+  */
 public class NetworkDriverAdapter extends NceNetworkPortController {
 
     public NetworkDriverAdapter() {
@@ -23,13 +19,14 @@ public class NetworkDriverAdapter extends NceNetworkPortController {
         option2Name = "Eprom";
         // the default is 2006 or later
         options.put(option2Name, new Option("Command Station EPROM", new String[]{"2006 or later", "2004 or earlier"}));
-        setManufacturer(jmri.jmrix.DCCManufacturerList.NCE);
+        setManufacturer(jmri.jmrix.nce.NceConnectionTypeList.NCE);
     }
 
     /**
      * set up all of the other objects to operate with an NCE command station
      * connected to this port
      */
+    @Override
     public void configure() {
         NceTrafficController tc = new NceTrafficController();
         this.getSystemConnectionMemo().setNceTrafficController(tc);
@@ -49,10 +46,6 @@ public class NetworkDriverAdapter extends NceNetworkPortController {
         tc.connectPort(this);
 
         this.getSystemConnectionMemo().configureManagers();
-
-        jmri.jmrix.nce.ActiveFlag.setActive();
     }
-
-    static Logger log = LoggerFactory.getLogger(NetworkDriverAdapter.class.getName());
 
 }

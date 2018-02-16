@@ -1,13 +1,13 @@
-// SdfBufferTest.java
 package jmri.jmrix.loconet.sdf;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
  * Tests for the jmri.jmrix.loconet.sdf.SdfBuffer class.
  *
  * @author Bob Jacobsen Copyright 2007
- * @version $Revision$
  */
 public class SdfBufferTest extends TestCase {
 
@@ -102,7 +101,7 @@ public class SdfBufferTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {SdfBufferTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -112,14 +111,16 @@ public class SdfBufferTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
-    static Logger log = LoggerFactory.getLogger(SdfBufferTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SdfBufferTest.class);
 
 }

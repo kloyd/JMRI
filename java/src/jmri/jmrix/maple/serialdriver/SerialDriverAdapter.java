@@ -1,27 +1,25 @@
-// SerialDriverAdapter.java
 package jmri.jmrix.maple.serialdriver;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.SerialPortEventListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import jmri.jmrix.maple.MapleSystemConnectionMemo;
 import jmri.jmrix.maple.SerialPortController;
-import jmri.jmrix.maple.SerialSensorManager;
-import jmri.jmrix.maple.SerialTrafficController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import purejavacomm.CommPortIdentifier;
+import purejavacomm.NoSuchPortException;
+import purejavacomm.PortInUseException;
+import purejavacomm.SerialPort;
+import purejavacomm.UnsupportedCommOperationException;
 
 /**
  * Provide access to C/MRI via a serial comm port. Normally controlled by the
  * maple.serialdriver.SerialDriverFrame class.
  *
- * @author	Bob Jacobsen Copyright (C) 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002
  */
 public class SerialDriverAdapter extends SerialPortController implements jmri.jmrix.SerialPortAdapter {
 
@@ -29,9 +27,10 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
 
     public SerialDriverAdapter() {
         super(new MapleSystemConnectionMemo());
-        this.manufacturerName = jmri.jmrix.DCCManufacturerList.MAPLE;
+        this.manufacturerName = jmri.jmrix.maple.SerialConnectionTypeList.MAPLE;
     }
 
+    @Override
     public String openPort(String portName, String appName) {
         try {
             // get and open the primary port
@@ -44,7 +43,7 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
             // try to set it for Maple serial
             try {
                 setSerialPort();
-            } catch (gnu.io.UnsupportedCommOperationException e) {
+            } catch (UnsupportedCommOperationException e) {
                 log.error("Cannot set serial parameters on port " + portName + ": " + e.getMessage());
                 return "Cannot set serial parameters on port " + portName + ": " + e.getMessage();
             }
@@ -71,12 +70,7 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
             serialStream = activeSerialPort.getInputStream();
 
             // purge contents, if any
-            int count = serialStream.available();
-            log.debug("input stream shows " + count + " bytes available");
-            while (count > 0) {
-                serialStream.skip(count);
-                count = serialStream.available();
-            }
+            purgeStream(serialStream);
 
             // report status?
             if (log.isInfoEnabled()) {
@@ -92,85 +86,19 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
             }
             if (log.isDebugEnabled()) {
                 // report additional status
-                log.debug(" port flow control shows "
-                        + (activeSerialPort.getFlowControlMode() == SerialPort.FLOWCONTROL_RTSCTS_OUT ? "hardware flow control" : "no flow control"));
-            }
-            if (log.isDebugEnabled()) {
-                // arrange to notify later
-                activeSerialPort.addEventListener(new SerialPortEventListener() {
-                    public void serialEvent(SerialPortEvent e) {
-                        int type = e.getEventType();
-                        switch (type) {
-                            case SerialPortEvent.DATA_AVAILABLE:
-                                log.info("SerialEvent: DATA_AVAILABLE is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.OUTPUT_BUFFER_EMPTY:
-                                log.info("SerialEvent: OUTPUT_BUFFER_EMPTY is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.CTS:
-                                log.info("SerialEvent: CTS is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.DSR:
-                                log.info("SerialEvent: DSR is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.RI:
-                                log.info("SerialEvent: RI is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.CD:
-                                log.info("SerialEvent: CD is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.OE:
-                                log.info("SerialEvent: OE (overrun error) is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.PE:
-                                log.info("SerialEvent: PE (parity error) is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.FE:
-                                log.info("SerialEvent: FE (framing error) is " + e.getNewValue());
-                                return;
-                            case SerialPortEvent.BI:
-                                log.info("SerialEvent: BI (break interrupt) is " + e.getNewValue());
-                                return;
-                            default:
-                                log.info("SerialEvent of unknown type: " + type + " value: " + e.getNewValue());
-                                return;
-                        }
-                    }
-                }
-                );
-                try {
-                    activeSerialPort.notifyOnFramingError(true);
-                } catch (Exception e) {
-                    log.debug("Could not notifyOnFramingError: " + e);
-                }
+                log.debug(" port flow control shows " // NOI18N
+                        + (activeSerialPort.getFlowControlMode() == SerialPort.FLOWCONTROL_RTSCTS_OUT ? "hardware flow control" : "no flow control")); // NOI18N
 
-                try {
-                    activeSerialPort.notifyOnBreakInterrupt(true);
-                } catch (Exception e) {
-                    log.debug("Could not notifyOnBreakInterrupt: " + e);
-                }
-
-                try {
-                    activeSerialPort.notifyOnParityError(true);
-                } catch (Exception e) {
-                    log.debug("Could not notifyOnParityError: " + e);
-                }
-
-                try {
-                    activeSerialPort.notifyOnOverrunError(true);
-                } catch (Exception e) {
-                    log.debug("Could not notifyOnOverrunError: " + e);
-                }
-
+                // log events
+                setPortEventLogging(activeSerialPort);
             }
 
             opened = true;
 
-        } catch (gnu.io.NoSuchPortException p) {
+        } catch (NoSuchPortException p) {
             return handlePortNotFound(p, portName, log);
-        } catch (Exception ex) {
-            log.error("Unexpected exception while opening port " + portName + " trace follows: " + ex);
-            ex.printStackTrace();
+        } catch (IOException ex) {
+            log.error("Unexpected exception while opening port {}", portName, ex);
             return "Unexpected error while opening port " + portName + ": " + ex;
         }
 
@@ -185,22 +113,17 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
     }
 
     /**
-     * set up all of the other objects to operate connected to this port
+     * Set up all of the other objects to operate connected to this port.
      */
+    @Override
     public void configure() {
         // connect to the traffic controller
-        SerialTrafficController.instance().connectPort(this);
-
-        jmri.InstanceManager.setTurnoutManager(jmri.jmrix.maple.SerialTurnoutManager.instance());
-        jmri.InstanceManager.setLightManager(jmri.jmrix.maple.SerialLightManager.instance());
-
-        SerialSensorManager s;
-        jmri.InstanceManager.setSensorManager(s = jmri.jmrix.maple.SerialSensorManager.instance());
-        SerialTrafficController.instance().setSensorManager(s);
-        jmri.jmrix.maple.ActiveFlag.setActive();
+        ((MapleSystemConnectionMemo) getSystemConnectionMemo()).getTrafficController().connectPort(this);
+        ((MapleSystemConnectionMemo) getSystemConnectionMemo()).configureManagers();
     }
 
     // base class methods for the SerialPortController interface
+    @Override
     public DataInputStream getInputStream() {
         if (!opened) {
             log.error("getInputStream called before load(), stream not available");
@@ -209,6 +132,7 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
         return new DataInputStream(serialStream);
     }
 
+    @Override
     public DataOutputStream getOutputStream() {
         if (!opened) {
             log.error("getOutputStream called before load(), stream not available");
@@ -221,6 +145,7 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
         return null;
     }
 
+    @Override
     public boolean status() {
         return opened;
     }
@@ -228,7 +153,7 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
     /**
      * Local method to do specific port configuration
      */
-    protected void setSerialPort() throws gnu.io.UnsupportedCommOperationException {
+    protected void setSerialPort() throws UnsupportedCommOperationException {
         // find the baud rate value, configure comm options
         int baud = 19200;  // default, but also defaulted in the initial value of selectedSpeed
         for (int i = 0; i < validSpeeds.length; i++) {
@@ -239,26 +164,20 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
         activeSerialPort.setSerialPortParams(baud, SerialPort.DATABITS_8,
                 SerialPort.STOPBITS_2, SerialPort.PARITY_NONE);
 
-        // set RTS high, DTR high - done early, so flow control can be configured after
-        activeSerialPort.setRTS(true);		// not connected in some serial ports and adapters
-        activeSerialPort.setDTR(true);		// pin 1 in DIN8; on main connector, this is DTR
-
         // find and configure flow control
         int flow = SerialPort.FLOWCONTROL_NONE; // default
-        activeSerialPort.setFlowControlMode(flow);
+        configureLeadsAndFlowControl(activeSerialPort, flow);
     }
 
-    /**
-     * Get an array of valid baud rates.
-     */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP") // OK to expose array instead of copy until Java 1.6
+    @Override
     public String[] validBaudRates() {
-        return validSpeeds;
+        return Arrays.copyOf(validSpeeds, validSpeeds.length);
     }
 
     /**
      * Set the baud rate.
      */
+    @Override
     public void configureBaudRate(String rate) {
         log.debug("configureBaudRate: " + rate);
         selectedSpeed = rate;
@@ -281,6 +200,6 @@ public class SerialDriverAdapter extends SerialPortController implements jmri.jm
     }
     static SerialDriverAdapter mInstance = null;
 
-    static Logger log = LoggerFactory.getLogger(SerialDriverAdapter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialDriverAdapter.class);
 
 }

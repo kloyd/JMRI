@@ -1,6 +1,7 @@
-// Ash2_2Algorithm.java
 package jmri.jmrix.rps;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Arrays;
 import javax.vecmath.Point3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,38 +133,36 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Return values are the same as with version 2.1. These are as follows.
  * <pre>
- * >= 4    OK.  Value = number of receivers used.
- * 3    Probably OK.  3 receivers used.
- * 1,2    Questionable.  Maybe OK, maybe not.
- * 0    No solution.  Don't even think about using it.  (Position outside the known universe.)
- * -1,-2    Not used.
- * <= -3    Variance of residuals too big.  Probably no good.  Value = minus number of receivers used.
+ * {@literal >= 4}    OK.  Value = number of receivers used.
+ *  3    Probably OK.  3 receivers used.
+ *  1,2    Questionable.  Maybe OK, maybe not.
+ *  0    No solution.  Don't even think about using it.  (Position outside the known universe.)
+ *  -1,-2    Not used.
+ * {@literal <=} -3    Variance of residuals too big.  Probably no good.  Value = minus number of receivers used.
  * (Perhaps close if input is noisy or receiver locations are sloppy.)
- * </pre> Variance too big means RMS residuals > 30 microseconds, i.e. about 0.4
- * inch or 1.0 cm. This is about as small a threshold as I dare use lest random
- * errors occasionally make good measurements appear bad.
+ * </pre> Variance too big means RMS residuals {@literal >} 30 microseconds,
+ * i.e. about 0.4 inch or 1.0 cm. This is about as small a threshold as I dare
+ * use lest random errors occasionally make good measurements appear bad.
  * <p>
  * The restrictions on the configuration of transmitters and receivers,
  * necessary to prevent the program from reporting a spurious position, are the
  * same as those for version 1.1. These are described in the e-mail with that
  * version sent on 12/9/06.
- * 
+ *
 * <P>
  * @author	Robert Ashenfelter Copyright (C) 2008
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
- */
+  */
 public class Ash2_2Algorithm extends AbstractCalculator {
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
     public Ash2_2Algorithm(Point3d[] sensors, double vsound, int offset) {
         this(sensors, vsound);
         Ash2_2Algorithm.offset = offset;
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP2")
     public Ash2_2Algorithm(Point3d[] sensors, double vsound) {
-        this.sensors = sensors;
+        this.sensors = Arrays.copyOf(sensors, sensors.length);
         this.Vs = vsound;
 
         // load the algorithm variables
@@ -192,6 +191,7 @@ public class Ash2_2Algorithm extends AbstractCalculator {
     double Yt = 0.0;
     double Zt = 0.0;
 
+    @Override
     public Measurement convert(Reading r) {
 
         if (log.isDebugEnabled()) {
@@ -220,6 +220,7 @@ public class Ash2_2Algorithm extends AbstractCalculator {
     /**
      * Seed the conversion using an estimated position
      */
+    @Override
     public Measurement convert(Reading r, Point3d guess) {
         this.Xt = guess.x;
         this.Yt = guess.y;
@@ -231,6 +232,7 @@ public class Ash2_2Algorithm extends AbstractCalculator {
     /**
      * Seed the conversion using a last measurement
      */
+    @Override
     public Measurement convert(Reading r, Measurement last) {
         if (last != null) {
             this.Xt = last.getX();
@@ -254,15 +256,15 @@ public class Ash2_2Algorithm extends AbstractCalculator {
 
     static int offset = 0;			//  Offset (usec), add to delay
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
     static public int TMAX = 35000;			//  Max. allowable delay (usec)
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
     static public int TMIN = 150;			//  Min. allowable delay (usec)
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
     static public int SMAX = 30;			//  Max. OK std. dev. (usec)
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
     static public int NMAX = 50;			//  Max. no. of receivers used
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL") // for script access
     static public int NERR = 6;			//  No. of rcvrs w/error reject
 
     //  Compute RPS Position  using
@@ -628,11 +630,11 @@ public class Ash2_2Algorithm extends AbstractCalculator {
             this.vs = vs;
         }
         int code;
-        @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "UUF_UNUSED_FIELD")
+        @SuppressFBWarnings(value = "UUF_UNUSED_FIELD")
         double x, y, z, t, vs;
     }
 
-    static Logger log = LoggerFactory.getLogger(Ash2_2Algorithm.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Ash2_2Algorithm.class);
 }
 
-/* @(#)Ash2_2Algorithm.java */
+

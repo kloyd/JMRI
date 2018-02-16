@@ -1,24 +1,22 @@
-// DecoderFileTest.java
 package jmri.jmrit.decoderdefn;
 
 import javax.swing.JLabel;
 import jmri.jmrit.symbolicprog.CvTableModel;
-import jmri.jmrit.symbolicprog.IndexedCvTableModel;
 import jmri.jmrit.symbolicprog.VariableTableModel;
 import jmri.progdebugger.ProgDebugger;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.jdom2.DocType;
 import org.jdom2.Document;
 import org.jdom2.Element;
+import org.junit.Assert;
 
 /**
  * DecoderFileTest.java
  *
  * @author	Bob Jacobsen, Copyright (C) 2001, 2002
- * @version $Revision$
  */
 public class DecoderFileTest extends TestCase {
 
@@ -97,10 +95,8 @@ public class DecoderFileTest extends TestCase {
         // this test should probably be done in terms of a test class instead of the real one...
         JLabel progStatus = new JLabel(" OK ");
         CvTableModel cvModel = new CvTableModel(progStatus, p);
-        IndexedCvTableModel icvModel = new IndexedCvTableModel(new JLabel(), p);
         VariableTableModel variableModel = new VariableTableModel(progStatus,
-                new String[]{"Name", "Value"},
-                cvModel, icvModel);
+                new String[]{"Name", "Value"}, cvModel);
         DecoderFile d = new DecoderFile("mfg", "mfgID", "model", "23", "24",
                 "family", "filename", 16, 16, null);
 
@@ -260,10 +256,8 @@ public class DecoderFileTest extends TestCase {
         // this test should probably be done in terms of a test class instead of the real one...
         JLabel progStatus = new JLabel(" OK ");
         CvTableModel cvModel = new CvTableModel(progStatus, p);
-        IndexedCvTableModel icvModel = new IndexedCvTableModel(new JLabel(), p);
         VariableTableModel variableModel = new VariableTableModel(progStatus,
-                new String[]{"Name", "Value"},
-                cvModel, icvModel);
+                new String[]{"Name", "Value"}, cvModel);
         DecoderFile d = new DecoderFile("mfg", "mfgID", "model", "23", "24",
                 "family", "filename", 16, 3, null);
 
@@ -277,10 +271,8 @@ public class DecoderFileTest extends TestCase {
         // this test should probably be done in terms of a test class instead of the real one...
         JLabel progStatus = new JLabel(" OK ");
         CvTableModel cvModel = new CvTableModel(progStatus, p);
-        IndexedCvTableModel icvModel = new IndexedCvTableModel(new JLabel(), p);
         VariableTableModel variableModel = new VariableTableModel(progStatus,
-                new String[]{"Name", "Value"},
-                cvModel, icvModel);
+                new String[]{"Name", "Value"}, cvModel);
         DecoderFile d = new DecoderFile("mfg", "mfgID", "model", "23", "24",
                 "family", "filename", 3, 16, null);
 
@@ -365,7 +357,7 @@ public class DecoderFileTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", DecoderFileTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -375,13 +367,15 @@ public class DecoderFileTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
-    // static Logger log = LoggerFactory.getLogger(DecoderFileTest.class.getName());
+    // private final static Logger log = LoggerFactory.getLogger(DecoderFileTest.class);
 }

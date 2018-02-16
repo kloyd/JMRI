@@ -1,4 +1,3 @@
-// Mx1Message.java
 package jmri.jmrix.zimo;
 
 import java.io.Serializable;
@@ -13,17 +12,11 @@ import org.slf4j.LoggerFactory;
  * bytes in Unicode.
  *
  * @author	Kevin Dickerson Copyright (C) 2014
- * @version	$Revision$
  *
  * Adapted by Sip Bosch for use with zimo MX-1
  *
  */
 public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6404655263624067289L;
 
     public Mx1Message(int len) {
         this(len, Mx1Packetizer.ASCII);
@@ -32,8 +25,10 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
     /**
      * Create a new object, representing a specific-length message.
      *
-     * @param len Total bytes in message, including opcode and error-detection
-     *            byte.
+     * @param len      Total bytes in message, including opcode and
+     *                 error-detection byte.
+     * @param protocol one of {@link Mx1Packetizer#ASCII} or
+     *                 {@link Mx1Packetizer#BINARY}
      */
     public Mx1Message(int len, boolean protocol) {
         super(len);
@@ -80,17 +75,23 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
     final static int ACK2 = 0x60;
 
     /**
-     * Indicates where the message is to/from in the header byte
+     * Indicates where the message is to/from in the header byte.
+     * <p>
+     * Up to JMRI 4.3.5, this was doing {@code ((mod & MX1) == MX1)} for the
+     * first test, which is really 0 == 0 and always true. At that point it was
+     * changed to just check the bottom two bits.
+     *
+     * @return one of {@link #MX1}, {@link #MX8}, {@link #MX9} or 0x0F
      */
     public int getModule() {
         int mod = getElement(1) & 0x0F;
-        if ((mod & MX1) == MX1) {
+        if ((mod & 0x03) == MX1) {
             return MX1;
         }
-        if ((mod & MX8) == MX8) {
+        if ((mod & 0x03) == MX8) {
             return MX8;
         }
-        if ((mod & MX9) == MX9) {
+        if ((mod & 0x03) == MX9) {
             return MX9;
         }
         return mod;
@@ -119,14 +120,23 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
      */
     static final int MX9 = 0x02;
 
-    /*public int messageUser(){
-     return getElement(1)&0x0F;
-     }*/
+    /**
+     * Indicates the message source is a command station. {@value #CS}
+     *
+     * @see #messageSource()
+     */
     final static boolean CS = true;
+    /**
+     * Indicates the message source is a command station. {@value #PC}
+     *
+     * @see #messageSource()
+     */
     final static boolean PC = false;
 
     /**
      * Indicates the source of the message.
+     *
+     * @return {@link #PC} or {@link #CS}
      */
     public boolean messageSource() {
         if ((getElement(0) & 0x08) == 0x08) {
@@ -189,17 +199,21 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
     }
 
     /**
-     * check whether the message has a valid parity in fact check for CR or LF
-     * as end of message
+     * Check if the message has a valid parity (actually check for CR or LF as
+     * end of message).
+     *
+     * @return true if message has correct parity bit
      */
+    @Override
     public boolean checkParity() {
         //javax.swing.JOptionPane.showMessageDialog(null, "A-Programma komt tot hier!");
         int len = getNumDataElements();
         return (getElement(len - 1) == (0x0D | 0x0A));
     }
-// programma komt hier volgens mij nooit
+    // programma komt hier volgens mij nooit
     // in fact set CR as end of message
 
+    @Override
     public void setParity() {
         javax.swing.JOptionPane.showMessageDialog(null, "B-Programma komt tot hier!");
         int len = getNumDataElements();
@@ -222,23 +236,29 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
             } else {
                 txt.append("From CS");
             }
-            txt.append(" Seq " + (getElement(0) & 0xff));
+            txt.append(" Seq ").append(getElement(0) & 0xff);
             if (getLongMessage()) {
                 txt.append(" (L)");
             } else {
                 txt.append(" (S)");
             }
-            int offset = 0;
-            if (getMessageType() == PRIMARY) {
-                txt.append(" Prim");
-            } else if (getMessageType() == ACKREP1) {
-                txt.append(" Ack/Reply 1");
-            } else if (getMessageType() == REPLY2) {
-                txt.append(" Reply 2");
-            } else if (getMessageType() == ACK2) {
-                txt.append(" Ack 2");
-            } else {
-                txt.append(" Unknown msg");
+            int offset;
+            switch (getMessageType()) {
+                case PRIMARY:
+                    txt.append(" Prim");
+                    break;
+                case ACKREP1:
+                    txt.append(" Ack/Reply 1");
+                    break;
+                case REPLY2:
+                    txt.append(" Reply 2");
+                    break;
+                case ACK2:
+                    txt.append(" Ack 2");
+                    break;
+                default:
+                    txt.append(" Unknown msg");
+                    break;
             }
             if (getModule() == MX1) {  //was (getElement(1)&0x00) == 0x00
                 txt.append(" to/from CS (MX1)");
@@ -262,7 +282,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
                     case 3:
                         txt.append(" Loco Control : ");
                         if (getMessageType() == PRIMARY) {
-                            txt.append("" + getLocoAddress(getElement((3)), getElement(4)));
+                            txt.append(getLocoAddress(getElement((3)), getElement(4)));
                             txt.append(((getElement(6) & 0x20) == 0x20) ? " Fwd " : " Rev ");
                             txt.append(((getElement(6) & 0x10) == 0x10) ? " F0: On " : " F0: Off ");
                             txt.append(decodeFunctionStates(getElement(7), getElement(8)));
@@ -280,7 +300,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
                     case 7:
                         txt.append(" Accessory ");
                         if (getMessageType() == PRIMARY) {
-                            txt.append("" + getLocoAddress(getElement((3)), getElement(4)));
+                            txt.append(getLocoAddress(getElement((3)), getElement(4)));
                             txt.append(((getElement(5) & 0x04) == 0x04) ? " Thrown " : " Closed ");
                         }
                         break;
@@ -321,7 +341,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
                         if (getNumDataElements() == 7 && getMessageType() == ACKREP1) {
                             txt.append(" Error Occured ");
                             txt.append(getErrorCode(getElement(6)));
-                            txt.append(" Loco: " + getLocoAddress(getElement((3 + offset)), getElement(4 + offset)));
+                            txt.append(" Loco: ").append(getLocoAddress(getElement((3 + offset)), getElement(4 + offset)));
                             break;
                         }
                         /*if(getNumDataElements()<7){
@@ -333,14 +353,14 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
                         } else {
                             txt.append(" Read CV ");
                         }
-                        txt.append("Loco: " + getLocoAddress(getElement((3 + offset)), getElement(4 + offset)));
+                        txt.append("Loco: ").append(getLocoAddress(getElement((3 + offset)), getElement(4 + offset)));
                         if ((getElement(3 + offset) & 0x80) == 0x80) {
                             txt.append(" DCC");
                         }
                         int cv = (((getElement(5 + offset) & 0xff) << 8) + (getElement(6 + offset) & 0xff));
-                        txt.append(" CV: " + Integer.toString(cv));
+                        txt.append(" CV: ").append(cv);
                         if (getNumDataElements() >= (8 + offset)) {  //Version 61.26 and later includes an extra error bit at the end of the packet
-                            txt.append(" Set To: " + (getElement(7 + offset) & 0xff));
+                            txt.append(" Set To: ").append(getElement(7 + offset) & 0xff);
                         }
                         break;
                     case 254:
@@ -486,7 +506,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
      */
     static public Mx1Message setPowerOff() {
         Mx1Message m = new Mx1Message(4, Mx1Packetizer.BINARY);
-        m.setElement(1, 0x10); /* PC control short message */
+        m.setElement(1, 0x10); // PC control short message
 
         m.setElement(2, TRACKCTL);
         m.setElement(3, 0x01);
@@ -495,7 +515,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
 
     static public Mx1Message setPowerOn() {
         Mx1Message m = new Mx1Message(4, Mx1Packetizer.BINARY);
-        m.setElement(1, 0x10); /* PC control short message */
+        m.setElement(1, 0x10); // PC control short message
 
         m.setElement(2, TRACKCTL);
         m.setElement(3, 0x02);
@@ -504,7 +524,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
 
     static public Mx1Message getTrackStatus() {
         Mx1Message m = new Mx1Message(4, Mx1Packetizer.BINARY);
-        m.setElement(1, 0x10); /* PC control short message */
+        m.setElement(1, 0x10); // PC control short message
 
         m.setElement(2, TRACKCTL);
         m.setElement(3, 0x03);
@@ -512,14 +532,15 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
     }
 
     /**
-     * @param locoAddress : address of the loco, if left blank then programming
-     *                    track is used
-     * @param cv          : CV that is to be either read in or written
-     * @param value       : Value to be written to the CV, if set to -1, then a
-     *                    read is done
-     * @param dcc         : Is the decoder Protocol DCC, true = DCC, false =
-     *                    Motorola
+     * Create a message to read or write a CV.
+     *
+     * @param locoAddress address of the loco
+     * @param cv          CV to read or write
+     * @param value       value to write to CV, if -1 CV is read
+     * @param dcc         true if decoder is DCC; false if decoder is Motorola
+     * @return a message to read or write a CV
      */
+    // javadoc did indicate locoAddress could be blank to use programming track, but that's not possible with an int
     static public Mx1Message getDecProgCmd(int locoAddress, int cv, int value, boolean dcc) {
         Mx1Message m;
         if (value == -1) {
@@ -528,7 +549,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
             m = new Mx1Message(8, Mx1Packetizer.BINARY);
         }
         m.setElement(0, 0x00);
-        m.setElement(1, 0x10); /* PC control short message */
+        m.setElement(1, 0x10); // PC control short message
 
         m.setElement(2, PROGCMD);
         int locoHi = locoAddress >> 8;
@@ -548,20 +569,20 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
     }
 
     /**
+     * Create a locomotive control message.
      *
-     * @param locoAddress Address of the loco that we are issuing the command
-     *                    too.
+     * @param locoAddress address of the loco
      * @param speed       Speed Step in the actual Speed Step System
-     * @param dcc         Is this a packet for a DCC or Motorola device
-     * @param cData1
-     * @param cData2      - Functions Output 0-7
-     * @param cData3      - Functions Output 9-12
-     * @return Mx1Message
+     * @param dcc         true if decoder is DCC; false if decoder is Motorola
+     * @param cData1      ???
+     * @param cData2      functions output 0-7
+     * @param cData3      functions output 9-12
+     * @return message controlling a locomotive
      */
     static public Mx1Message getLocoControl(int locoAddress, int speed, boolean dcc, int cData1, int cData2, int cData3) {
         Mx1Message m = new Mx1Message(9, Mx1Packetizer.BINARY);
         m.setElement(0, 0x00);
-        m.setElement(1, 0x10); /* PC control short message */
+        m.setElement(1, 0x10); // PC control short message
 
         m.setElement(2, LOCOCMD);
         //High add 80 to indicate DCC
@@ -583,7 +604,7 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
     static public Mx1Message getSwitchMsg(int accAddress, int setting, boolean dcc) {
         Mx1Message m = new Mx1Message(6, Mx1Packetizer.BINARY);
         m.setElement(0, 0x00);
-        m.setElement(1, 0x10); /* PC control short message */
+        m.setElement(1, 0x10); // PC control short message
 
         m.setElement(2, ACCCMD);
         //High add 80 to indicate DCC
@@ -602,8 +623,6 @@ public class Mx1Message extends jmri.jmrix.NetMessage implements Serializable {
         return m;
     }
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(Mx1Message.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Mx1Message.class);
 
 }
-
-/* @(#)Mx1Message.java */

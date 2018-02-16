@@ -1,4 +1,3 @@
-// RpsSensor.java
 package jmri.jmrix.rps;
 
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
  * example "RS(0,0,0);(1,0,0);(1,1,0);(0,1,0)".
  * <P>
  * @author	Bob Jacobsen Copyright (C) 2007
- * @version $Revision$
  */
 public class RpsSensor extends AbstractSensor
         implements MeasurementListener {
@@ -34,9 +32,10 @@ public class RpsSensor extends AbstractSensor
         Model.instance().addRegion(region);
     }
 
+    @Override
     public void notify(Measurement r) {
         Point3d p = new Point3d(r.getX(), r.getY(), r.getZ());
-        Integer id = Integer.valueOf(r.getReading().getID());
+        Integer id = Integer.valueOf(r.getReading().getId());
 
         // ignore if code not OK
         if (!r.isOkPoint()) {
@@ -64,6 +63,7 @@ public class RpsSensor extends AbstractSensor
     }
 
     // if somebody outside sets state to INACTIVE, clear list
+    @Override
     public void setOwnState(int state) {
         if (state == Sensor.INACTIVE) {
             if (contents.size() > 0) {
@@ -100,8 +100,6 @@ public class RpsSensor extends AbstractSensor
     transient Region region;
     ArrayList<Integer> contents = new ArrayList<Integer>();
 
-    private static final long serialVersionUID = 1L;
-
     /**
      * Notify parameter listeners that a device has left the region covered by
      * this sensor
@@ -118,15 +116,17 @@ public class RpsSensor extends AbstractSensor
         firePropertyChange("Arriving", null, id);
     }
 
+    @Override
     public void dispose() {
         Model.instance().removeRegion(region);
     }
 
+    @Override
     public void requestUpdateFromLayout() {
     }
 
-    static Logger log = LoggerFactory.getLogger(RpsSensor.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RpsSensor.class);
 
 }
 
-/* @(#)RpsSensor.java */
+

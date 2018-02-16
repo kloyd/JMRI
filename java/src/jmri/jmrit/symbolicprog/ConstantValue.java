@@ -1,4 +1,3 @@
-// ConstantValue.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.Color;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
  * there's no CV associated with this.
  *
  * @author Bob Jacobsen Copyright (C) 2001
- * @version $Revision$
  *
  */
 public class ConstantValue extends VariableValue {
@@ -43,6 +41,7 @@ public class ConstantValue extends VariableValue {
     public ConstantValue() {
     }
 
+    @Override
     public CvValue[] usesCVs() {
         return new CvValue[]{};
     }
@@ -50,6 +49,7 @@ public class ConstantValue extends VariableValue {
     /**
      * Provide a user-readable description of the CVs accessed by this variable.
      */
+    @Override
     public String getCvDescription() {
         return null;
     }
@@ -57,6 +57,7 @@ public class ConstantValue extends VariableValue {
     // stored value
     JComboBox<Integer> _value = null;
 
+    @Override
     public void setToolTipText(String t) {
         super.setToolTipText(t);   // do default stuff
         _value.setToolTipText(t);  // set our value
@@ -70,28 +71,34 @@ public class ConstantValue extends VariableValue {
     private int _minVal;
     Color _defaultColor;
 
+    @Override
     public Object rangeVal() {
         return "constant: " + _minVal + " - " + _maxVal;
     }
 
     // to complete this class, fill in the routines to handle "Value" parameter
     // and to read/write/hear parameter changes.
+    @Override
     public String getValueString() {
         return "" + _value.getSelectedIndex();
     }
 
+    @Override
     public void setIntValue(int i) {
         _value.setSelectedIndex(i);  // automatically fires a change event
     }
 
+    @Override
     public int getIntValue() {
         return _value.getSelectedIndex();
     }
 
+    @Override
     public Object getValueObject() {
         return Integer.valueOf(_value.getSelectedIndex());
     }
 
+    @Override
     public Component getCommonRep() {
         return _value;
     }
@@ -104,6 +111,7 @@ public class ConstantValue extends VariableValue {
         }
     }
 
+    @Override
     public Component getNewRep(String format) {
         // sort on format type
         if (format.equals("checkbox")) {
@@ -139,41 +147,49 @@ public class ConstantValue extends VariableValue {
     List<JRadioButton> comboRBs = new ArrayList<JRadioButton>();
 
     // implement an abstract member to set colors
+    @Override
     void setColor(Color c) {
     }
 
     /**
      * No connected CV, so this notify does nothing
      *
-     * @param state
      */
+    @Override
     public void setCvState(int state) {
     }
 
+    @Override
     public boolean isChanged() {
         return false;
     }
 
+    @Override
     public void setToRead(boolean state) {
     }
 
+    @Override
     public boolean isToRead() {
         return false;
     }
 
+    @Override
     public void setToWrite(boolean state) {
     }
 
+    @Override
     public boolean isToWrite() {
         return false;
     }
 
+    @Override
     public void readChanges() {
         if (isChanged()) {
             readAll();
         }
     }
 
+    @Override
     public void writeChanges() {
         if (isChanged()) {
             writeAll();
@@ -188,6 +204,7 @@ public class ConstantValue extends VariableValue {
      * 'normal' VariableValue objects, which rely on the associated CV objects
      * to drive state changes at the end of the write.
      */
+    @Override
     public void readAll() {
         if (log.isDebugEnabled()) {
             log.debug("read invoked");
@@ -206,6 +223,7 @@ public class ConstantValue extends VariableValue {
      * 'normal' VariableValue objects, which rely on the associated CV objects
      * to drive state changes at the end of the write.
      */
+    @Override
     public void writeAll() {
         if (log.isDebugEnabled()) {
             log.debug("write invoked");
@@ -216,11 +234,13 @@ public class ConstantValue extends VariableValue {
         setBusy(false);
     }
 
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         log.warn("Unexpected propertyChange: " + e);
     }
 
     // clean up connections when done
+    @Override
     public void dispose() {
         if (log.isDebugEnabled()) {
             log.debug("dispose");
@@ -231,6 +251,6 @@ public class ConstantValue extends VariableValue {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConstantValue.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ConstantValue.class);
 
 }

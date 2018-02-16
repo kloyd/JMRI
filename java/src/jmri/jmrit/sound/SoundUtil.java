@@ -21,8 +21,7 @@ import org.slf4j.LoggerFactory;
  * jmri.jmrix.
  *
  *
- * @author	Bob Jacobsen Copyright (C) 2004, 2006
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2004, 2006
  */
 public class SoundUtil {
 
@@ -45,7 +44,7 @@ public class SoundUtil {
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, format); // format is an AudioFormat object
         if (!AudioSystem.isLineSupported(info)) {
             // Handle the error.
-            log.error("line not supported: " + info);
+            log.warn("line not supported: " + info);
             return;
         }
         // Obtain and open the line.
@@ -109,5 +108,5 @@ public class SoundUtil {
         return abAudioData;
     }
 
-    static Logger log = LoggerFactory.getLogger(SoundUtil.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SoundUtil.class);
 }

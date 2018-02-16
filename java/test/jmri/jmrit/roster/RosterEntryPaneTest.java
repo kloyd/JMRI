@@ -1,16 +1,16 @@
 package jmri.jmrit.roster;
 
-import junit.framework.Assert;
+import jmri.InstanceManager;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the jmrit.roster.RosterEntryPane class.
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
- */
+  */
 public class RosterEntryPaneTest extends TestCase {
 
     // statics for test objects
@@ -19,6 +19,7 @@ public class RosterEntryPaneTest extends TestCase {
     RosterEntry rOld = null;
     RosterEntry rNew = null;
 
+    @Override
     public void setUp() {
         // create Element
         eOld = new org.jdom2.Element("locomotive")
@@ -39,6 +40,7 @@ public class RosterEntryPaneTest extends TestCase {
                 );
 
         rOld = new RosterEntry(eOld) {
+            @Override
             protected void warnShortLong(String s) {
             }
         };
@@ -55,6 +57,7 @@ public class RosterEntryPaneTest extends TestCase {
                 ); // end create element
 
         rNew = new RosterEntry(eNew) {
+            @Override
             protected void warnShortLong(String s) {
             }
         };
@@ -65,6 +68,7 @@ public class RosterEntryPaneTest extends TestCase {
 
         // copy to a new entry
         RosterEntry n = new RosterEntry() {
+            @Override
             protected void warnShortLong(String s) {
             }
         };
@@ -151,15 +155,17 @@ public class RosterEntryPaneTest extends TestCase {
     public void testNotDuplicate() {
         RosterEntryPane p = new RosterEntryPane(rNew);
         // reset Roster
-        Roster.resetInstance();
+        InstanceManager.reset(Roster.class);
+        InstanceManager.setDefault(Roster.class, new Roster(null));
         Assert.assertTrue(!p.checkDuplicate());
     }
 
     public void testIsDuplicate() {
         RosterEntryPane p = new RosterEntryPane(rNew);
         // reset Roster
-        Roster.resetInstance();
-        Roster.instance().addEntry(rNew);
+        InstanceManager.reset(Roster.class);
+        InstanceManager.setDefault(Roster.class, new Roster(null));
+        Roster.getDefault().addEntry(rNew);
 
         Assert.assertTrue(!p.checkDuplicate());
     }
@@ -167,8 +173,9 @@ public class RosterEntryPaneTest extends TestCase {
     public void testRenamedDuplicate() {
         RosterEntryPane p = new RosterEntryPane(rOld);
         // reset Roster
-        Roster.resetInstance();
-        Roster.instance().addEntry(rNew);
+        InstanceManager.reset(Roster.class);
+        InstanceManager.setDefault(Roster.class, new Roster(null));
+        Roster.getDefault().addEntry(rNew);
 
         // reset entry
         p.id.setText("new id");
@@ -185,7 +192,7 @@ public class RosterEntryPaneTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {RosterEntryPaneTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

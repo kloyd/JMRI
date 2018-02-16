@@ -1,8 +1,5 @@
-// JMRIClientMessage.java
 package jmri.jmrix.jmriclient;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Encodes a message to an JMRIClient server. The JMRIClientReply class handles
@@ -10,10 +7,9 @@ import org.slf4j.LoggerFactory;
  * <P>
  * The {@link JMRIClientReply} class handles the response from the server.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2004, 2008
+ * @author Bob Jacobsen Copyright (C) 2001, 2004, 2008
  * @author Paul Bender Copyright (C) 2010
- * @version	$Revision$
- */
+  */
 public class JMRIClientMessage extends jmri.jmrix.AbstractMRMessage {
 
     public JMRIClientMessage() {
@@ -69,8 +65,6 @@ public class JMRIClientMessage extends jmri.jmrix.AbstractMRMessage {
 
     final static protected int LONG_TIMEOUT = 180000;  // e.g. for programming options
 
-    static Logger log = LoggerFactory.getLogger(JMRIClientMessage.class.getName());
-
 }
 
-/* @(#)JMRIClientMessage.java */
+

@@ -1,4 +1,3 @@
-// SystemConsoleConfigPanel.java
 package apps;
 
 import apps.SystemConsole.Scheme;
@@ -18,30 +17,26 @@ import javax.swing.UIManager;
 import jmri.InstanceManager;
 import jmri.swing.PreferencesPanel;
 import jmri.util.swing.FontComboUtil;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * Allow certain elements of the System Console to be configured.
  * <hr>
  * This file is part of JMRI.
- * <P>
+ * <p>
  * JMRI is free software; you can redistribute it and/or modify it under the
  * terms of version 2 of the GNU General Public License as published by the Free
  * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
+ * <p>
  * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
+ * <p>
  *
  * @author Matthew Harris copyright (c) 2010, 2011
- * @version $Revision$
  */
+@ServiceProvider(service = PreferencesPanel.class)
 public class SystemConsoleConfigPanel extends JPanel implements PreferencesPanel {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2050602237831555417L;
 
     private static final ResourceBundle rbc = ResourceBundle.getBundle("apps.AppsConfigBundle");
 
@@ -245,4 +240,3 @@ public class SystemConsoleConfigPanel extends JPanel implements PreferencesPanel
         return InstanceManager.getDefault(SystemConsolePreferencesManager.class);
     }
 }
-/* @(#)SystemConsoleConfigPanel.java */

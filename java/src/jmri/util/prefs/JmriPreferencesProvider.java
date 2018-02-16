@@ -15,6 +15,7 @@ import java.util.prefs.AbstractPreferences;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import jmri.Version;
 import jmri.profile.Profile;
 import jmri.util.FileUtil;
@@ -45,39 +46,40 @@ import org.slf4j.LoggerFactory;
 public final class JmriPreferencesProvider {
 
     private final JmriPreferences root;
-    private final Profile project;
+    private final File path;
     private final boolean firstUse;
     private final boolean shared;
     private boolean backedUp = false;
 
-    private static final HashMap<Profile, JmriPreferencesProvider> sharedProviders = new HashMap<>();
-    private static final HashMap<Profile, JmriPreferencesProvider> privateProviders = new HashMap<>();
-    private static final String INVALID_KEY_CHARACTERS = "_.";
+    private static final HashMap<File, JmriPreferencesProvider> SHARED_PROVIDERS = new HashMap<>();
+    private static final HashMap<File, JmriPreferencesProvider> PRIVATE_PROVIDERS = new HashMap<>();
+    //private static final String INVALID_KEY_CHARACTERS = "_.";
     private static final Logger log = LoggerFactory.getLogger(JmriPreferencesProvider.class);
 
     /**
-     * Get the JmriPrefererncesProvider for the specified profile.
+     * Get the JmriPreferencesProvider for the specified profile path. Use of
      *
-     * @param project The profile. This is most often the profile returned by
-     *                the {@link jmri.profile.ProfileManager#getActiveProfile()}
-     *                method of the ProfileManager returned by
-     *                {@link jmri.profile.ProfileManager#getDefault()}
-     * @param shared  True if the preferences apply to this profile irregardless
-     *                of host. If false, the preferences only apply to this
-     *                computer.
-     * @return The shared or private JmriPreferencesProvider for the project.
+     * @param path   The root path of a {@link jmri.profile.Profile}. This is
+     *               most frequently the path returned by
+     *               {@link jmri.profile.Profile#getPath()}.
+     * @param shared True if the preferences apply to the profile at path
+     *               irregardless of host. If false, the preferences only apply
+     *               to this computer.
+     * @return The shared or private JmriPreferencesProvider for the project at
+     *         path.
      */
-    static synchronized JmriPreferencesProvider findProvider(Profile project, boolean shared) {
+    @Nonnull
+    static synchronized JmriPreferencesProvider findProvider(@Nullable File path, boolean shared) {
         if (shared) {
-            if (sharedProviders.get(project) == null) {
-                sharedProviders.put(project, new JmriPreferencesProvider(project, shared));
+            if (SHARED_PROVIDERS.get(path) == null) {
+                SHARED_PROVIDERS.put(path, new JmriPreferencesProvider(path, shared));
             }
-            return sharedProviders.get(project);
+            return SHARED_PROVIDERS.get(path);
         } else {
-            if (privateProviders.get(project) == null) {
-                privateProviders.put(project, new JmriPreferencesProvider(project, shared));
+            if (PRIVATE_PROVIDERS.get(path) == null) {
+                PRIVATE_PROVIDERS.put(path, new JmriPreferencesProvider(path, shared));
             }
-            return privateProviders.get(project);
+            return PRIVATE_PROVIDERS.get(path);
         }
     }
 
@@ -98,8 +100,62 @@ public final class JmriPreferencesProvider {
      * @return The shared or private Preferences node for the package containing
      *         clazz for project.
      */
-    public static Preferences getPreferences(final Profile project, final Class<?> clazz, final boolean shared) {
-        return findProvider(project, shared).getPreferences(clazz);
+    @Nonnull
+    public static Preferences getPreferences(@Nullable final Profile project, @Nullable final Class<?> clazz, final boolean shared) {
+        if (project != null) {
+            return findProvider(project.getPath(), shared).getPreferences(clazz);
+        } else {
+            return findProvider(null, shared).getPreferences(clazz);
+        }
+    }
+
+    /**
+     * Get the {@link java.util.prefs.Preferences} for the specified package in
+     * the specified profile.
+     *
+     * @param project The profile. This is most often the profile returned by
+     *                the {@link jmri.profile.ProfileManager#getActiveProfile()}
+     *                method of the ProfileManager returned by
+     *                {@link jmri.profile.ProfileManager#getDefault()}
+     * @param pkg     The package requesting preferences.
+     * @param shared  True if the preferences apply to this profile irregardless
+     *                of host. If false, the preferences only apply to this
+     *                computer.
+     * @return The shared or private Preferences node for the package.
+     * @deprecated Not for removal. Use of
+     * {@link #getPreferences(jmri.profile.Profile, java.lang.Class, boolean)}
+     * is preferred and recommended unless reading preferences for a
+     * non-existent package or class.
+     */
+    @Nonnull
+    public static Preferences getPreferences(@Nullable final Profile project, @Nullable final String pkg, final boolean shared) {
+        if (project != null) {
+            return findProvider(project.getPath(), shared).getPreferences(pkg);
+        } else {
+            return findProvider(null, shared).getPreferences(pkg);
+        }
+    }
+
+    /**
+     * Get the {@link java.util.prefs.Preferences} for the specified class in
+     * the specified path.
+     *
+     * @param path   The path to a profile. This is most often the result of
+     *               {@link jmri.profile.Profile#getPath()} for a given Profile.
+     * @param clazz  The class requesting preferences. Note that the preferences
+     *               returned are for the package containing the class.
+     * @param shared True if the preferences apply to this profile irregardless
+     *               of host. If false, the preferences only apply to this
+     *               computer.
+     * @return The shared or private Preferences node for the package containing
+     *         clazz for project.
+     * @deprecated Not for removal. Use of
+     * {@link #getPreferences(jmri.profile.Profile, java.lang.Class, boolean)}
+     * is preferred and recommended unless being used to during the construction
+     * of a Profile object.
+     */
+    public static Preferences getPreferences(@Nullable final File path, @Nullable final Class<?> clazz, final boolean shared) {
+        return findProvider(path, shared).getPreferences(clazz);
     }
 
     /**
@@ -110,15 +166,28 @@ public final class JmriPreferencesProvider {
      * @return The shared or private Preferences node for the package containing
      *         clazz.
      */
-    Preferences getPreferences(final Class<?> clazz) {
+    Preferences getPreferences(@Nullable final Class<?> clazz) {
         if (clazz == null) {
             return this.root;
         }
         return this.root.node(findCNBForClass(clazz));
     }
 
-    JmriPreferencesProvider(Profile project, boolean shared) {
-        this.project = project;
+    /**
+     * Get the {@link java.util.prefs.Preferences} for the specified package.
+     *
+     * @param pkg The package for which preferences are needed.
+     * @return The shared or private Preferences node for the package.
+     */
+    Preferences getPreferences(@Nullable final String pkg) {
+        if (pkg == null) {
+            return this.root;
+        }
+        return this.root.node(pkg);
+    }
+
+    JmriPreferencesProvider(@Nullable File path, boolean shared) {
+        this.path = path;
         this.shared = shared;
         this.firstUse = !this.getPreferencesFile().exists();
         this.root = new JmriPreferences(null, "");
@@ -137,34 +206,35 @@ public final class JmriPreferencesProvider {
      * Note that the first use of a node-specific setting can be different than
      * the first use of a multi-node setting.
      *
-     * @return
+     * @return true if new or newly migrated profile, false otherwise
      */
     public boolean isFirstUse() {
         return this.firstUse;
     }
 
-    private static String encodeString(String s) {
-        StringBuilder result = new StringBuilder();
-
-        for (char c : s.toCharArray()) {
-            if (INVALID_KEY_CHARACTERS.indexOf(c) == (-1)) {
-                result.append(c);
-            } else {
-                result.append("_");
-                result.append(Integer.toHexString(c));
-                result.append("_");
-            }
-        }
-
-        return result.toString();
-    }
-
+    // retain unused method for reference - generates a String replacing
+    // all invalid characters in a String with underscores
+    //private static String encodeString(String s) {
+    //    StringBuilder result = new StringBuilder();
+    //
+    //    for (char c : s.toCharArray()) {
+    //        if (INVALID_KEY_CHARACTERS.indexOf(c) == (-1)) {
+    //            result.append(c);
+    //        } else {
+    //            result.append("_");
+    //            result.append(Integer.toHexString(c));
+    //            result.append("_");
+    //        }
+    //    }
+    //
+    //    return result.toString();
+    //}
     /**
      * Returns the name of the package for the class in a format that is treated
      * as a single token.
      *
-     * @param cls
-     * @return
+     * @param cls The class for which a sanitized package name is needed
+     * @return A sanitized package name
      */
     public static String findCNBForClass(@Nonnull Class<?> cls) {
         String absolutePath;
@@ -172,26 +242,42 @@ public final class JmriPreferencesProvider {
         return absolutePath.replace('.', '-');
     }
 
-    private File getPreferencesFile() {
-        if (this.project == null) {
+    @Nonnull
+    File getPreferencesFile() {
+        if (this.path == null) {
             return new File(this.getPreferencesDirectory(), "preferences.properties");
         } else {
             return new File(this.getPreferencesDirectory(), Profile.PROPERTIES);
         }
     }
 
+    @Nonnull
     private File getPreferencesDirectory() {
         File dir;
-        if (this.project == null) {
+        if (this.path == null) {
             dir = new File(FileUtil.getPreferencesPath(), "preferences");
         } else {
-            dir = new File(this.project.getPath(), Profile.PROFILE);
+            dir = new File(this.path, Profile.PROFILE);
             if (!this.shared) {
                 dir = new File(dir, NodeIdentity.identity());
             }
         }
         FileUtil.createDirectory(dir);
         return dir;
+    }
+
+    /**
+     * @return the backedUp
+     */
+    protected boolean isBackedUp() {
+        return backedUp;
+    }
+
+    /**
+     * @param backedUp the backedUp to set
+     */
+    protected void setBackedUp(boolean backedUp) {
+        this.backedUp = backedUp;
     }
 
     private class JmriPreferences extends AbstractPreferences {
@@ -205,13 +291,13 @@ public final class JmriPreferencesProvider {
         public JmriPreferences(AbstractPreferences parent, String name) {
             super(parent, name);
 
-            log.debug("Instantiating node " + name);
+            log.trace("Instantiating node \"{}\"", name);
 
             root = new TreeMap<>();
             children = new TreeMap<>();
 
             try {
-                sync();
+                super.sync();
             } catch (BackingStoreException e) {
                 log.error("Unable to sync on creation of node {}", name, e);
             }
@@ -283,7 +369,9 @@ public final class JmriPreferencesProvider {
             synchronized (file) {
                 Properties p = new OrderedProperties();
                 try {
-                    p.load(new FileInputStream(file));
+                    try (FileInputStream fis = new FileInputStream(file)) {
+                        p.load(fis);
+                    }
 
                     StringBuilder sb = new StringBuilder();
                     getPath(sb);
@@ -329,7 +417,9 @@ public final class JmriPreferencesProvider {
                     String path = sb.toString();
 
                     if (file.exists()) {
-                        p.load(new FileInputStream(file));
+                        try (FileInputStream fis = new FileInputStream(file)) {
+                            p.load(fis);
+                        }
 
                         List<String> toRemove = new ArrayList<>();
 
@@ -359,12 +449,14 @@ public final class JmriPreferencesProvider {
                         });
                     }
 
-                    if (!JmriPreferencesProvider.this.backedUp && file.exists()) {
+                    if (!JmriPreferencesProvider.this.isBackedUp() && file.exists()) {
                         log.debug("Backing up {}", file);
                         FileUtil.backup(file);
-                        JmriPreferencesProvider.this.backedUp = true;
+                        JmriPreferencesProvider.this.setBackedUp(true);
                     }
-                    p.store(new FileOutputStream(file), "JMRI Preferences version " + Version.name());
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
+                        p.store(fos, "JMRI Preferences version " + Version.name());
+                    }
                 } catch (IOException e) {
                     throw new BackingStoreException(e);
                 }

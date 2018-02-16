@@ -1,4 +1,3 @@
-// AlignmentPanel.java
 package jmri.jmrix.rps.reversealign;
 
 import java.awt.event.ActionEvent;
@@ -23,11 +22,11 @@ import jmri.jmrix.rps.PositionFile;
 import jmri.jmrix.rps.Reading;
 import jmri.jmrix.rps.ReadingListener;
 import jmri.jmrix.rps.trackingpanel.RpsTrackingPanel;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * Gather RPS Readings and use them to align the detector.
  * <P>
  * Note that algorithms have a bias to find transmitters with positive Z
@@ -36,18 +35,15 @@ import org.slf4j.LoggerFactory;
  * working for us.
  *
  * @author	Bob Jacobsen Copyright (C) 2007
- * @version $Revision$
  */
 public class AlignmentPanel extends javax.swing.JPanel
         implements ReadingListener, Constants {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7798693118150508821L;
+    RpsSystemConnectionMemo memo = null;
 
-    public AlignmentPanel() {
+    public AlignmentPanel(RpsSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
         Distributor.instance().addReadingListener(this);
         nf = java.text.NumberFormat.getInstance();
         nf.setMinimumFractionDigits(1);
@@ -76,6 +72,7 @@ public class AlignmentPanel extends javax.swing.JPanel
         vs.setText("0.01345");
         p.add(calc);
         calc.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 calculate();
             }
@@ -119,6 +116,7 @@ public class AlignmentPanel extends javax.swing.JPanel
         JButton b1;
         b1 = new JButton("Store...");
         b1.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 store();
             }
@@ -127,6 +125,7 @@ public class AlignmentPanel extends javax.swing.JPanel
 
         b1 = new JButton("Load...");
         b1.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 load();
             }
@@ -360,6 +359,7 @@ public class AlignmentPanel extends javax.swing.JPanel
 
     }
 
+    @Override
     public void notify(Reading r) {
         // update lines
         for (int i = 0; i < lines.length; i++) {
@@ -496,11 +496,6 @@ public class AlignmentPanel extends javax.swing.JPanel
      */
     class Line extends JPanel {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = -758969222553576502L;
-
         Line() {
             setLayout(new java.awt.FlowLayout());
             add(new JLabel("Position:"));
@@ -511,6 +506,7 @@ public class AlignmentPanel extends javax.swing.JPanel
             add(acquire);
             JButton reset = new JButton("Reset");
             reset.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent event) {
                     reset();
                 }
@@ -633,5 +629,5 @@ public class AlignmentPanel extends javax.swing.JPanel
         double s1, s2, s3, s4, s5, s6;
     }
 
-    static Logger log = LoggerFactory.getLogger(RpsTrackingPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RpsTrackingPanel.class);
 }

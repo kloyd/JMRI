@@ -2,13 +2,9 @@ package jmri.jmrit.throttle;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
+import jmri.InstanceManager;
 
 public class ThrottlesListAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 6318756102854541505L;
 
     /**
      * Constructor
@@ -18,7 +14,7 @@ public class ThrottlesListAction extends AbstractAction {
     public ThrottlesListAction(String s) {
         super(s);
         // disable the ourselves if there is no throttle Manager
-        if (jmri.InstanceManager.throttleManagerInstance() == null) {
+        if (jmri.InstanceManager.getNullableDefault(jmri.ThrottleManager.class) == null) {
             setEnabled(false);
         }
     }
@@ -27,7 +23,8 @@ public class ThrottlesListAction extends AbstractAction {
         this("Throttles list");
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        jmri.jmrit.throttle.ThrottleFrameManager.instance().showThrottlesList();
+        InstanceManager.getDefault(ThrottleFrameManager.class).showThrottlesList();
     }
 }

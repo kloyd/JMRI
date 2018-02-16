@@ -1,4 +1,3 @@
-// SprogTurnoutManager.java
 package jmri.jmrix.sprog;
 
 import jmri.Turnout;
@@ -11,43 +10,95 @@ import org.slf4j.LoggerFactory;
  * System names are "STnnn", where nnn is the turnout number without padding.
  *
  * @author	Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
  */
 public class SprogTurnoutManager extends jmri.managers.AbstractTurnoutManager {
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
-    // Ignore FindBugs warnings as there can only be one instance at present
-    public SprogTurnoutManager() {
-        _instance = this;
+    SprogSystemConnectionMemo _memo = null;
+
+    public SprogTurnoutManager(SprogSystemConnectionMemo memo) {
+        _memo = memo;
     }
 
+    @Override
     public String getSystemPrefix() {
-        return "S";
+        return _memo.getSystemPrefix();
     }
 
     // Sprog-specific methods
+
+    @Override
     public Turnout createNewTurnout(String systemName, String userName) {
-        int addr = Integer.valueOf(systemName.substring(2)).intValue();
+        int addr = Integer.valueOf(systemName.substring(getSystemPrefix().length() + 1)).intValue(); // multi char prefix
         Turnout t;
-        if (jmri.jmrix.sprog.ActiveFlagCS.isActive()) {
-            t = new SprogCSTurnout(addr);
+        if (_memo.getSprogMode() == SprogConstants.SprogMode.OPS ) {
+            t = new SprogCSTurnout(addr, _memo);
         } else {
-            t = new SprogTurnout(addr);
+            t = new SprogTurnout(addr, _memo);
         }
         t.setUserName(userName);
         return t;
     }
 
-    static public SprogTurnoutManager instance() {
-        if (_instance == null) {
-            _instance = new SprogTurnoutManager();
+    /**
+     * Get the bit address from the system name.
+     */
+    public int getBitFromSystemName(String systemName) {
+        // validate the System Name leader characters
+        if (!systemName.startsWith(getSystemPrefix() + "T")) {
+            // here if an illegal sprog turnout system name
+            log.error("illegal character in header field of sprog turnout system name: {}", systemName);
+            return (0);
         }
-        return _instance;
+        // name must be in the STnnnnn format (S is user configurable)
+        int num = 0;
+        try {
+            num = Integer.valueOf(systemName.substring(getSystemPrefix().length() + 1)).intValue();
+        } catch (Exception e) {
+            log.debug("invalid character in number field of system name: {}", systemName);
+            return (0);
+        }
+        if (num <= 0) {
+            log.debug("invalid sprog turnout system name: {}", systemName);
+            return (0);
+        } else if (num > SprogConstants.MAX_ACC_DECODER_JMRI_ADDR) { // undocumented for SPROG, higher causes error in NMRA Acc Packet
+            log.debug("bit number out of range in sprog turnout system name: {}", systemName);
+            return (0);
+        }
+        return (num);
     }
-    static SprogTurnoutManager _instance = null;
 
-    static Logger log = LoggerFactory.getLogger(SprogTurnoutManager.class.getName());
+    /**
+     * Public method to validate system name format.
+     *
+     * @return 'true' if system name has a valid format, else returns 'false'
+     */
+    @Override
+    public NameValidity validSystemNameFormat(String systemName) {
+        return (getBitFromSystemName(systemName) != 0) ? NameValidity.VALID : NameValidity.INVALID;
+    }
+
+    @Override
+    public boolean allowMultipleAdditions(String systemName) {
+        return true;
+    }
+
+    /**
+     * Provide a manager-specific tooltip for the Add new item beantable pane.
+     */
+    @Override
+    public String getEntryToolTip() {
+        String entryToolTip = Bundle.getMessage("AddOutputEntryToolTip");
+        return entryToolTip;
+    }
+
+    /**
+     * @deprecated JMRI Since 4.4 instance() shouldn't be used; convert to JMRI multi-system support structure
+     */
+    @Deprecated
+    static public SprogTurnoutManager instance() {
+        return null;
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(SprogTurnoutManager.class);
 
 }
-
-/* @(#)SprogTurnoutManager.java */

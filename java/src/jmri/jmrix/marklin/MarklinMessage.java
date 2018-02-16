@@ -1,17 +1,13 @@
-// MarklinMessage.java
 package jmri.jmrix.marklin;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Encodes a message to an Marklin command station.
+ * Encodes a message to a Marklin command station.
  * <P>
  * The {@link MarklinReply} class handles the response from the command station.
  * <P>
  *
- * @author	Kevin Dickerson Copyright (C) 2001, 2008
- * @version $Revision: 17977 $
+ * @author Kevin Dickerson Copyright (C) 2001, 2008
  */
 /*Packages of length 13 are interpreted as can-bus packages: 4 bytes
  Can-bus-ID (BigEndian or network order), 1-byte length and 8 bytes of data, if necessary with null bytes
@@ -289,8 +285,4 @@ public class MarklinMessage extends jmri.jmrix.AbstractMRMessage {
     static public MarklinMessage getWriteDirectCV(int cv, int val) { //Pxxx xxx
         return new MarklinMessage();
     }
-
-    static Logger log = LoggerFactory.getLogger(MarklinMessage.class.getName());
 }
-
-/* @(#)MarklinMessage.java */

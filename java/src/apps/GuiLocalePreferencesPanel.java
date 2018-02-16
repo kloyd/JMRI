@@ -3,13 +3,15 @@ package apps;
 import javax.swing.JComponent;
 import jmri.swing.PreferencesPanel;
 import jmri.swing.PreferencesSubPanel;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * Provide PreferencesPanel information for the JPanel provided by
  * {@link apps.GuiLafConfigPane#doLocale()}.
  *
- * @author Randall Wood <randall.h.wood@alexandriasoftware.com>
+ * @author Randall Wood randall.h.wood@alexandriasoftware.com
  */
+@ServiceProvider(service = PreferencesPanel.class)
 public class GuiLocalePreferencesPanel implements PreferencesSubPanel {
 
     GuiLafConfigPane parent = null;
@@ -43,12 +45,12 @@ public class GuiLocalePreferencesPanel implements PreferencesSubPanel {
 
     @Override
     public String getTabbedPreferencesTitle() {
-        return GuiLafConfigPane.rb.getString("TabbedLayoutLocale"); // NOI18N
+        return ConfigBundle.getMessage("TabbedLayoutLocale"); // NOI18N
     }
 
     @Override
     public String getLabelKey() {
-        return GuiLafConfigPane.rb.getString("LabelTabbedLayoutLocale"); // NOI18N
+        return ConfigBundle.getMessage("LabelTabbedLayoutLocale"); // NOI18N
     }
 
     @Override

@@ -3,21 +3,13 @@ package jmri.jmrit.throttle;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import javax.swing.AbstractAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Save throttles to XML
  *
- * @author	Lionel Jeanson Copyright 2009
- * @version $Revision$
+ * @author Lionel Jeanson Copyright 2009
  */
 public class StoreDefaultXmlThrottlesLayoutAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2009494965932977394L;
 
     /**
      * Constructor
@@ -27,7 +19,7 @@ public class StoreDefaultXmlThrottlesLayoutAction extends AbstractAction {
     public StoreDefaultXmlThrottlesLayoutAction(String s) {
         super(s);
         // disable this ourselves if there is no throttle Manager
-        if (jmri.InstanceManager.throttleManagerInstance() == null) {
+        if (jmri.InstanceManager.getNullableDefault(jmri.ThrottleManager.class) == null) {
             setEnabled(false);
         }
     }
@@ -38,12 +30,10 @@ public class StoreDefaultXmlThrottlesLayoutAction extends AbstractAction {
      *
      * @param e The event causing the action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         StoreXmlThrottlesLayoutAction sxta = new StoreXmlThrottlesLayoutAction();
         sxta.saveThrottlesLayout(new File(ThrottleFrame.getDefaultThrottleFilename()));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(StoreXmlThrottlesLayoutAction.class.getName());
 
 }

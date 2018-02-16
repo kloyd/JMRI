@@ -1,15 +1,13 @@
-// ConnectionConfig.java
 package jmri.jmrix.tams.simulator;
 
 import javax.swing.JPanel;
 
 /**
- * Definition of objects to handle configuring a layout connection via an MRC
+ * Definition of objects to handle configuring a layout connection via a Tams
  * SerialDriverAdapter object.
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2003 Copies from NCE
  * @author kcameron Copyright (C) 2014
- * @version	$Revision: 17977 $
  */
 public class ConnectionConfig extends jmri.jmrix.AbstractSimulatorConnectionConfig {
 
@@ -30,14 +28,17 @@ public class ConnectionConfig extends jmri.jmrix.AbstractSimulatorConnectionConf
         super();
     }
 
+    @Override
     public String name() {
         return NAME;
     }
 
+    @Override
     public void loadDetails(JPanel details) {
         super.loadDetails(details);
     }
 
+    @Override
     protected void setInstance() {
         if (adapter == null) {
             adapter = new SimulatorAdapter();

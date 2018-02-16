@@ -1,4 +1,3 @@
-/* SprogSlotManager.java */
 package jmri.jmrix.sprog;
 
 import java.util.LinkedList;
@@ -6,7 +5,6 @@ import java.util.Queue;
 import java.util.Vector;
 import jmri.CommandStation;
 import jmri.DccLocoAddress;
-import jmri.jmrix.sprog.sprogslotmon.SprogSlotMonFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,101 +21,133 @@ import org.slf4j.LoggerFactory;
  * service mode and ops mode, or two ops mode) at the same time, but this code
  * definitely can't.
  * <P>
- * <P>
  * Updated by Andrew Berridge, January 2010 - state management code now safer,
  * uses enum, etc. Amalgamated with Sprog Slot Manager into a single class -
  * reduces code duplication </P>
  * <P>
  * Updated by Andrew Crosland February 2012 to allow slots to hold 28 step speed
  * packets</P>
+ * <P>
+ * Re-written by Andrew Crosland to send the next packet as soon as a reply is 
+ * notified. This removes a race between the old state machine running before 
+ * the traffic controller despatches a reply, missing the opportunity to send a 
+ * new packet to the layout until the next JVM time slot, which can be 15ms on 
+ * Windows platforms.</P>
+ * <P>
+ * May-17 Moved status reply handling to the slot monitor. Monitor messages from
+ * other sources and suppress messages from here to prevent queueing messages in
+ * the traffic controller.</P>
+ * <P>
+ * Jan-18 Re-written again due to threading issues. Previous changes removed
+ * activity from the slot thread, which could result in loading the swing thread
+ * to the extent that the gui becomes very slow to respond.
+ * Moved status message generation to the slot monitor.</P>
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2003 Andrew Crosland (C) 2006 ported
- * to SPROG, 2012
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2003
+ * @author Andrew Crosland (C) 2006 ported to SPROG, 2012, 2016, 2018
  */
 public class SprogCommandStation implements CommandStation, SprogListener, Runnable {
 
-    private enum SlotThreadState {
+    protected int currentSlot = 0;
+    protected int currentSprogAddress = -1;
 
-        IDLE, WAITING_FOR_REPLY, SEND_STATUS_REQUEST, WAITING_FOR_STATUS_REPLY
-    }
+    protected LinkedList<SprogSlot> slots;
+    protected Queue<SprogSlot> sendNow;
 
-    private int currentSlot = 0;
-    private int currentSprogAddress = -1;
+    private SprogTrafficController tc = null;
 
-    private static LinkedList<SprogSlot> slots;
-    private Queue<SprogSlot> sendNow = new LinkedList<SprogSlot>();
-
-    public SprogCommandStation() {
-        // error if more than one constructed?
-        if (self != null) {
-            log.debug("Creating too many SlotManager objects");
-        }
-        SprogTrafficController.instance().addSprogListener(this);
-    }
-
-    /**
-     * Create a default length queue
-     */
-    static {
-        slots = new LinkedList<SprogSlot>();
+    final Object lock = new Object();
+    final Object lock2 = new Object();
+    private SprogReply reply;
+    private boolean waitingForReply = false;
+    private boolean replyAvailable = false;
+    private boolean sendSprogAddress = false;
+    private long time, timeNow, packetDelay;
+    final static int MAX_PACKET_DELAY = 25;
+    private int lastId;
+    
+    public SprogCommandStation(SprogTrafficController controller) {
+        sendNow = new LinkedList<>();
+        /**
+         * Create a default length queue
+         */
+        slots = new LinkedList<>();
         for (int i = 0; i < SprogConstants.MAX_SLOTS; i++) {
             slots.add(new SprogSlot(i));
         }
+        tc = controller;
+        tc.addSprogListener(this);
     }
 
     /**
-     * Send a specific packet to the rails.
-     *
-     * Call to sendSprogMessage seems to get delayed if this thread sleeps, so
-     * create a new runnable object to despatch the message to the traffic
-     * controller.
+     * Send a specific packet as a SprogMessage.
      *
      * @param packet  Byte array representing the packet, including the
      *                error-correction byte. Must not be null.
      * @param repeats number of times to repeat the packet
      */
+    @Override
     public void sendPacket(byte[] packet, int repeats) {
         if (packet.length <= 1) {
-            log.error("Invalid DCC packet length: " + packet.length);
+            log.error("Invalid DCC packet length: {}", packet.length);
         }
         if (packet.length >= 7) {
-            log.error("Maximum 6-byte packets accepted: " + packet.length);
+            log.error("Maximum 6-byte packets accepted: {}", packet.length);
         }
         final SprogMessage m = new SprogMessage(packet);
-        for (int i = 0; i < repeats; i++) {
-            final SprogTrafficController thisTC = SprogTrafficController.instance();
-
-            Runnable r = new Runnable() {
-                //SprogMessage messageForLater = m;
-                SprogTrafficController myTC = thisTC;
-
-                public void run() {
-                    myTC.sendSprogMessage(m, null);
-                }
-            };
-            javax.swing.SwingUtilities.invokeLater(r);
-        }
+        sendMessage(m);
     }
 
     /**
-     * Return contents of Queue slot i
+     * Send the SprogMessage to the hardware.
+     * <p>
+     * sendSprogMessage will block until the message can be sent. When it returns
+     * we set the reply status for the message just sent.
+     * 
+     * @param m       The message to be sent
+     */
+    protected void sendMessage(SprogMessage m) {
+        // Limit to one message in flight from the command station
+        while (waitingForReply) {
+            try {
+                log.debug("Waiting for a reply");
+                synchronized (lock2) {
+                    lock2.wait(100); // Will wait until notify()ed or 100ms timeout
+                }
+            } catch (InterruptedException e) {
+                log.debug("waitingForReply interrupted");
+                // Save the interrupted status for anyone who may be interested
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (waitingForReply) {
+                log.warn("Timeout Waiting for reply");
+            }
+        }
+        waitingForReply = true;
+        log.debug("Sending message [{}] id {}", m.toString(tc.isSIIBootMode()), m.getId());
+        lastId = m.getId();
+        tc.sendSprogMessage(m, this);
+    }
+    
+    /**
+     * Return contents of Queue slot i.
      *
-     * @param i int
-     * @return SprogSlot
+     * @param i int of slot requested
+     * @return SprogSlot slot i
      */
     public SprogSlot slot(int i) {
         return slots.get(i);
     }
 
     /**
-     * Clear all slots
+     * Clear all slots.
      */
     @SuppressWarnings("unused")
     private void clearAllSlots() {
-        for (SprogSlot s : slots) {
+        slots.stream().forEach((s) -> {
             s.clear();
-        }
+        });
     }
 
     /**
@@ -125,9 +155,12 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
      *
      * @return SprogSlot the next free Slot or null if all slots are full
      */
-    private SprogSlot findFree() {
+    protected SprogSlot findFree() {
         for (SprogSlot s : slots) {
             if (s.isFree()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Found free slot {}", s.getSlotNumber());
+                }
                 return s;
             }
         }
@@ -135,7 +168,7 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
     }
 
     /**
-     * Find a queue entry matching the address
+     * Find a queue entry matching the address.
      *
      * @param a int
      * @return the slot or null if the address is not in the queue
@@ -150,7 +183,7 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
     }
 
     private SprogSlot findAddressSpeedPacket(DccLocoAddress address) {
-        // SPROG doesn't use IDLE packets but sends speed 0 commands to last address selected by "A" command.
+        // SPROG doesn't use IDLE packets but sends speed commands to last address selected by "A" command.
         // We may need to move these pseudo-idle packets to an unused long address so locos will not receive conflicting speed commands.
         // Some short-address-only decoders may also respond to same-numbered long address so we avoid any number match irrespective of type
         // We need to find a suitable free long address, save (currentSprogAddress) and use it for pseudo-idle packets
@@ -163,11 +196,13 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
                     currentSprogAddress = currentSprogAddress % 10240;
             }
         if (currentSprogAddress != lastSprogAddress) {
-            log.info("Changing currentSprogAddress (for pseudo-idle packets) to "+currentSprogAddress+"(L)");
-            lastSprogAddress = currentSprogAddress;
-        }   
-            SprogTrafficController.instance().sendSprogMessage(new SprogMessage("A " + currentSprogAddress + " 0"));
-            for (SprogSlot s : slots) {
+            log.info("Changing currentSprogAddress (for pseudo-idle packets) to {}(L)", currentSprogAddress);
+            // We want to ignore the reply to this message so it does not trigger an extra packet
+            // Set a flag to send this from the slot thread and avoid swing thread waiting
+            //sendMessage(new SprogMessage("A " + currentSprogAddress + " 0"));
+            sendSprogAddress = true;
+        }
+        for (SprogSlot s : slots) {
             if (s.isActiveAddressMatch(address) && s.isSpeedPacket()) {
                 return s;
             }
@@ -221,7 +256,6 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
             s.setAccessoryPacket(address, closed, SprogConstants.S_REPEATS);
             notifySlotListeners(s);
         }
-
     }
 
     public void function0Through4Packet(DccLocoAddress address,
@@ -267,10 +301,6 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
      * than possibly waiting for a complete traversal of all slots before the
      * new speed is actually sent to the hardware.
      *
-     * @param mode
-     * @param address
-     * @param spd
-     * @param isForward
      */
     public void setSpeed(int mode, DccLocoAddress address, int spd, boolean isForward) {
         SprogSlot s = this.findAddressSpeedPacket(address);
@@ -282,11 +312,17 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
         }
     }
 
-    public void opsModepacket(int address, boolean longAddr, int cv, int val) {
+    public SprogSlot opsModepacket(int address, boolean longAddr, int cv, int val) {
         SprogSlot s = findFree();
         if (s != null) {
             s.setOps(address, longAddr, cv, val);
+            if (log.isDebugEnabled()) {
+                log.debug("opsModePacket() Notify ops mode packet for address {}", address);
+            }
             notifySlotListeners(s);
+            return (s);
+        } else {
+             return (null);
         }
     }
 
@@ -299,43 +335,40 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
     }
 
     /**
-     * Send emergency stop to all slots
+     * Send emergency stop to all slots.
      */
     public void estopAll() {
-        for (SprogSlot s : slots) {
-            if ((s.getRepeat() == -1)
-                    && s.slotStatus() != SprogConstants.SLOT_FREE
-                    && s.speed() != 1) {
-                eStopSlot(s);
-            }
-        }
+        slots.stream().filter((s) -> ((s.getRepeat() == -1)
+                && s.slotStatus() != SprogConstants.SLOT_FREE
+                && s.speed() != 1)).forEach((s) -> {
+                    eStopSlot(s);
+                });
     }
 
     /**
-     * Send emergency stop to a slot
+     * Send emergency stop to a slot.
      *
      * @param s SprogSlot to eStop
      */
-    private void eStopSlot(SprogSlot s) {
-        log.debug("Estop slot: " + s.getSlotNumber() + " for address: " + s.locoAddr());
+    protected void eStopSlot(SprogSlot s) {
+        log.debug("Estop slot: {} for address: {}", s.getSlotNumber(), s.getAddr());
         s.eStop();
         notifySlotListeners(s);
     }
 
     /**
-     * method to find the existing SlotManager object, if need be creating one
+     * Method to find the existing SlotManager object, if need be creating one.
+     *
+     * @return the SlotManager object
+     * @deprecated JMRI Since 4.4 instance() shouldn't be used, convert to JMRI multi-system support structure
      */
-    static public final SprogCommandStation instance() {
-        if (self == null) {
-            log.debug("creating a new SprogSlotManager object");
-            self = new SprogCommandStation();
-        }
-        return self;
+    @Deprecated
+    public final SprogCommandStation instance() {
+        return null;
     }
-    static volatile private SprogCommandStation self = null;
 
     // data members to hold contact with the slot listeners
-    final private Vector<SprogSlotListener> slotListeners = new Vector<SprogSlotListener>();
+    final private Vector<SprogSlotListener> slotListeners = new Vector<>();
 
     public synchronized void addSlotListener(SprogSlotListener l) {
         // add only if not already registered
@@ -352,180 +385,95 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
      * @param s The changed slot to notify.
      */
     private synchronized void notifySlotListeners(SprogSlot s) {
-        if (log.isDebugEnabled()) {
-            log.debug("notify " + slotListeners.size()
-                    + " SlotListeners about slot for address"
-                    + s.getAddr());
-        }
+        log.debug("notifySlotListeners() notify {} SlotListeners about slot for address {}",
+                    slotListeners.size(), s.getAddr());
 
         // forward to all listeners
-        for (SprogSlotListener client : slotListeners) {
+        slotListeners.stream().forEach((client) -> {
             client.notifyChangedSlot(s);
-        }
+        });
     }
 
-    /**
-     * Loop here sending packets to the rails
-     */
-    private volatile boolean replyReceived;
-    private volatile boolean awaitingReply;
     private int statusDue = 0;
-
+    @Override
+    /**
+     * The run() method will only be called (from SprogSystemConnectionMemo
+     * ConfigureCommandStation()) if the connected SPROG is in Command Station mode.
+     * 
+     */
     public void run() {
-        log.debug("Slot thread starts");
-        byte[] p;
-        int[] statusA = new int[4];
-        //int statusIdx = 0;
-        //AJB slot state now uses enums
-        SlotThreadState state = SlotThreadState.IDLE;
-        SlotThreadState prevState = state;
-        //Keep track of how many times we've been doing the same thing
-        //in case we need to give up (to avoid being stuck in a state with
-        //no escape!
-        int numLoopsSameState = 0;
-        //count of no. of times idle
-        int idleCount = 0;
-        while (true) { // loop permanently but sleep
-//            if (log.isDebugEnabled()) {
-//                log.debug("SPROG SlotManager in state: " + state.toString()
-//                        + " prevState was: " + prevState.toString());
-//            }
-            /*
-             * Check:
-             * Are we stuck in certain (non idle) state?
-             */
-            if (state != SlotThreadState.IDLE) {
-                idleCount = 0;
-                if (state == prevState) {
-                    if (++numLoopsSameState > 100) {
-                        //We're probably stuck in a state... Just go back to idle and
-                        //carry on!
-                        log.error("Stuck in state: " + state.toString());
-                        numLoopsSameState = 0;
-                        state = SlotThreadState.IDLE;
-                    }
-                } else {
-                    numLoopsSameState = 0;
+        time = System.currentTimeMillis();
+        log.debug("Slot thread starts at time {}", time);
+        // Send a decoder idle packet to prompt a reply from hardware and set things running
+        sendPacket(jmri.NmraPacket.idlePacket(), SprogConstants.S_REPEATS);
+        while(true) {
+            try {
+                synchronized(lock) {
+                   lock.wait(1000);
                 }
+            } catch (InterruptedException e) {
+               log.debug("Slot thread interrupted");
+               // We'll loop around if there's no reply available yet
+               // Save the interrupted status for anyone who may be interested
+               Thread.currentThread().interrupt();
+               // and exit
+               return;
             }
-            // [AC] On some windows platforms the minimum scheduler period is
-            // 15ms plus task switch overhead, so the fastest possible send-
-            // reply operation was 30+ms, sometimes longer giving a very slow
-            // packet update rate. This new code only sleeps if the state doesn't
-            // change between iterations.
-            // reply as the hardware may be busy with the previous packet, giving
-            // a minimum cycle time of ~15ms. Even this is too long as the
-            // maximum hardware delay will be the time to send the previous
-            // packet plus preamble which is unlikely to exceed 10ms.
-            // As soon as we see a reply we send the next message.
-            if (state == prevState) {
-                try {
-                    //Slow down loop repeat rate if we've been idle for a while,
-                    //otherwise repeat frequently for responsiveness
-                    if (idleCount > 10) {
-                        log.debug("sleeping 250ms");
-                        Thread.sleep(250);
-                    } else {
-                        log.debug("sleeping 10ms");
-                        Thread.sleep(10);
+            log.debug("Slot thread wakes at time {}", System.currentTimeMillis());
+            
+            // If we need to change the SPROGs default address, do that immediately.
+            // Reply to that will 
+            if (sendSprogAddress) {
+                sendMessage(new SprogMessage("A " + currentSprogAddress + " 0"));
+                replyAvailable = false;
+                sendSprogAddress = false;
+            } else if (replyAvailable) {
+                if (reply.isUnsolicited() && reply.isOverload()) {
+                    log.error("Overload");
+
+                    // *** turn power off
+                }
+
+                // Get next packet to send
+                byte[] p;
+                SprogSlot s = sendNow.poll();
+                if (s != null) {
+                    // New throttle action to be sent immediately
+                    p = s.getPayload();
+                    log.debug("Packet from immediate send queue");
+                } else {
+                    // Or take the next one from the stack
+                    p = getNextPacket();
+                    if (p != null) {
+                        log.debug("Packet from stack");
                     }
-                } catch (InterruptedException i) {
-                    Thread.currentThread().interrupt(); // retain if needed later
-                    log.error("Sprog slot thread interrupted\n" + i);
+                }
+                replyAvailable = false;
+                if (p != null) {
+                    // Send the packet
+                    sendPacket(p, SprogConstants.S_REPEATS);
+                    log.debug("Packet sent");
+                } else {
+                    // Send a decoder idle packet to prompt a reply from hardware and keep things running
+                    sendPacket(jmri.NmraPacket.idlePacket(), SprogConstants.S_REPEATS);
+                }
+                timeNow = System.currentTimeMillis();
+                packetDelay = timeNow - time;
+                time = timeNow;
+                // Useful for debug if packets are being delayed; Set to trace level to be able to debug other stuff
+                if (packetDelay > MAX_PACKET_DELAY) {
+                    log.trace("Packet delay was {} ms time now {}", packetDelay, time);
                 }
             } else {
-                Thread.yield();
-            }
-            prevState = state;
-            switch (state) {
-                case IDLE: {
-                    idleCount++;
-                    // Get next packet to send
-                    SprogSlot s = sendNow.poll();
-                    p = null;
-                    if (s != null) {
-                        // New throttle action to be sent immediately
-                        p = s.getPayload();
-                        log.debug("Packet from immediate send queue");
-                    } else {
-                        // Or take the next one from the stack
-                        p = getNextPacket();
-                        if (p != null) {
-                            log.debug("Packet from stack");
-                        }
-                    }
-                    if (p != null) {
-                        /* AJB: Moved flags to before sending packet - with improved
-                         * performance, we were sometimes setting the flags AFTER
-                         * a reply was received elsewhere!
-                         */
-                        synchronized (this) {
-                            replyReceived = false; //should be false!
-                            awaitingReply = true;  //should be true!
-                        }
-                        sendPacket(p, SprogConstants.S_REPEATS);
-
-                        state = SlotThreadState.WAITING_FOR_REPLY;
-                    }
-                    break;
-                }
-                case WAITING_FOR_REPLY: {
-                    // Wait for reply
-                    if (replyReceived) {
-                        if (++statusDue > 20) {
-                            state = SlotThreadState.SEND_STATUS_REQUEST;
-                        } else {
-                            state = SlotThreadState.IDLE;
-                        }
-                    }
-                    break;
-                }
-                case SEND_STATUS_REQUEST: {
-                    // Send status request
-        	/* AJB: Moved flags to before sending packet - with improved
-                     * performance, we were sometimes setting the flags AFTER
-                     * a reply was received elsewhere!
-                     */
-                    synchronized (this) {
-                        replyReceived = false;
-                        awaitingReply = true;
-                    }
-                    SprogTrafficController.instance().
-                            sendSprogMessage(SprogMessage.getStatus(), this);
-
-                    statusDue = 0;
-                    state = SlotThreadState.WAITING_FOR_STATUS_REPLY;
-                    break;
-                }
-                case WAITING_FOR_STATUS_REPLY: {
-                    // Waiting for status reply
-                    if (replyReceived) {
-                        if (SprogSlotMonFrame.instance() != null) {
-                            String s = replyForMe.toString();
-                            log.debug("Reply received whilst waiting for status");
-                            int i = s.indexOf('h');
-                            //Check that we got a status message before acting on it
-                            //by checking that "h" was found in the reply
-                            if (i > -1) {
-                                int milliAmps = ((Integer.decode("0x" + s.substring(i + 7, i + 11)).intValue()) * 488) / 47;
-                                statusA[0] = milliAmps;
-                                String ampString;
-                                ampString = Float.toString((float) statusA[0] / 1000);
-                                SprogSlotMonFrame.instance().updateStatus(ampString);
-                            }
-                        }
-                        state = SlotThreadState.IDLE;
-                        break;
-                    }
-                }
+                log.warn("Slot thread wait timeout");
             }
         }
     }
 
     /**
-     * Get the next packet to be transmitted. returns null if no packet
+     * Get the next packet to be transmitted.
      *
-     * @return byte[]
+     * @return byte[] null if no packet
      */
     private byte[] getNextPacket() {
         SprogSlot s;
@@ -556,35 +504,47 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
     }
 
     /*
-     * Needs to listen to replies
-     * Need to implement asynch replies for overload & notify power manager
      *
-     * How does POM work??? how does programmer send packets??
+     * @param m the sprog message received
      */
+    @Override
     public void notifyMessage(SprogMessage m) {
-//        log.error("message received unexpectedly: "+m.toString());
     }
 
-    private SprogReply replyForMe;
-
+    /**
+     * Handle replies.
+     * <p>
+     * Handle replies from the hardware, ignoring those that were not sent from
+     * the command station.
+     *
+     * @param m The SprogReply to be handled
+     */
+    @Override
     public void notifyReply(SprogReply m) {
-        replyForMe = m;
-        //log.debug("reply received: "+m.toString());
-        if (m.isUnsolicited() && m.isOverload()) {
-            log.error("Overload");
-
-            // *** turn power off
-        }
-        if (awaitingReply) {
-            synchronized (this) {
-                replyReceived = true;
-                awaitingReply = false;
+        if (m.getId() != lastId) {
+            // Not my id, so not interested, message send still locked
+            log.debug("Ignore reply with mismatched id");
+            return;
+        } else {
+            // Unblock sending messages
+            waitingForReply = false;
+            reply = new SprogReply(m);
+            synchronized (lock2) {
+                lock2.notifyAll();
+            }
+            log.debug("Reply received [{}]", m.toString());
+            // Log the reply and wake the slot thread
+            replyAvailable = true;
+            synchronized (lock) {
+                lock.notifyAll();
             }
         }
     }
 
     /**
-     * Provide a count of the slots in use
+     * Provide a count of the slots in use.
+     * 
+     * @return the number of slots in use
      */
     public int getInUseCount() {
         int result = 0;
@@ -602,12 +562,7 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
      *         one occupied slot
      */
     public boolean isBusy() {
-        for (SprogSlot s : slots) {
-            if (!s.isFree()) {
-                return true;
-            }
-        }
-        return false;
+        return slots.stream().anyMatch((s) -> (!s.isFree()));
     }
 
     public void setSystemConnectionMemo(SprogSystemConnectionMemo memo) {
@@ -616,6 +571,12 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
 
     SprogSystemConnectionMemo adaptermemo;
 
+    /**
+     * Get user name.
+     * 
+     * @return the user name
+     */
+    @Override
     public String getUserName() {
         if (adaptermemo == null) {
             return "Sprog";
@@ -623,6 +584,12 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
         return adaptermemo.getUserName();
     }
 
+    /**
+     * Get system prefix.
+     * 
+     * @return the system prefix
+     */
+    @Override
     public String getSystemPrefix() {
         if (adaptermemo == null) {
             return "S";
@@ -631,8 +598,6 @@ public class SprogCommandStation implements CommandStation, SprogListener, Runna
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(SprogCommandStation.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SprogCommandStation.class);
+
 }
-
-
-/* @(#)SprogSlotManager.java */

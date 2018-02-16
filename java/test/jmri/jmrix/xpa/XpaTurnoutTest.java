@@ -1,53 +1,60 @@
 package jmri.jmrix.xpa;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * XpaTurnoutTest.java
- *
  * Description:	tests for the jmri.jmrix.xpa.XpaTurnout class
- *
+ * <P>
  * @author	Paul Bender
- * @version $Revision: 17977 $
  */
-public class XpaTurnoutTest extends TestCase {
+public class XpaTurnoutTest extends jmri.implementation.AbstractTurnoutTestBase  {
 
+    private XpaTrafficControlScaffold xnis;
+    private XpaSystemConnectionMemo memo = null;
+
+    @Override
+    public int numListeners() {
+        return xnis.numListeners();
+    }
+
+    @Override
+    public void checkClosedMsgSent() {
+        Assert.assertEquals("closed message", "ATDT#3#3;",
+                xnis.outbound.get(xnis.outbound.size() - 1).toString());
+        Assert.assertEquals("CLOSED state", jmri.Turnout.CLOSED, t.getCommandedState());
+    }
+
+    @Override
+    public void checkThrownMsgSent() {
+        Assert.assertEquals("thrown message", "ATDT#3#1;",
+                xnis.outbound.get(xnis.outbound.size() - 1).toString());
+        Assert.assertEquals("THROWN state", jmri.Turnout.THROWN, t.getCommandedState());
+    }
+
+    @Test
     public void testCtor() {
-        XpaTurnout t = new XpaTurnout(3);
         Assert.assertNotNull(t);
     }
 
-    // from here down is testing infrastructure
-    public XpaTurnoutTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", XpaTurnoutTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(XpaTurnoutTest.class);
-        return suite;
-    }
-
     // The minimal setup for log4J
-    protected void setUp() {
+    @Override
+    @Before
+    public void setUp() {
         apps.tests.Log4JFixture.setUp();
+        memo = new XpaSystemConnectionMemo();
+        xnis = new XpaTrafficControlScaffold();
+        memo.setXpaTrafficController(xnis);
+        t = new XpaTurnout(3,memo);
     }
 
-    protected void tearDown() {
+    @After
+    public void tearDown() {
         apps.tests.Log4JFixture.tearDown();
+        memo = null;
+        xnis = null;
     }
-
-    static Logger log = LoggerFactory.getLogger(XpaTurnoutTest.class.getName());
 
 }

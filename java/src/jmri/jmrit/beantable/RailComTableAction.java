@@ -1,4 +1,3 @@
-// RailCommTableAction.java
 package jmri.jmrit.beantable;
 
 import java.awt.event.ActionEvent;
@@ -8,6 +7,7 @@ import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import jmri.InstanceManager;
+import jmri.IdTag;
 import jmri.Manager;
 import jmri.NamedBean;
 import jmri.RailCom;
@@ -19,17 +19,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Swing action to create and register a RailCommTable GUI.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @author Matthew Harris Copyright (C) 2011
- * @version $Revision: 18072 $
+ * @author  Bob Jacobsen Copyright (C) 2003
+ * @author  Matthew Harris Copyright (C) 2011
  * @since 2.11.4
  */
-public class RailComTableAction extends AbstractTableAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4041803967319785256L;
+public class RailComTableAction extends AbstractTableAction<RailCom> {
 
     /**
      * Create an action with a specific title.
@@ -37,13 +31,14 @@ public class RailComTableAction extends AbstractTableAction {
      * Note that the argument is the Action title, not the title of the
      * resulting frame. Perhaps this should be changed?
      *
-     * @param actionName
+     * @param actionName title of the action
      */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public RailComTableAction(String actionName) {
         super(actionName);
 
         // disable ourself if there is no primary RailComm manager available
-        if (InstanceManager.getDefault(RailComManager.class) == null) {
+        if (InstanceManager.getNullableDefault(RailComManager.class) == null) {
             setEnabled(false);
         }
         includeAddButton = false;
@@ -57,13 +52,10 @@ public class RailComTableAction extends AbstractTableAction {
      * Create the JTable DataModel, along with the changes for the specific case
      * of RailComm objects
      */
+    @Override
     protected void createModel() {
-        m = new BeanTableDataModel() {
+        m = new BeanTableDataModel<RailCom>() {
 
-            /**
-             *
-             */
-            private static final long serialVersionUID = 2279329942656851421L;
             static public final int VALUECOL = 0;
             public static final int WHERECOL = VALUECOL + 1;
             public static final int WHENCOL = WHERECOL + 1;
@@ -79,8 +71,9 @@ public class RailComTableAction extends AbstractTableAction {
 
             static public final int NUMCOLUMN = DELETECOL + 1;
 
+            @Override
             public String getValue(String name) {
-                RailCom tag = (RailCom) InstanceManager.getDefault(RailComManager.class).getBySystemName(name);
+                RailCom tag = InstanceManager.getDefault(RailComManager.class).getBySystemName(name);
                 if (tag == null) {
                     return "?";
                 }
@@ -92,7 +85,8 @@ public class RailComTableAction extends AbstractTableAction {
                 }
             }
 
-            public Manager getManager() {
+            @Override
+            public RailComManager getManager() {
                 RailComManager m = InstanceManager.getDefault(RailComManager.class);
                 if (!m.isInitialised()) {
                     m.init();
@@ -100,15 +94,18 @@ public class RailComTableAction extends AbstractTableAction {
                 return m;
             }
 
-            public NamedBean getBySystemName(String name) {
+            @Override
+            public RailCom getBySystemName(String name) {
                 return InstanceManager.getDefault(RailComManager.class).getBySystemName(name);
             }
 
-            public NamedBean getByUserName(String name) {
+            @Override
+            public RailCom getByUserName(String name) {
                 return InstanceManager.getDefault(RailComManager.class).getByUserName(name);
             }
 
-            public void clickOn(NamedBean t) {
+            @Override
+            public void clickOn(RailCom t) {
                 // don't do anything on click; not used in this class, because
                 // we override setValueAt
             }
@@ -116,7 +113,7 @@ public class RailComTableAction extends AbstractTableAction {
             @Override
             public void setValueAt(Object value, int row, int col) {
                 if (col == CLEARCOL) {
-                    RailCom t = (RailCom) getBySystemName(sysNameList.get(row));
+                    RailCom t = getBySystemName(sysNameList.get(row));
                     if (log.isDebugEnabled()) {
                         log.debug("Clear where & when last seen for " + t.getSystemName());
                     }
@@ -137,25 +134,25 @@ public class RailComTableAction extends AbstractTableAction {
             public String getColumnName(int col) {
                 switch (col) {
                     case VALUECOL:
-                        return rb.getString("ColumnAddress");
+                        return Bundle.getMessage("ColumnAddress");
                     case WHERECOL:
-                        return rb.getString("ColumnIdWhere");
+                        return Bundle.getMessage("ColumnIdWhere");
                     case WHENCOL:
-                        return rb.getString("ColumnIdWhen");
+                        return Bundle.getMessage("ColumnIdWhen");
                     case SPEEDCOL:
-                        return rb.getString("ColumnSpeed");
+                        return Bundle.getMessage("ColumnSpeed");
                     case LOADCOL:
-                        return rb.getString("ColumnLoad");
+                        return Bundle.getMessage("ColumnLoad");
                     case TEMPCOL:
-                        return rb.getString("ColumnTemp");
+                        return Bundle.getMessage("ColumnTemp");
                     case FUELCOL:
-                        return rb.getString("ColumnFuelLevel");
+                        return Bundle.getMessage("ColumnFuelLevel");
                     case WATERCOL:
-                        return rb.getString("ColumnWaterLevel");
+                        return Bundle.getMessage("ColumnWaterLevel");
                     case LOCATIONCOL:
-                        return rb.getString("ColumnLocation");
+                        return Bundle.getMessage("ColumnLocation");
                     case ROUTINGCOL:
-                        return rb.getString("ColumnRouting");
+                        return Bundle.getMessage("ColumnRouting");
                     case DELETECOL:
                         return "";
                     case CLEARCOL:
@@ -189,7 +186,7 @@ public class RailComTableAction extends AbstractTableAction {
 
             @Override
             public Object getValueAt(int row, int col) {
-                RailCom t = (RailCom) getBySystemName(sysNameList.get(row));
+                RailCom t = getBySystemName(sysNameList.get(row));
                 if (t == null) {
                     return null;
                 }
@@ -204,7 +201,7 @@ public class RailComTableAction extends AbstractTableAction {
                         return (((d = t.getWhenLastSeen()) != null)
                                 ? DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(d) : null);
                     case CLEARCOL:
-                        return rb.getString("ButtonClear");
+                        return Bundle.getMessage("ButtonClear");
                     case SPEEDCOL:
                         if (t.getActualSpeed() == -1) {
                             return null;
@@ -241,7 +238,10 @@ public class RailComTableAction extends AbstractTableAction {
                         }
                         return t.getRoutingNo();
                     case DELETECOL:  //
-                        return AbstractTableAction.rb.getString("ButtonDelete");
+                        return Bundle.getMessage("ButtonDelete");
+                    default:
+                        // fall through
+                        break;
                 }
                 return null;
             }
@@ -256,7 +256,7 @@ public class RailComTableAction extends AbstractTableAction {
                         return new JTextField(10).getPreferredSize().width;
                     case CLEARCOL:
                     case DELETECOL:
-                        return new JButton(rb.getString("ButtonClear")).getPreferredSize().width + 4;
+                        return new JButton(Bundle.getMessage("ButtonClear")).getPreferredSize().width + 4;
                     default:
                         return new JTextField(5).getPreferredSize().width;
                 }
@@ -275,7 +275,7 @@ public class RailComTableAction extends AbstractTableAction {
 
             @Override
             public JButton configureButton() {
-                BeanTableDataModel.log.error("configureButton should not have been called");
+                log.error("configureButton should not have been called");
                 return null;
             }
 
@@ -284,14 +284,16 @@ public class RailComTableAction extends AbstractTableAction {
                 return getClassName();
             }
 
+            @Override
             protected String getBeanType() {
                 return "ID Tag";
             }
         };
     }
 
+    @Override
     protected void setTitle() {
-        f.setTitle(f.rb.getString("TitleRailComTable"));
+        f.setTitle(Bundle.getMessage("TitleRailComTable"));
     }
 
     @Override
@@ -299,12 +301,13 @@ public class RailComTableAction extends AbstractTableAction {
         return "package.jmri.jmrit.beantable.RailComTable";
     }
 
+    @Override
     protected void addPressed(ActionEvent e) {
     }
 
     @Override
     public String getClassDescription() {
-        return f.rb.getString("TitleRailComTable");
+        return Bundle.getMessage("TitleRailComTable");
     }
 
     @Override
@@ -317,10 +320,9 @@ public class RailComTableAction extends AbstractTableAction {
         log.debug("Added CheckBox in addToPanel method");
     }
 
+    @Override
     protected String getClassName() {
         return RailComTableAction.class.getName();
     }
-    private static final Logger log = LoggerFactory.getLogger(RailComTableAction.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(RailComTableAction.class);
 }
-
-/* @(#)RailCommTableAction.java */

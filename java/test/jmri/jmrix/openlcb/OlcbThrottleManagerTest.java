@@ -1,48 +1,29 @@
-// OlcbThrottleManagerTest.java
 package jmri.jmrix.openlcb;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * Tests for the jmri.jmrix.openlcb.OlcbThrottleManager class.
  *
  * @author	Bob Jacobsen Copyright 2008, 2010, 2011
- * @version $Revision$
+ * @author      Paul Bender Copyright (C) 2016
  */
-public class OlcbThrottleManagerTest extends TestCase {
+public class OlcbThrottleManagerTest extends jmri.managers.AbstractThrottleManagerTestBase {
 
-    public void testCtor() {
-    }
-
-    // from here down is testing infrastructure
-    public OlcbThrottleManagerTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {OlcbThrottleManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(OlcbThrottleManagerTest.class);
-        return suite;
-    }
-
-    static Logger log = LoggerFactory.getLogger(OlcbThrottleManagerTest.class.getName());
 
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Override
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
+        OlcbSystemConnectionMemo m = OlcbTestInterface.createForLegacyTests();
+        tm = new OlcbThrottleManager(m,new OlcbConfigurationManagerScaffold(m));
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public  void tearDown() {
+        JUnitUtil.tearDown();
     }
 }

@@ -1,8 +1,5 @@
-// ConnectionConfig.java
 package jmri.jmrix.loconet.loconetovertcp;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Definition of objects to handle configuring a LocoNetOverTcp layout
@@ -11,7 +8,6 @@ import org.slf4j.LoggerFactory;
  * @author Bob Jacobsen Copyright (C) 2001, 2003
  * @author Stephen Williams Copyright (C) 2008
  *
- * @version $Revision$
  */
 public class ConnectionConfig extends jmri.jmrix.AbstractNetworkConnectionConfig {
 
@@ -24,26 +20,26 @@ public class ConnectionConfig extends jmri.jmrix.AbstractNetworkConnectionConfig
     }
 
     /**
-     * Ctor for a functional Swing object with no prexisting adapter
+     * Ctor for a functional Swing object with no preexisting adapter
      */
     public ConnectionConfig() {
         super();
     }
 
+    @Override
     public String name() {
-        return "LocoNetOverTcp LbServer";
+        return Bundle.getMessage("ConnectionTitle");
     }
 
     public boolean isOptList1Advanced() {
         return false;
     }
 
+    @Override
     protected void setInstance() {
         if (adapter == null) {
             adapter = new LnTcpDriverAdapter();
             adapter.setPort(1234);
         }
     }
-
-    static Logger log = LoggerFactory.getLogger(ConnectionConfig.class.getName());
 }

@@ -1,4 +1,3 @@
-// SerialNode.java
 package jmri.jmrix.maple;
 
 import jmri.jmrix.AbstractMRListener;
@@ -18,11 +17,10 @@ import org.slf4j.LoggerFactory;
  * on the serial bus. E.g. you can manually change a state via an icon, and not
  * have it change back the next time that node is polled.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2008
+ * @author Bob Jacobsen Copyright (C) 2003, 2008
  * @author Bob Jacobsen, Dave Duchamp, multiNode extensions, 2004
  * @author Bob Jacobsen, Dave Duchamp, revised for Maple, 2009
- * @version	$Revision$
- */
+  */
 public class SerialNode extends AbstractNode {
 
     /**
@@ -32,42 +30,45 @@ public class SerialNode extends AbstractNode {
 
     // class constants
     // node definition instance variables (must persist between runs)
-//	protected int pulseWidth = 500;				// Pulse width for pulsed turnout control (milliseconds)
+// protected int pulseWidth = 500;    // Pulse width for pulsed turnout control (milliseconds)
     private int _address = 0;
 
-    // operational instance variables  (should not be preserved between runs)
+    // operational instance variables (should not be preserved between runs)
     /**
-     * Assumes a node address of 1, and a node type of 0 If this constructor is
+     * Assumes a node address of 1, and a node type of 0. If this constructor is
      * used, actual node address must be set using setNodeAddress.
      */
-    public SerialNode() {
-        this(1, 0);
+    public SerialNode(SerialTrafficController tc) {
+        this(1, 0, tc);
     }
 
     /**
      * Creates a new SerialNode and initialize default instance variables
-     * address - Address of node on serial bus (0-99) type - 0 (ignored).
+     * @param address Address of node on serial bus (0-99)
+     * @param type 0 (ignored)
      */
-    public SerialNode(int address, int type) {
+    public SerialNode(int address, int type, SerialTrafficController tc) {
         // set address 
         setNodeAddress(address);
         _address = address;
         // register this node
-        SerialTrafficController.instance().registerNode(this);
+        tc.registerNode(this);
     }
 
     /**
      * Public method to return state of Sensors. Note: returns 'true' since at
      * least one sensor is defined
      */
+    @Override
     public boolean getSensorsActive() {
         return true;
     }
 
     /**
-     * Check valid node address, must match value configured in the Maple HMI
+     * Check valid node address, must match value configured in the Maple HMI.
      * Allowed values are 1-99
      */
+    @Override
     protected boolean checkNodeAddress(int address) {
         return (address > 0) && (address <= 99);
     }
@@ -84,14 +85,16 @@ public class SerialNode extends AbstractNode {
      * node Note: Maple Systems devices do not need initialization. This is here
      * for completion.
      */
+    @Override
     public AbstractMRMessage createInitPacket() {
         return null;
     }
 
     /**
-     * Public Method to create an Transmit packet (SerialMessage) Not used in
+     * Public Method to create a Transmit packet (SerialMessage) Not used in
      * Maple.
      */
+    @Override
     public AbstractMRMessage createOutPacket() {
         return null;
     }
@@ -112,6 +115,7 @@ public class SerialNode extends AbstractNode {
      *
      * @return true if initialization required
      */
+    @Override
     public boolean handleTimeout(AbstractMRMessage m, AbstractMRListener l) {
         // increment timeout count
         timeout++;
@@ -119,6 +123,7 @@ public class SerialNode extends AbstractNode {
         return false;
     }
 
+    @Override
     public void resetTimeout(AbstractMRMessage m) {
         if (timeout > 0) {
             log.debug("Reset " + timeout + " timeout count");
@@ -130,7 +135,6 @@ public class SerialNode extends AbstractNode {
         return timeout;
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialNode.class.getName());
-}
+    private final static Logger log = LoggerFactory.getLogger(SerialNode.class);
 
-/* @(#)SerialNode.java */
+}

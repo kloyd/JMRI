@@ -5,8 +5,6 @@ import jmri.jmrix.configurexml.AbstractSerialConnectionConfigXml;
 import jmri.jmrix.powerline.serialdriver.ConnectionConfig;
 import jmri.jmrix.powerline.serialdriver.SerialDriverAdapter;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistance of layout connections by persisting the
@@ -19,7 +17,6 @@ import org.slf4j.LoggerFactory;
  * attribute in the XML.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003, 2006, 2007, 2008
- * @version $Revision$
  */
 public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
 
@@ -54,10 +51,12 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
         return p;
     }
 
+    @Override
     protected void getInstance() {
         adapter = new SerialDriverAdapter();
     }
 
+    @Override
     protected void getInstance(Object object) {
         adapter = ((ConnectionConfig) object).getAdapter();
     }
@@ -66,7 +65,7 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
 //     * Unpack the node information when reading the "connection" element
 //     * @param e Element containing the connection info
 //     */
-//	protected void unpackElement(Element e) {
+// protected void unpackElement(Element e) {
 //        List<Element> l = e.getChildren("node");
 //        for (int i = 0; i<l.size(); i++) {
 //            Element n = l.get(i);
@@ -103,8 +102,5 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

@@ -1,4 +1,3 @@
-// Light.java
 package jmri;
 
 import java.util.ArrayList;
@@ -58,10 +57,9 @@ import jmri.implementation.LightControl;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Dave Duchamp Copyright (C) 2004, 2010
- * @author	Ken Cameron Copyright (C) 2008
- * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
+ * @author Dave Duchamp Copyright (C) 2004, 2010
+ * @author Ken Cameron Copyright (C) 2008
+ * @author Bob Jacobsen Copyright (C) 2008
  */
 public interface Light extends NamedBean {
 
@@ -123,13 +121,16 @@ public interface Light extends NamedBean {
      * Note that the state may have other values, such as INTERMEDIATE or a form
      * of transitioning, but that these may not be directly set.
      * <p>
+     * @param newState the new desired state
      * @throws IllegalArgumentException if invalid newState provided
      */
+    @Override
     public void setState(int newState);
 
     /**
      * Get the current state of the Light's output.
      */
+    @Override
     public int getState();
 
     // control types - types defined
@@ -178,6 +179,7 @@ public interface Light extends NamedBean {
      * be one of TRANSITIONTOFULLON, TRANSITIONHIGHER, TRANSITIONLOWER or
      * TRANSITIONTOFULLOFF until the transition is complete.
      * <P>
+     * @param intensity the desired brightness
      * @throws IllegalArgumentException when intensity is less than 0.0 or more
      *                                  than 1.0
      * @throws IllegalArgumentException if isIntensityVariable is false and the
@@ -192,6 +194,8 @@ public interface Light extends NamedBean {
      * <p>
      * A value of 0.0 corresponds to full off, and a value of 1.0 corresponds to
      * full on.
+     *
+     * @return the current brightness
      */
     public double getCurrentIntensity();
 
@@ -204,6 +208,8 @@ public interface Light extends NamedBean {
      * full on.
      * <p>
      * Bound property
+     *
+     * @return the desired brightness
      */
     public double getTargetIntensity();
 
@@ -215,6 +221,7 @@ public interface Light extends NamedBean {
      * A value of 0.0 corresponds to full off, and a value of 1.0 corresponds to
      * full on.
      *
+     * @param intensity the maximum brightness
      * @throws IllegalArgumentException when intensity is less than 0.0 or more
      *                                  than 1.0
      * @throws IllegalArgumentException when intensity is not greater than the
@@ -228,6 +235,8 @@ public interface Light extends NamedBean {
      * <p>
      * A value of 0.0 corresponds to full off, and a value of 1.0 corresponds to
      * full on.
+     *
+     * @return the maximum brightness
      */
     public double getMaxIntensity();
 
@@ -239,6 +248,7 @@ public interface Light extends NamedBean {
      * A value of 0.0 corresponds to full off, and a value of 1.0 corresponds to
      * full on.
      *
+     * @param intensity the minimum brightness
      * @throws IllegalArgumentException when intensity is less than 0.0 or more
      *                                  than 1.0
      * @throws IllegalArgumentException when intensity is not less than the
@@ -252,6 +262,8 @@ public interface Light extends NamedBean {
      * <p>
      * A value of 0.0 corresponds to full off, and a value of 1.0 corresponds to
      * full on.
+     *
+     * @return the minimum brightness
      */
     public double getMinIntensity();
 
@@ -263,6 +275,8 @@ public interface Light extends NamedBean {
      * intensity level to another.
      * <p>
      * Unbound property
+     *
+     * @return true if brightness can fade between two states; false otherwise
      */
     public boolean isTransitionAvailable();
 
@@ -277,6 +291,7 @@ public interface Light extends NamedBean {
      * <p>
      * Bound property
      * <p>
+     * @param minutes time to fade
      * @throws IllegalArgumentException if isTransitionAvailable() is false and
      *                                  minutes is not 0.0
      * @throws IllegalArgumentException if minutes is negative
@@ -297,6 +312,8 @@ public interface Light extends NamedBean {
      * <p>
      * Bound property so that listeners can conveniently learn when the
      * transition is over.
+     *
+     * @return true if light is between two states; false otherwise
      */
     public boolean isTransitioning();
 
@@ -313,12 +330,16 @@ public interface Light extends NamedBean {
      * Set the Enabled property, which determines whether the control logic
      * built in the light object is operating or not. Light objects are usually
      * enabled.
+     *
+     * @param state true if control logic is enabled; false otherwise
      */
     public void setEnabled(boolean state);
 
     /**
      * Get the Enabled property, which determines whether the control logic
      * built in the light object is operating or not.
+     *
+     * @return true if control logic is enabled; false otherwise
      */
     public boolean getEnabled();
 
@@ -334,5 +355,3 @@ public interface Light extends NamedBean {
      */
     public void deactivateLight();
 }
-
-/* @(#)Light.java */

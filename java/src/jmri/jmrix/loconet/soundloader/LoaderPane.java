@@ -1,4 +1,3 @@
-// LoaderPane.java
 package jmri.jmrix.loconet.soundloader;
 
 import java.awt.FlowLayout;
@@ -17,21 +16,13 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import jmri.jmrix.loconet.spjfile.SpjFile;
 import jmri.util.FileUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Pane for downloading .hex files
  *
- * @author	Bob Jacobsen Copyright (C) 2005
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2005
  */
 public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3466057573583241795L;
 
     // GUI member declarations
     static ResourceBundle res = ResourceBundle.getBundle("jmri.jmrix.loconet.soundloader.Loader");
@@ -50,12 +41,14 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
     SpjFile file;
     LoaderEngine engine;
 
+    @Override
     public String getHelpTarget() {
-        return "package.jmri.jmrix.loconet.soundloader.LoaderFrame";
+        return "package.jmri.jmrix.loconet.soundloader.LoaderFrame"; // NOI18N
     }
 
+    @Override
     public String getTitle() {
-        return getTitle(jmri.jmrix.loconet.LocoNetBundle.bundle().getString("MenuItemSoundload"));
+        return getTitle(Bundle.getMessage("MenuItemSoundload"));
     }
 
     public LoaderPane() {
@@ -64,13 +57,9 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
         {
             JPanel p = new JPanel();
             p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
-            JButton b = new JButton(res.getString("ButtonSelect"));
+            JButton b = new JButton(Bundle.getMessage("ButtonSelect")); // is in jmri.NBBundle
             b.addActionListener(new AbstractAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = 2498146136992279361L;
-
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     selectInputFile();
                 }
@@ -93,11 +82,7 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
             readButton.setToolTipText(res.getString("TipReadDisabled"));
             p.add(readButton);
             readButton.addActionListener(new AbstractAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -1408564712471319146L;
-
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     doRead();
                 }
@@ -127,11 +112,7 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
             loadButton.setToolTipText(res.getString("TipLoadDisabled"));
             p.add(loadButton);
             loadButton.addActionListener(new AbstractAction() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -1042657057160985067L;
-
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     doLoad();
                 }
@@ -183,9 +164,9 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
     }
 
     void doRead() {
-        if (inputFileName.getText() == "") {
+        if (inputFileName.getText().equals("")) {
             JOptionPane.showMessageDialog(this, res.getString("ErrorNoInputFile"),
-                    res.getString("ErrorTitle"),
+                    Bundle.getMessage("ErrorTitle"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -199,12 +180,12 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
             file.read();
         } catch (FileNotFoundException f) {
             JOptionPane.showMessageDialog(this, res.getString("ErrorFileNotFound"),
-                    res.getString("ErrorTitle"),
+                    Bundle.getMessage("ErrorTitle"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         } catch (IOException f) {
             JOptionPane.showMessageDialog(this, res.getString("ErrorIOError"),
-                    res.getString("ErrorTitle"),
+                    Bundle.getMessage("ErrorTitle"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -230,6 +211,7 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
         // Override notify() method to do a swing-thread update of status field
         if (engine == null) {
             engine = new LoaderEngine(memo) {
+                @Override
                 public void notify(String s) {
                     javax.swing.SwingUtilities.invokeLater(new Notifier(s));
                 }
@@ -238,6 +220,7 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
 
         // start the download itself
         new Thread() {
+            @Override
             public void run() {
                 engine.runDownload(file);
             }
@@ -255,6 +238,7 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
         }
         String msg;
 
+        @Override
         public void run() {
             status.setText(msg);
         }
@@ -263,6 +247,7 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
     /**
      * Get rid of any held resources
      */
+    @Override
     public void dispose() {
         if (file != null) {
             file.dispose();
@@ -274,7 +259,5 @@ public class LoaderPane extends jmri.jmrix.loconet.swing.LnPanel {
         }
         engine = null;  // not for GC, this flags need to reinit
     }
-
-    static Logger log = LoggerFactory.getLogger(LoaderPane.class.getName());
 
 }

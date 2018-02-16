@@ -1,4 +1,3 @@
-// EcosNamedPaneAction.java
 package jmri.jmrix.rfid.swing;
 
 import javax.swing.Icon;
@@ -13,15 +12,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright (C) 2010
  * @author Matthew Harris Copyright (C) 2011
- * @version $Revision$
  * @since 2.11.4
  */
 public class RfidNamedPaneAction extends jmri.util.swing.JmriNamedPaneAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2811521437408908950L;
 
     /**
      * Enhanced constructor for placing the pane in various GUIs
@@ -49,14 +42,11 @@ public class RfidNamedPaneAction extends jmri.util.swing.JmriNamedPaneAction {
             ((RfidPanelInterface) p).initComponents(memo);
             return p;
         } catch (Exception ex) {
-            log.warn("could not init pane class: " + paneClass + " due to:" + ex);
-            ex.printStackTrace();
+            log.warn("could not init pane class: {}", paneClass, ex);
         }
 
         return p;
     }
 
-    private static final Logger log = LoggerFactory.getLogger(RfidNamedPaneAction.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(RfidNamedPaneAction.class);
 }
-
-/* @(#)EcosNamedPaneAction.java */

@@ -1,22 +1,23 @@
-// SerialNodeTest.java
 package jmri.jmrix.grapevine;
 
 import jmri.Sensor;
 import jmri.jmrix.AbstractMRMessage;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the SerialNode class
  *
  * @author	Bob Jacobsen Copyright 2003, 2007, 2008
  * @author	Dave Duchamp multi-node extensions 2003
- * @version	$Revision$
  */
 @SuppressWarnings("null")
 public class SerialNodeTest extends TestCase {
+
+    private GrapevineSystemConnectionMemo memo = null; 
 
     public void testConstructor1() {
         SerialNode b = new SerialNode();
@@ -899,7 +900,7 @@ public class SerialNodeTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", SerialNodeTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -909,25 +910,22 @@ public class SerialNodeTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
-        // replace the SensorManager
-        jmri.InstanceManager i = new jmri.InstanceManager() {
-            protected void init() {
-                super.init();
-                root = null;
-            }
-        };
+        JUnitUtil.setUp();
+
         // replace the traffic manager
         SerialTrafficControlScaffold tcis = new SerialTrafficControlScaffold();
+        memo = new GrapevineSystemConnectionMemo();
+        memo.setTrafficController(tcis);
         // install a grapevine sensor manager
-        jmri.InstanceManager.setSensorManager(new jmri.jmrix.grapevine.SerialSensorManager());
-        Assert.assertNotNull("exists", i);
+        jmri.InstanceManager.setSensorManager(new jmri.jmrix.grapevine.SerialSensorManager(memo));
         Assert.assertNotNull("exists", tcis);
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

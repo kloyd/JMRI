@@ -1,4 +1,3 @@
-// LightControl.java
 package jmri.implementation;
 
 import java.util.Date;
@@ -38,8 +37,7 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Dave Duchamp Copyright (C) 2010
- * @version	$Revision$
+ * @author Dave Duchamp Copyright (C) 2010
  */
 public class LightControl {
 
@@ -67,7 +65,7 @@ public class LightControl {
     protected int _timeOnDuration = 0;          // duration (milliseconds) if TIMED_ON_CONTROL
     private String _controlSensor2Name = ""; // second controlling sensor if TWO_SENSOR_CONTROL
 
-    /**
+    /*
      * Accessor methods
      */
     public int getControlType() {
@@ -171,7 +169,7 @@ public class LightControl {
     }
 
     // operational instance variables - not saved between runs
-    protected Light _parentLight = null;        // Light that is being controlled			
+    protected Light _parentLight = null;        // Light that is being controlled   
     private boolean _active = false;
     protected NamedBeanHandle<Sensor> _namedControlSensor = null;
     private java.beans.PropertyChangeListener _sensorListener = null;
@@ -231,6 +229,7 @@ public class LightControl {
                         // listen for change in sensor state
                         _namedControlSensor.getBean().addPropertyChangeListener(_sensorListener
                                 = new java.beans.PropertyChangeListener() {
+                                    @Override
                                     public void propertyChange(java.beans.PropertyChangeEvent e) {
                                         if (!_parentLight.getEnabled()) {
                                             return;  // ignore property change if user disabled Light
@@ -268,7 +267,7 @@ public class LightControl {
 
                 case Light.FAST_CLOCK_CONTROL:
                     if (_clock == null) {
-                        _clock = InstanceManager.timebaseInstance();
+                        _clock = InstanceManager.getDefault(jmri.Timebase.class);
                     }
                     // set up time as minutes in a day
                     _timeOn = _fastClockOnHour * 60 + _fastClockOnMin;
@@ -278,6 +277,7 @@ public class LightControl {
                     // set up to listen for time changes on a minute basis
                     _clock.addMinuteChangeListener(_timebaseListener
                             = new java.beans.PropertyChangeListener() {
+                                @Override
                                 public void propertyChange(java.beans.PropertyChangeEvent e) {
                                     if (_parentLight.getEnabled()) {  // don't change light if not enabled
                                         // update control if light is enabled
@@ -288,65 +288,67 @@ public class LightControl {
                     _active = true;
                     break;
                 case Light.TURNOUT_STATUS_CONTROL:
-                    _controlTurnout = InstanceManager.turnoutManagerInstance().
-                            provideTurnout(_controlTurnoutName);
-                    if (_controlTurnout != null) {
-                        // set light based on current turnout state if known
-                        int tState = _controlTurnout.getKnownState();
-                        if (tState == Turnout.CLOSED) {
-                            if (_turnoutState == Turnout.CLOSED) {
-                                // Turn light on
-                                _parentLight.setState(Light.ON);
-                            } else {
-                                // Turn light off
-                                _parentLight.setState(Light.OFF);
-                            }
-                        } else if (tState == Turnout.THROWN) {
-                            if (_turnoutState == Turnout.THROWN) {
-                                // Turn light on
-                                _parentLight.setState(Light.ON);
-                            } else {
-                                // Turn light off
-                                _parentLight.setState(Light.OFF);
-                            }
-                        }
-
-                        // listen for change in turnout state
-                        _controlTurnout.addPropertyChangeListener(_turnoutListener
-                                = new java.beans.PropertyChangeListener() {
-                                    public void propertyChange(java.beans.PropertyChangeEvent e) {
-                                        if (!_parentLight.getEnabled()) {
-                                            return;  // ignore property change if user disabled light
-                                        }
-                                        if (e.getPropertyName().equals("KnownState")) {
-                                            int now = _controlTurnout.getKnownState();
-                                            if (now == Turnout.CLOSED) {
-                                                if (_turnoutState == Turnout.CLOSED) {
-                                                    // Turn light on
-                                                    _parentLight.setState(Light.ON);
-                                                } else {
-                                                    // Turn light off
-                                                    _parentLight.setState(Light.OFF);
-                                                }
-                                            } else if (now == Turnout.THROWN) {
-                                                if (_turnoutState == Turnout.THROWN) {
-                                                    // Turn light on
-                                                    _parentLight.setState(Light.ON);
-                                                } else {
-                                                    // Turn light off
-                                                    _parentLight.setState(Light.OFF);
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                        _active = true;
-                    } else {
+                    try {
+                        _controlTurnout = InstanceManager.turnoutManagerInstance().
+                                provideTurnout(_controlTurnoutName);
+                    } catch (IllegalArgumentException e) {
                         // control turnout does not exist
                         log.error("Light " + _parentLight.getSystemName()
                                 + " is linked to a Turnout that does not exist: " + _controlSensorName);
                         return;
                     }
+                    
+                    // set light based on current turnout state if known
+                    int tState = _controlTurnout.getKnownState();
+                    if (tState == Turnout.CLOSED) {
+                        if (_turnoutState == Turnout.CLOSED) {
+                            // Turn light on
+                            _parentLight.setState(Light.ON);
+                        } else {
+                            // Turn light off
+                            _parentLight.setState(Light.OFF);
+                        }
+                    } else if (tState == Turnout.THROWN) {
+                        if (_turnoutState == Turnout.THROWN) {
+                            // Turn light on
+                            _parentLight.setState(Light.ON);
+                        } else {
+                            // Turn light off
+                            _parentLight.setState(Light.OFF);
+                        }
+                    }
+
+                    // listen for change in turnout state
+                    _controlTurnout.addPropertyChangeListener(_turnoutListener
+                            = new java.beans.PropertyChangeListener() {
+                                @Override
+                                public void propertyChange(java.beans.PropertyChangeEvent e) {
+                                    if (!_parentLight.getEnabled()) {
+                                        return;  // ignore property change if user disabled light
+                                    }
+                                    if (e.getPropertyName().equals("KnownState")) {
+                                        int now = _controlTurnout.getKnownState();
+                                        if (now == Turnout.CLOSED) {
+                                            if (_turnoutState == Turnout.CLOSED) {
+                                                // Turn light on
+                                                _parentLight.setState(Light.ON);
+                                            } else {
+                                                // Turn light off
+                                                _parentLight.setState(Light.OFF);
+                                            }
+                                        } else if (now == Turnout.THROWN) {
+                                            if (_turnoutState == Turnout.THROWN) {
+                                                // Turn light on
+                                                _parentLight.setState(Light.ON);
+                                            } else {
+                                                // Turn light off
+                                                _parentLight.setState(Light.OFF);
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                    _active = true;
                     break;
                 case Light.TIMED_ON_CONTROL:
                     if (_timedSensorName.length() > 0) {
@@ -360,6 +362,7 @@ public class LightControl {
                         // listen for change in timed control sensor state
                         _namedTimedControlSensor.getBean().addPropertyChangeListener(_timedSensorListener
                                 = new java.beans.PropertyChangeListener() {
+                                    @Override
                                     public void propertyChange(java.beans.PropertyChangeEvent e) {
                                         if (!_parentLight.getEnabled()) {
                                             return;  // ignore property change if user disabled light
@@ -430,12 +433,14 @@ public class LightControl {
                         // listen for change in sensor states
                         _namedControlSensor.getBean().addPropertyChangeListener(_sensorListener
                                 = new java.beans.PropertyChangeListener() {
+                                    @Override
                                     public void propertyChange(java.beans.PropertyChangeEvent e) {
                                         twoSensorChanged(e);
                                     }
                                 }, _controlSensorName, "Light Control " + _parentLight.getDisplayName());
                         _namedControlSensor2.getBean().addPropertyChangeListener(_sensor2Listener
                                 = new java.beans.PropertyChangeListener() {
+                                    @Override
                                     public void propertyChange(java.beans.PropertyChangeEvent e) {
                                         twoSensorChanged(e);
                                     }
@@ -588,6 +593,7 @@ public class LightControl {
      */
     class TimeLight implements java.awt.event.ActionListener {
 
+        @Override
         public void actionPerformed(java.awt.event.ActionEvent event) {
             // Turn Light OFF
             _parentLight.setState(Light.OFF);
@@ -597,7 +603,5 @@ public class LightControl {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(LightControl.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LightControl.class);
 }
-
-/* @(#)LightControl.java */

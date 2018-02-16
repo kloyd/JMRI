@@ -1,37 +1,36 @@
 package jmri.jmrit.roster;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import java.awt.GraphicsEnvironment;
+import jmri.InstanceManager;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the jmrit.roster.RosterEntryPane class.
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
  */
-public class CopyRosterItemActionTest extends TestCase {
+public class CopyRosterItemActionTest {
 
     /**
      * Really just checks that the thing can init; doesn't really copy the file,
      * etc. Should do that some day!
-     *
-     * @throws IOException
      */
-    public void testCopy() { //throws java.io.IOException, java.io.FileNotFoundException
+    @Test
+    public void testCopy() {
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         // create a special roster
         //Roster r = RosterTest.createTestRoster();
         // make that the default; not that test roster uses special name
-        Roster.resetInstance();
-        Roster.instance();
+        InstanceManager.reset(Roster.class);
+        InstanceManager.setDefault(Roster.class, new Roster(null));
 
         // copy the item
         CopyRosterItemAction a = new CopyRosterItemAction("copy", new javax.swing.JFrame()) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -3247630279571447763L;
-
+            @Override
             protected boolean selectFrom() {
                 return false;  // aborts operation
             }
@@ -39,30 +38,14 @@ public class CopyRosterItemActionTest extends TestCase {
         a.actionPerformed(null);
     }
 
-    // from here down is testing infrastructure
-    public CopyRosterItemActionTest(String s) {
-        super(s);
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", CopyRosterItemActionTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(CopyRosterItemActionTest.class);
-        return suite;
-    }
-
-    // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
-    }
-
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
 
 }

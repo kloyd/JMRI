@@ -1,4 +1,3 @@
-// SprogSlotMonFrame.java
 package jmri.jmrix.sprog.sprogslotmon;
 
 import java.awt.Dimension;
@@ -14,57 +13,71 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import jmri.jmrix.sprog.SprogCommandStation;
+import javax.swing.table.TableRowSorter;
 import jmri.jmrix.sprog.SprogConstants;
-import jmri.util.JTableUtil;
+import jmri.jmrix.sprog.SprogListener;
+import jmri.jmrix.sprog.SprogMessage;
+import jmri.jmrix.sprog.SprogReply;
+import jmri.jmrix.sprog.SprogSystemConnectionMemo;
+import jmri.jmrix.sprog.SprogTrafficController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Frame providing a command station slot manager.
  * <P>
+ * May-17 Modified to a SprogListener to handle status replies.
+ * 
+ * Jan-18 Moved status request generation here, based on a timer.
  *
- * @author	Bob Jacobsen Copyright (C) 2001 Andrew Crosland (C) 2006 ported to
- * SPROG 2008 Use JmriJframe
- * @version	$Revision$
+ * @author	Bob Jacobsen Copyright (C) 2001 
+ * @author  Andrew Crosland (C) 2006 ported to SPROG 2008
  */
-public class SprogSlotMonFrame extends jmri.util.JmriJFrame {
+public class SprogSlotMonFrame extends jmri.util.JmriJFrame implements SprogListener {
 
     /**
-     *
-     */
-    private static final long serialVersionUID = -6600658860279143115L;
-
-    /**
-     * Controls whether not-in-use slots are shown
+     * Controls whether not-in-use slots are shown.
      */
     javax.swing.JCheckBox showAllCheckBox = new javax.swing.JCheckBox();
 
-    JButton estopAllButton = new JButton("estop all");
-    SprogSlotMonDataModel slotModel = new SprogSlotMonDataModel(SprogConstants.MAX_SLOTS, 8);
+    JButton estopAllButton = new JButton(Bundle.getMessage("ButtonEstopAll"));
+    SprogSlotMonDataModel slotModel = null;
+
     JTable slotTable;
     JScrollPane slotScroll;
 
-    JTextArea status = new JTextArea("Track Current: ---A");
+    JTextArea status = new JTextArea(Bundle.getMessage("TrackCurrentXString", "---"));
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
-    // Ignore FindBugs warnings as there can only be one instance at present
-    public SprogSlotMonFrame() {
+    SprogSystemConnectionMemo _memo = null;
+    private SprogTrafficController tc = null;
+    
+    private static final int STATUS_PERIOD = 500;
+    javax.swing.Timer timer = null;
+
+    public SprogSlotMonFrame(SprogSystemConnectionMemo memo) {
         super();
+        _memo = memo;
+        
+        tc = memo.getSprogTrafficController();
+        tc.addSprogListener(this);
+        
+        slotModel = new SprogSlotMonDataModel(SprogConstants.MAX_SLOTS, 8,_memo);
 
-        slotTable = JTableUtil.sortableDataModel(slotModel);
+        slotTable = new JTable(slotModel);
+        slotTable.setRowSorter(new TableRowSorter<>(slotModel));
         slotScroll = new JScrollPane(slotTable);
 
         // configure items for GUI
-        showAllCheckBox.setText("Show unused slots");
+        showAllCheckBox.setText(Bundle.getMessage("ButtonShowUnusedSlots"));
         showAllCheckBox.setVisible(true);
         showAllCheckBox.setSelected(true);
-        showAllCheckBox.setToolTipText("if checked, even empty/idle slots will appear");
+        showAllCheckBox.setToolTipText(Bundle.getMessage("ButtonShowSlotsTooltip"));
 
         slotModel.configureTable(slotTable);
 
         // add listener object so checkboxes function
         showAllCheckBox.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 slotModel.showAllSlots(showAllCheckBox.isSelected());
                 slotModel.fireTableDataChanged();
@@ -73,26 +86,32 @@ public class SprogSlotMonFrame extends jmri.util.JmriJFrame {
 
         // add listener object so stop all button functions
         estopAllButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 log.debug("Estop all button pressed");
-                SprogCommandStation.instance().estopAll();
+                _memo.getCommandStation().estopAll();
             }
         });
 
         estopAllButton.addMouseListener(new MouseListener() {
+            @Override
             public void mousePressed(MouseEvent e) {
-                SprogCommandStation.instance().estopAll();
+                _memo.getCommandStation().estopAll();
             }
 
+            @Override
             public void mouseExited(MouseEvent e) {
             }
 
+            @Override
             public void mouseEntered(MouseEvent e) {
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
             }
 
+            @Override
             public void mouseClicked(MouseEvent e) {
             }
         });
@@ -101,7 +120,7 @@ public class SprogSlotMonFrame extends jmri.util.JmriJFrame {
         slotModel.showAllSlots(showAllCheckBox.isSelected());
 
         // general GUI config
-        setTitle("SPROG Slot Monitor");
+        setTitle(Bundle.getMessage("SprogSlotMonitorTitle"));
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
         // install items in GUI
@@ -115,36 +134,78 @@ public class SprogSlotMonFrame extends jmri.util.JmriJFrame {
         getContentPane().add(pane1);
         getContentPane().add(slotScroll);
 
+        setHelp();
+        
         pack();
         pane1.setMaximumSize(pane1.getSize());
         pack();
-
-        self = this;
-    }
-
-    public void initComponents() {
-        // add help menu to window
-        addHelpMenu("package.jmri.jmrix.sprog.sprogslotmon.SprogSlotMonFrame", true);
+        
+        startTimer(STATUS_PERIOD);
     }
 
     /**
-     * method to find the existing SprogSlotMonFrame object
+     * Define system-specific help item
      */
-    static public final SprogSlotMonFrame instance() {
-        return self;
+    protected void setHelp() {
+        addHelpMenu("package.jmri.jmrix.sprog.sprogslotmon.SprogSlotMonFrame", true);  // NOI18N
     }
-    static private SprogSlotMonFrame self = null;
+
+    /**
+     * Find the existing SprogSlotMonFrame object.
+     * @deprecated JMRI Since 4.4 instance() shouldn't be used, convert to JMRI multi-system support structure
+     */
+    @Deprecated
+    static public final SprogSlotMonFrame instance() {
+        return null;
+    }
 
     public void update() {
         slotModel.fireTableDataChanged();
     }
 
     public void updateStatus(String a) {
-        status.setText("Track Current: " + a + " A");
+        status.setText(Bundle.getMessage("TrackCurrentXString", a));
     }
 
     private boolean mShown = false;
 
+    /**
+     * Listen to outgoing messages.
+     *
+     * @param m the sprog message received
+     */
+    @Override
+    public void notifyMessage(SprogMessage m) {
+        // Do nothing
+    }
+
+    /**
+     * Listen for status replies.
+     * 
+     * @param m The SprogReply to be handled
+     */
+    @Override
+    public void notifyReply(SprogReply m) {
+        int [] statusA = new int[4];
+        String s = m.toString();
+        log.debug("Reply received: {}", s);
+        if (s.indexOf('S') > -1) {
+            // Handle a status reply
+            log.debug("Status reply");
+            int i = s.indexOf('h');
+            // Double Check that "h" was found in the reply
+            if (i > -1) {
+                int milliAmps = (int) ((Integer.decode("0x" + s.substring(i + 7, i + 11))) * 
+                            tc.getAdapterMemo().getSprogType().getCurrentMultiplier());
+                statusA[0] = milliAmps;
+                String ampString;
+                ampString = Float.toString((float) statusA[0] / 1000);
+                updateStatus(ampString);
+            }
+        }
+    }
+    
+    @Override
     public void addNotify() {
         super.addNotify();
 
@@ -163,7 +224,10 @@ public class SprogSlotMonFrame extends jmri.util.JmriJFrame {
         mShown = true;
     }
 
+    @Override
     public void dispose() {
+        // deregister with the command station.
+        stopTimer();
         slotModel.dispose();
         slotModel = null;
         slotTable = null;
@@ -171,6 +235,46 @@ public class SprogSlotMonFrame extends jmri.util.JmriJFrame {
         super.dispose();
     }
 
-    static Logger log = LoggerFactory.getLogger(SprogSlotMonFrame.class.getName());
+    /**
+     * Internal routine to handle a timeout
+     */
+    synchronized protected void timeout() {
+        Runnable r = () -> {
+            // Send a status request
+            log.debug("Sending status request");
+            tc.sendSprogMessage(SprogMessage.getStatus(), this);
+        };
+        javax.swing.SwingUtilities.invokeLater(r);
+    }
+
+    /**
+     * Internal routine to handle timer starts {@literal &} restarts
+     * 
+     * @param delay timer delay
+     */
+    protected void startTimer(int delay) {
+        log.debug("Restart timer");
+        if (timer == null) {
+            timer = new javax.swing.Timer(delay, (java.awt.event.ActionEvent e) -> {
+                timeout();
+            });
+        }
+        timer.stop();
+        timer.setInitialDelay(delay);
+        timer.setRepeats(true);
+        timer.start();
+    }
+
+    /**
+     * Internal routine to handle timer stop
+     */
+    protected void stopTimer() {
+        log.debug("Stop timer");
+        if (timer != null) {
+            timer.stop();
+        }
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(SprogSlotMonFrame.class);
 
 }

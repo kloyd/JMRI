@@ -2,7 +2,6 @@ package jmri.profile;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 import javax.annotation.Nonnull;
@@ -14,7 +13,7 @@ import javax.annotation.Nonnull;
  *
  * @author Randall Wood Copyright (C) 2013, 2014, 2015
  */
-public class Profile {
+public class Profile implements Comparable<Profile> {
 
     private String name;
     private String id;
@@ -28,15 +27,18 @@ public class Profile {
     public static final String SHARED_PROPERTIES = PROFILE + "/" + PROPERTIES; // NOI18N
     public static final String SHARED_CONFIG = PROFILE + "/" + CONFIG; // NOI18N
     public static final String CONFIG_FILENAME = "ProfileConfig.xml"; // NOI18N
+    public static final String UI_CONFIG = "user-interface.xml"; // NOI18N
+    public static final String SHARED_UI_CONFIG = PROFILE + "/" + UI_CONFIG; // NOI18N
+    public static final String UI_CONFIG_FILENAME = "UserPrefsProfileConfig.xml"; // NOI18N
 
     /**
      * Create a Profile object given just a path to it. The Profile must exist
      * in storage on the computer.
      *
      * @param path The Profile's directory
-     * @throws IOException
+     * @throws java.io.IOException If unable to read the Profile from path
      */
-    public Profile(File path) throws IOException {
+    public Profile(@Nonnull File path) throws IOException {
         this(path, true);
     }
 
@@ -49,13 +51,14 @@ public class Profile {
      * read-only property of the Profile. The {@link ProfileManager} will only
      * load a single profile with a given id.
      *
-     * @param name
-     * @param id
-     * @param path
-     * @throws IOException
-     * @throws IllegalArgumentException
+     * @param name Name of the profile. Will not be used to enforce uniqueness
+     *             constraints.
+     * @param id   Id of the profile. Will be prepended to a random String to
+     *             enforce uniqueness constraints.
+     * @param path Location to store the profile
+     * @throws java.io.IOException If unable to create the profile at path
      */
-    public Profile(String name, String id, File path) throws IOException, IllegalArgumentException {
+    public Profile(@Nonnull String name, @Nonnull String id, @Nonnull File path) throws IOException, IllegalArgumentException {
         if (!path.getName().equals(id)) {
             throw new IllegalArgumentException(id + " " + path.getName() + " do not match"); // NOI18N
         }
@@ -71,7 +74,9 @@ public class Profile {
         this.name = name;
         this.id = id + "." + ProfileManager.createUniqueId();
         this.path = path;
-        path.mkdirs();
+        if (!path.exists() && !path.mkdirs()) {
+            throw new IOException("Unable to create directory " + path); // NOI18N
+        }
         if (!path.isDirectory()) {
             throw new IllegalArgumentException(path + " is not a directory"); // NOI18N
         }
@@ -83,16 +88,37 @@ public class Profile {
 
     /**
      * Create a Profile object given just a path to it. If isReadable is true,
-     * the Profile must exist in storage on the computer.
-     *
+     * the Profile must exist in storage on the computer. Generates a random id
+     * for the profile.
+     * <p>
      * This method exists purely to support subclasses.
      *
      * @param path       The Profile's directory
-     * @param isReadable
-     * @throws IOException
+     * @param isReadable True if the profile has storage. See
+     *                   {@link jmri.profile.NullProfile} for a Profile subclass
+     *                   where this is not true.
+     * @throws java.io.IOException If the profile's preferences cannot be read.
      */
-    protected Profile(File path, boolean isReadable) throws IOException {
+    protected Profile(@Nonnull File path, boolean isReadable) throws IOException {
+        this(path, ProfileManager.createUniqueId(), isReadable);
+    }
+
+    /**
+     * Create a Profile object given just a path to it. If isReadable is true,
+     * the Profile must exist in storage on the computer.
+     * <p>
+     * This method exists purely to support subclasses.
+     *
+     * @param path       The Profile's directory
+     * @param id         The Profile's id
+     * @param isReadable True if the profile has storage. See
+     *                   {@link jmri.profile.NullProfile} for a Profile subclass
+     *                   where this is not true.
+     * @throws java.io.IOException If the profile's preferences cannot be read.
+     */
+    protected Profile(@Nonnull File path, @Nonnull String id, boolean isReadable) throws IOException {
         this.path = path;
+        this.id = id;
         if (isReadable) {
             this.readProfile();
         }
@@ -102,33 +128,6 @@ public class Profile {
         ProfileProperties p = new ProfileProperties(this);
         p.put(NAME, this.name, true);
         p.put(ID, this.id, true);
-        this.saveXml();
-    }
-
-    /*
-     * Remove when or after support for writing ProfileConfig.xml is removed.
-     */
-    @Deprecated
-    protected final void saveXml() throws IOException {
-        Properties p = new Properties();
-        File f = new File(this.path, PROPERTIES);
-        FileOutputStream os = null;
-
-        p.setProperty(NAME, this.name);
-        p.setProperty(ID, this.id);
-        if (!f.exists() && !f.createNewFile()) {
-            throw new IOException("Unable to create file at " + f.getAbsolutePath()); // NOI18N
-        }
-        try {
-            os = new FileOutputStream(f);
-            p.storeToXML(os, "JMRI Profile"); // NOI18N
-            os.close();
-        } catch (IOException ex) {
-            if (os != null) {
-                os.close();
-            }
-            throw ex;
-        }
     }
 
     /**
@@ -138,6 +137,16 @@ public class Profile {
         return name;
     }
 
+    /**
+     * Set the name for this profile.
+     * <p>
+     * Overriding classing must use
+     * {@link #setNameInConstructor(java.lang.String)} to set the name in a
+     * constructor since this method passes this Profile object to an object
+     * excepting a completely constructed Profile.
+     *
+     * @param name the new name
+     */
     public void setName(String name) {
         String oldName = this.name;
         this.name = name;
@@ -145,10 +154,23 @@ public class Profile {
     }
 
     /**
+     * Set the name for this profile while constructing the profile.
+     * <p>
+     * Overriding classing must use this method to set the name in a constructor
+     * since {@link #setName(java.lang.String)} passes this Profile object to an
+     * object expecting a completely constructed Profile.
+     *
+     * @param name the new name
+     */
+    protected final void setNameInConstructor(String name) {
+        this.name = name;
+    }
+
+    /**
      * @return the id
      */
-    public @Nonnull
-    String getId() {
+    @Nonnull
+    public String getId() {
         return id;
     }
 
@@ -160,7 +182,7 @@ public class Profile {
     }
 
     private void readProfile() throws IOException {
-        ProfileProperties p = new ProfileProperties(this);
+        ProfileProperties p = new ProfileProperties(this.path);
         this.id = p.get(ID, true);
         this.name = p.get(NAME, true);
         if (this.id == null) {
@@ -169,8 +191,9 @@ public class Profile {
         }
     }
 
-    /*
-     * Remove sometime after the new profiles get entrenched (JMRI 5.0, 6.0?)
+    /**
+     * @deprecated since 4.1.1; Remove sometime after the new profiles get
+     * entrenched (JMRI 5.0, 6.0?)
      */
     @Deprecated
     private void readProfileXml() throws IOException {
@@ -218,17 +241,17 @@ public class Profile {
     /**
      * Test if the profile is complete. A profile is considered complete if it
      * can be instantiated using {@link #Profile(java.io.File)} and has a
-     * ProfileConfig.xml file within it's private directory.
+     * profile.properties file within its "profile" directory.
      *
-     * @return true if ProfileConfig.xml exists where expected.
+     * @return true if profile.properties exists where expected.
      */
     public boolean isComplete() {
-        return (new File(this.getPath(), Profile.CONFIG_FILENAME)).exists();
+        return (new File(this.getPath(), Profile.SHARED_PROPERTIES)).exists();
     }
 
     /**
      * Return the uniqueness portion of the Profile Id.
-     *
+     * <p>
      * This portion of the Id is automatically generated when the profile is
      * created.
      *
@@ -241,7 +264,7 @@ public class Profile {
     /**
      * Test if the given path or subdirectories contains a Profile.
      *
-     * @param path
+     * @param path Path to test.
      * @return true if path or subdirectories contains a Profile.
      * @since 3.9.4
      */
@@ -250,9 +273,12 @@ public class Profile {
             if (Profile.isProfile(path)) {
                 return true;
             } else {
-                for (File file : path.listFiles()) {
-                    if (Profile.containsProfile(file)) {
-                        return true;
+                File[] files = path.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        if (Profile.containsProfile(file)) {
+                            return true;
+                        }
                     }
                 }
             }
@@ -263,7 +289,7 @@ public class Profile {
     /**
      * Test if the given path is within a directory that is a Profile.
      *
-     * @param path
+     * @param path Path to test.
      * @return true if path or parent directories is a Profile.
      * @since 3.9.4
      */
@@ -280,7 +306,7 @@ public class Profile {
     /**
      * Test if the given path is a Profile.
      *
-     * @param path
+     * @param path Path to test.
      * @return true if path is a Profile.
      * @since 3.9.4
      */
@@ -291,10 +317,20 @@ public class Profile {
                 return true;
             }
             // version 1
-            if ((new File(path, PROPERTIES)).canRead()) {
+            if ((new File(path, PROPERTIES)).canRead() && !path.getName().equals(PROFILE)) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public int compareTo(Profile o) {
+        if (this.equals(o)) {
+            return 0;
+        }
+        String thisString = "" + this.getName() + this.getPath();
+        String thatString = "" + o.getName() + o.getPath();
+        return thisString.compareTo(thatString);
     }
 }

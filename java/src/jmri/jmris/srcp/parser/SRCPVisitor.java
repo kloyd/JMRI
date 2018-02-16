@@ -1,15 +1,13 @@
-//SRCPVisitor.java
 package jmri.jmris.srcp.parser;
 
 import jmri.InstanceManager;
-import jmri.managers.DefaultProgrammerManager;
+import jmri.ProgrammingMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/* This class provides an interface between the JavaTree/JavaCC 
+/* This class provides an interface between the JavaTree/JavaCC
  * parser for the SRCP protocol and the JMRI back end.
  * @author Paul Bender Copyright (C) 2010
- * @version $Revision$
  */
 public class SRCPVisitor implements SRCPParserVisitor {
 
@@ -59,7 +57,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
                         outputString = "422 ERROR unsupported device group";
                     }
                 } else if (devicegroup.equals("SM")) {
-                    if (memo.provides(jmri.ProgrammerManager.class)) {
+                    if (memo.provides(jmri.GlobalProgrammerManager.class)) {
                         return true;
                     } else {
                         // respond this isn't supported
@@ -80,21 +78,25 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return false;
     }
 
+    @Override
     public Object visit(SimpleNode node, Object data) {
         log.debug("Generic Visit " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASThandshakecommand node, Object data) {
         log.debug("Handshake Mode Command ");
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTcommand node, Object data) {
         log.debug("Command " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTgo node, Object data) {
         log.debug("Go " + node.jjtGetValue());
         jmri.jmris.srcp.JmriSRCPServiceHandler handle = (jmri.jmris.srcp.JmriSRCPServiceHandler) data;
@@ -110,6 +112,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return data;
     }
 
+    @Override
     public Object visit(ASThandshake_set node, Object data) {
         log.debug("Handshake Mode SET ");
         jmri.jmris.srcp.JmriSRCPServiceHandler handle = (jmri.jmris.srcp.JmriSRCPServiceHandler) data;
@@ -137,6 +140,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return data;
     }
 
+    @Override
     public Object visit(ASTget node, Object data) {
         log.debug("Get " + ((SimpleNode) node.jjtGetChild(1)).jjtGetValue());
         int bus = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(0)).jjtGetValue()));
@@ -145,7 +149,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
             // This is a message asking for the power status
             try {
                 ((jmri.jmris.ServiceHandler) data).getPowerServer().sendStatus(
-                        InstanceManager.powerManagerInstance().getPower());
+                        InstanceManager.getDefault(jmri.PowerManager.class).getPower());
             } catch (jmri.JmriException je) {
                 // We shouldn't have any errors here.
                 // If we do, something is horibly wrong.
@@ -155,7 +159,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
                 && isSupported(bus, "GA")) {
             // This is a message asking for the status of a "General Accessory".
             int address = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(2)).jjtGetValue()));
-            // our implementation ignores the port, but maybe we shouldn't to 
+            // our implementation ignores the port, but maybe we shouldn't to
             // follow the letter of the standard.
             //int port = Integer.parseInt(((String)((SimpleNode)node.jjtGetChild(3)).jjtGetValue()));
             try {
@@ -173,11 +177,11 @@ public class SRCPVisitor implements SRCPParserVisitor {
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("SM")
                 && isSupported(bus, "SM")) {
             // This is a Service Mode read request.
-            jmri.ProgrammingMode modeno = DefaultProgrammerManager.REGISTERMODE;
+            ProgrammingMode modeno = ProgrammingMode.REGISTERMODE;
             if (node.jjtGetChild(3).getClass() == ASTcv.class) {
-                modeno = DefaultProgrammerManager.DIRECTBYTEMODE;
+                modeno = ProgrammingMode.DIRECTBYTEMODE;
             } else if (node.jjtGetChild(3).getClass() == ASTcvbit.class) {
-                modeno = DefaultProgrammerManager.DIRECTBITMODE;
+                modeno = ProgrammingMode.DIRECTBITMODE;
             }
 
             int cv = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(4)).jjtGetValue()));
@@ -189,6 +193,15 @@ public class SRCPVisitor implements SRCPParserVisitor {
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("GL")
                 && isSupported(bus, "GL")) {
             // This is a Generic Loco request
+            // the 3rd child is the address of the locomotive we are
+            // requesting status of.
+            int address=Integer.parseInt(((String) ((SimpleNode)node.jjtGetChild(2)).jjtGetValue()));
+            // This is a Throttle Status request
+            try {
+                ((jmri.jmris.srcp.JmriSRCPThrottleServer)(((jmri.jmris.ServiceHandler) data).getThrottleServer())).sendStatus(bus,address);
+            } catch (java.io.IOException ie) {
+            }
+
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("TIME")) {
             // This is a Time request
             try {
@@ -197,7 +210,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
             }
 
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("SERVER")) {
-            // for the GET <bus> SERVER request, we return the current server 
+            // for the GET <bus> SERVER request, we return the current server
             // state.  In JMRI, we always return "Running".
             outputString = "100 INFO 0 SERVER RUNNING";
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("DESCRIPTION")) {
@@ -231,7 +244,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
                             if (memo.provides(jmri.PowerManager.class)) {
                                 outputString = outputString + " POWER";
                             }
-                            if (memo.provides(jmri.ProgrammerManager.class)) {
+                            if (memo.provides(jmri.GlobalProgrammerManager.class)) {
                                 outputString = outputString + " SM";
                             }
                         } else {
@@ -319,7 +332,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
                     } else if (devicegroup.equals("GL") && isSupported(bus, devicegroup)) {
                         // outputString=outputString + " GL " +address;
                         // this one needs some tought on how to proceed,
-                        // since the throttle manager differs from 
+                        // since the throttle manager differs from
                         // other JMRI managers.
                         // for now, just say no data.
                         outputString = "416 ERROR no data";
@@ -343,6 +356,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return data;
     }
 
+    @Override
     public Object visit(ASTset node, Object data) {
         SimpleNode target = (SimpleNode) node.jjtGetChild(1);
 
@@ -365,7 +379,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
             int port = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(3)).jjtGetValue()));
             // we expect to get both the value and delay, but JMRI only cares about
             // the port which indicates which output of a pair we are using.
-            // leave the values below commented out, unless we decide to use them 
+            // leave the values below commented out, unless we decide to use them
             // later.
             //int value = Integer.parseInt(((String)((SimpleNode)node.jjtGetChild(4)).jjtGetValue()));
             //int delay = Integer.parseInt(((String)((SimpleNode)node.jjtGetChild(5)).jjtGetValue()));
@@ -391,11 +405,11 @@ public class SRCPVisitor implements SRCPParserVisitor {
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("SM")
                 && isSupported(bus, "SM")) {
             // This is a Service Mode write request
-            jmri.ProgrammingMode modeno = DefaultProgrammerManager.REGISTERMODE;
+            ProgrammingMode modeno = ProgrammingMode.REGISTERMODE;
             if (node.jjtGetChild(3).getClass() == ASTcv.class) {
-                modeno = DefaultProgrammerManager.DIRECTBYTEMODE;
+                modeno = ProgrammingMode.DIRECTBYTEMODE;
             } else if (node.jjtGetChild(3).getClass() == ASTcvbit.class) {
-                modeno = DefaultProgrammerManager.DIRECTBITMODE;
+                modeno = ProgrammingMode.DIRECTBITMODE;
             }
             int cv = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(4)).jjtGetValue()));
             int value = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(5)).jjtGetValue()));
@@ -408,6 +422,24 @@ public class SRCPVisitor implements SRCPParserVisitor {
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("GL")
                 && isSupported(bus, "GL")) {
             // This is a Generic Loco request
+            int address = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(2)).jjtGetValue()));
+            String drivemode = (String) ((SimpleNode) node.jjtGetChild(3)).jjtGetValue();
+
+            int speedstep = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(4)).jjtGetValue()));
+
+            int maxspeedstep = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(5)).jjtGetValue()));
+            ((jmri.jmris.srcp.JmriSRCPThrottleServer) ((jmri.jmris.ServiceHandler) data).getThrottleServer()).setThrottleSpeedAndDirection(bus,address,(float)speedstep/(float)maxspeedstep,drivemode.equals("0"));
+            // setup the array list of function values.
+
+            int numFunctions = node.jjtGetNumChildren() - 6;
+            java.util.ArrayList<Boolean> functionList = new java.util.ArrayList<Boolean>();
+            for(int i = 0; i < numFunctions;i++){
+                // the functions start at the 7th child (index 6) of the node.
+                String functionMode = (String) ((SimpleNode) node.jjtGetChild(i+6)).jjtGetValue();
+                functionList.add(Boolean.valueOf(functionMode.equals("1")));
+            }
+            ((jmri.jmris.srcp.JmriSRCPThrottleServer) ((jmri.jmris.ServiceHandler) data).getThrottleServer()).setThrottleFunctions(bus,address,functionList);
+
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("TIME")) {
             // This is a Time request
             try {
@@ -430,9 +462,12 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return data;
     }
 
+    @Override
     public Object visit(ASTterm node, Object data) {
-        log.debug("TERM " + ((SimpleNode) node.jjtGetChild(1)).jjtGetValue());
-        if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("SERVER")) {
+        SimpleNode target = (SimpleNode) node.jjtGetChild(1);
+        int bus = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(0)).jjtGetValue()));
+        log.debug("TERM " + bus + " " + target.jjtGetValue());
+        if (target.jjtGetValue().equals("SERVER")) {
             // for the TERM <bus> SERVER request, the protocol requries that
             // we terminate all connections and reset the state to the initial
             // state.  Since we may have a local GUI controlling things, we
@@ -440,34 +475,46 @@ public class SRCPVisitor implements SRCPParserVisitor {
             // requesting client.
             outputString = "200 OK";
             return data;
-        } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("SESSION")) {
+        } else if (target.jjtGetValue().equals("SESSION")) {
             // for the TERM <bus> SERVER request, the protocol requries that
             // we terminate all connections and reset the state to the initial
             // state.  Since we may have a local GUI controlling things, we
             // ignore the request, but send the proper return value to the
             // requesting client.
-            outputString = "102 TERM 0 SESSION " + ((jmri.jmris.srcp.JmriSRCPServiceHandler) data).getSessionNumber();  // we need to set session IDs.
+            outputString = "102 INFO " + bus + " SESSION " + ((jmri.jmris.srcp.JmriSRCPServiceHandler) data).getSessionNumber();  // we need to set session IDs.
             return data;
+        } else if(target.jjtGetValue().equals("GL")) {
+               // terminate a locomotive
+               int address = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(2)).jjtGetValue()));
+               try {
+                  ((jmri.jmris.srcp.JmriSRCPThrottleServer)(((jmri.jmris.ServiceHandler) data).getThrottleServer())).releaseThrottle(bus,address);
+               } catch (java.io.IOException ioe){
+                 log.error("Error writing to network port");
+               }
+               return data;
         }
 
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTcheck node, Object data) {
         log.debug("CHECK " + ((SimpleNode) node.jjtGetChild(1)).jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTverify node, java.lang.Object data) {
         log.debug("VERIFY " + ((SimpleNode) node.jjtGetChild(1)).jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTreset node, java.lang.Object data) {
         log.debug("RESET " + ((SimpleNode) node.jjtGetChild(1)).jjtGetValue());
         if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("SERVER")) {
             // for the RESET <bus> SERVER request, the protocol requries that
-            // we re-initialize the server.  Since we may have a local GUI 
+            // we re-initialize the server.  Since we may have a local GUI
             // controlling things, we ignore the request, but send a prohibited
             // response to the requesting client.
             outputString = "413 ERROR temporarily prohibited";
@@ -478,6 +525,7 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTinit node, java.lang.Object data) {
         int bus = Integer.parseInt(((String) ((SimpleNode) node.jjtGetChild(0)).jjtGetValue()));
         log.debug("INIT " + ((SimpleNode) node.jjtGetChild(1)).jjtGetValue());
@@ -501,7 +549,36 @@ public class SRCPVisitor implements SRCPParserVisitor {
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("GL")
                 && isSupported(bus, "GL")) {
             /* Initilize a new locomotive */
-            //int address = Integer.parseInt(((String)((SimpleNode)node.jjtGetChild(2)).jjtGetValue()));
+            int address = Integer.parseInt(((String)((SimpleNode)node.jjtGetChild(2)).jjtGetValue()));
+            SimpleNode protocolNode = (SimpleNode)node.jjtGetChild(3);
+            String protocol = (String)(protocolNode.jjtGetValue());
+            switch(protocol){
+            case "N": // NMRA DCC
+                 int protocolversion = Integer.parseInt(((String)((SimpleNode)protocolNode.jjtGetChild(0)).jjtGetValue()));
+                 int speedsteps = Integer.parseInt(((String)((SimpleNode)protocolNode.jjtGetChild(1)).jjtGetValue()));
+                 int functions = Integer.parseInt(((String)((SimpleNode)protocolNode.jjtGetChild(2)).jjtGetValue()));
+                 try {
+                   ((jmri.jmris.srcp.JmriSRCPThrottleServer)(((jmri.jmris.ServiceHandler) data).getThrottleServer())).initThrottle(bus,address,protocolversion==2,speedsteps,functions);
+                 } catch (java.io.IOException ie) {
+                 }
+                 break;
+            case "A": // analog operation
+                      // the documentation says this is reserved for address 0.
+                      // but this could be used if we ever build support for
+                      // analog non-dcc throttles.
+            case "P": // protocol by server.  The documentation indicates
+                      // the server gets to choose the type of decoder,
+                      // but otherwise is silent on what parameters this
+                      // should take.
+            case "F": // Fleischmann
+            case "L": // LocoNet
+            case "M": // Maerklin/Motorola
+            case "S": // Selectrix
+            case "Z": // zimo
+            default:
+               outputString = "420 ERROR unsupported device protocol";
+               return data;
+            }
         } else if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("TIME")) {
             /* Initilize fast clock ratio */
             try {
@@ -526,56 +603,61 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return data;
     }
 
-    public Object visit(ASTcomment node, java.lang.Object data) {
-        log.debug("COMMENT " + node.jjtGetValue());
-        return node.childrenAccept(this, data);
-    }
-
+    @Override
     public Object visit(ASTgl node, Object data) {
         log.debug("GL " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTsm node, Object data) {
         log.debug("SM " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTga node, Object data) {
         log.debug("GA" + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTfb node, Object data) {
         log.debug("FB " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTtime node, Object data) {
         log.debug("TIME " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTpower node, Object data) {
         log.debug("POWER " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTserver node, Object data) {
         log.debug("SERVER " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTsession node, Object data) {
         log.debug("SESION " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTlock node, Object data) {
         log.debug("LOCK " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTwait_cmd node, Object data) {
         log.debug("Received WAIT CMD " + node.jjtGetValue());
         if (((SimpleNode) node.jjtGetChild(1)).jjtGetValue().equals("TIME")) {
@@ -593,127 +675,151 @@ public class SRCPVisitor implements SRCPParserVisitor {
         return data;
     }
 
+    @Override
     public Object visit(ASTbus node, Object data) {
         log.debug("Received Bus " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTaddress node, Object data) {
         log.debug("Received Address " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTvalue node, Object data) {
         log.debug("Received Value " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTzeroaddress node, Object data) {
         log.debug("Received Address " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTnonzeroaddress node, Object data) {
         log.debug("Received Address " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTport node, Object data) {
         log.debug("Received Port " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTdevicegroup node, Object data) {
         log.debug("Received Bus " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTonoff node, Object data) {
         log.debug("Received ON/OFF " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTdescription node, Object data) {
         log.debug("Description " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTdelay node, Object data) {
         log.debug("Delay " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTtimeout node, Object data) {
         log.debug("Timeout " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTzeroone node, Object data) {
         log.debug("ZeroOne " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTserviceversion node, Object data) {
         log.debug("Service Version " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTconnectionmode node, Object data) {
         log.debug("Connection Mode " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTcvno node, Object data) {
         log.debug("CV Number " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTprogmode node, Object data) {
         log.debug("Programming Mode Production" + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTcv node, Object data) {
         log.debug("CV Programming Mode " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTcvbit node, Object data) {
         log.debug("CVBIT Programming Mode " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTreg node, Object data) {
         log.debug("REG Programming Mode " + node.jjtGetValue());
         return node.childrenAccept(this, data);
     }
 
+    @Override
     public Object visit(ASTprotocol node, Object data) {
         log.debug("Protocol Production " + node.jjtGetValue());
         //return node.childrenAccept(this,data);
         return data;
     }
 
+    @Override
     public Object visit(ASTdrivemode node, Object data) {
         log.debug("Drivemode Production " + node.jjtGetValue());
         return data;
     }
 
+    @Override
     public Object visit(ASTfunctionmode node, Object data) {
         log.debug("Functionmode Production " + node.jjtGetValue());
         return data;
     }
 
+    @Override
     public Object visit(ASTconnectionlitteral node, Object data) {
         log.debug("Connectionlitteral Production " + node.jjtGetValue());
         return data;
     }
 
+    @Override
     public Object visit(ASTprotocollitteral node, Object data) {
         log.debug("Protocol Litteral Production " + node.jjtGetValue());
         return data;
     }
 
-    static Logger log = LoggerFactory.getLogger(SRCPVisitor.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SRCPVisitor.class);
 
 }

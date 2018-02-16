@@ -18,21 +18,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * PositionableRoundRect.
- * <P>
  * @author Pete cresman Copyright (c) 2013
- * @version $Revision: 1 $
  */
 public class PositionablePolygon extends PositionableShape {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 6175122309400060896L;
     private ArrayList<Rectangle> _vertexHandles;
-    private boolean _editing = false;
+//    protected boolean _isClosed;
 
-    public PositionablePolygon(Editor editor) {
+    // there is no default PositionablePolygon
+    private PositionablePolygon(Editor editor) {
         super(editor);
     }
 
@@ -47,8 +41,7 @@ public class PositionablePolygon extends PositionableShape {
     }
 
     @Override
-    public Positionable finishClone(Positionable pg) {
-        PositionablePolygon pos = (PositionablePolygon) pg;
+    protected Positionable finishClone(PositionableShape pos) {
         GeneralPath path = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
         path.append(getPathIterator(null), false);
         /*
@@ -81,36 +74,20 @@ public class PositionablePolygon extends PositionableShape {
 
     @Override
     public boolean setEditItemMenu(JPopupMenu popup) {
-        String txt = Bundle.getMessage("editShape", Bundle.getMessage("polygon"));
+        String txt = Bundle.getMessage("editShape", Bundle.getMessage("Polygon"));
         popup.add(new javax.swing.AbstractAction(txt) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 6740597325568794368L;
-            PositionablePolygon ps;
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (_editFrame == null) {
-                    _editFrame = new DrawPolygon(getEditor(), "polygon", ps);
-                    setEditParams();
-                }
+                makeEditFrame();
             }
-
-            javax.swing.AbstractAction init(PositionablePolygon p) {
-                ps = p;
-                return this;
-            }
-        }.init(this));
+        });
         return true;
     }
-
-    protected void editing(boolean edit) {
-        _editing = edit;
-    }
-
-    protected int getHitIndex() {
-        return _hitIndex;
+    private void makeEditFrame() {
+        if (_editFrame == null) {
+            _editFrame = new DrawPolygon("editShape", "Polygon", this);
+            setEditParams();
+        }
     }
 
     @Override
@@ -122,7 +99,7 @@ public class PositionablePolygon extends PositionableShape {
     @Override
     public void drawHandles() {
         if (_editing) {
-            _vertexHandles = new ArrayList<Rectangle>();
+            _vertexHandles = new ArrayList<>();
             PathIterator iter = getPathIterator(null);
             float[] coord = new float[6];
             while (!iter.isDone()) {
@@ -153,7 +130,7 @@ public class PositionablePolygon extends PositionableShape {
                 try {
                     pt = getInversePoint(x, y);
                 } catch (java.awt.geom.NoninvertibleTransformException nte) {
-                    log.error("Can't locate Hit Rectangles " + nte.getMessage());
+                    log.error("Can't locate Hit Rectangles {}", nte.getMessage());
                     return;
                 }
                 for (int i = 0; i < _vertexHandles.size(); i++) {
@@ -172,12 +149,6 @@ public class PositionablePolygon extends PositionableShape {
         if (_hitIndex >= 0 && _editor.isEditable()) {
             if (_editing) {
                 Point pt = new Point(event.getX() - _lastX, event.getY() - _lastY);
-                /*        		try {
-                 pt = getInversePoint(event.getX()-_lastX, event.getY()-_lastY);
-                 } catch (java.awt.geom.NoninvertibleTransformException nte) {
-                 log.error("Can't locate Hit Rectangles "+nte.getMessage());
-                 return false;
-                 }*/
                 Rectangle rect = _vertexHandles.get(_hitIndex);
                 rect.x += pt.x;
                 rect.y += pt.y;
@@ -203,7 +174,7 @@ public class PositionablePolygon extends PositionableShape {
                 float width = _width;
                 float height = _height;
                 if (_height < SIZE || _width < SIZE) {
-                    log.error("Bad size _width= " + _width + ", _height= " + _height);
+                    log.error("Bad size _width= {}, _height= {}", _width, _height);
                 }
                 GeneralPath path = null;
                 switch (_hitIndex) {
@@ -231,6 +202,8 @@ public class PositionablePolygon extends PositionableShape {
                             _editor.moveItem(this, _width - SIZE, 0);
                         }
                         break;
+                    default:
+                        log.warn("Unhandled direction code: {}", _hitIndex);
                 }
                 if (path != null) {
                     setShape(path);
@@ -267,7 +240,7 @@ public class PositionablePolygon extends PositionableShape {
     }
 
     private GeneralPath scale(float ratioX, float ratioY) {
-//    	log.info("scale("+ratioX+" , "+ratioY+")");
+//     log.info("scale("+ratioX+" , "+ratioY+")");
         GeneralPath path = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
         PathIterator iter = getPathIterator(null);
         float[] coord = new float[6];
@@ -284,13 +257,16 @@ public class PositionablePolygon extends PositionableShape {
                     path.quadTo(coord[0], coord[1], coord[2], coord[3]);
                     break;
                 case PathIterator.SEG_CUBICTO:
-                    path.curveTo(coord[0], coord[1], coord[2], coord[3], coord[4], coord[53]);
+                    path.curveTo(coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]);
                     break;
                 case PathIterator.SEG_CLOSE:
                     path.closePath();
                     break;
+                default:
+                    log.warn("Unhandled path iterator type: {}", type);
+                    break;
             }
-//    		log.debug("type= "+type+"  x= "+coord[0]+", y= "+ coord[1]);
+//      log.debug("type= "+type+"  x= "+coord[0]+", y= "+ coord[1]);
             iter.next();
         }
         return path;
@@ -321,5 +297,16 @@ public class PositionablePolygon extends PositionableShape {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(PositionablePolygon.class.getName());
+    @Override
+    protected void invalidateShape() {
+        // do nothing to prevent PositionableShape from invalidating this path
+    }
+
+    @Override
+    protected Shape makeShape() {
+        // return an empty shape so it can be appended to
+        return new GeneralPath(GeneralPath.WIND_EVEN_ODD);
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(PositionablePolygon.class);
 }

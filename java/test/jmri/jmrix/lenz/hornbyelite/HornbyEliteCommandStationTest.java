@@ -1,11 +1,10 @@
 package jmri.jmrix.lenz.hornbyelite;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * HornbyEliteCommandStationTest.java
@@ -14,7 +13,6 @@ import org.slf4j.LoggerFactory;
  * jmri.jmrix.lenz.hornbyelite.HornbyEliteCommandStation class
  *
  * @author	Paul Bender
- * @version $Revision$
  */
 public class HornbyEliteCommandStationTest extends TestCase {
 
@@ -32,7 +30,7 @@ public class HornbyEliteCommandStationTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", HornbyEliteCommandStationTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -42,14 +40,14 @@ public class HornbyEliteCommandStationTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(HornbyEliteCommandStationTest.class.getName());
 
 }

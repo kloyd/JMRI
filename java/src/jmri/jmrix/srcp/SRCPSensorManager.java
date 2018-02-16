@@ -1,9 +1,6 @@
-// SRCPSensorManager.java
 package jmri.jmrix.srcp;
 
 import jmri.Sensor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implement Sensor manager for SRCP systems
@@ -11,7 +8,6 @@ import org.slf4j.LoggerFactory;
  * System names are "DSnnn", where nnn is the sensor number without padding.
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2008
- * @version	$Revision$
  */
 public class SRCPSensorManager extends jmri.managers.AbstractSensorManager {
 
@@ -23,10 +19,12 @@ public class SRCPSensorManager extends jmri.managers.AbstractSensorManager {
         _bus = bus;
     }
 
+    @Override
     public String getSystemPrefix() {
         return _memo.getSystemPrefix();
     }
 
+    @Override
     public Sensor createNewSensor(String systemName, String userName) {
         Sensor t;
         int addr = Integer.valueOf(systemName.substring(getSystemPrefix().length() + 1)).intValue();
@@ -36,12 +34,12 @@ public class SRCPSensorManager extends jmri.managers.AbstractSensorManager {
         return t;
     }
 
+    /**
+     * @deprecated JMRI Since 4.4 instance() shouldn't be used, convert to JMRI multi-system support structure
+     */
+    @Deprecated
     static public SRCPSensorManager instance() {
         return null;
     }
 
-    static Logger log = LoggerFactory.getLogger(SRCPSensorManager.class.getName());
-
 }
-
-/* @(#)SRCPSensorManager.java */

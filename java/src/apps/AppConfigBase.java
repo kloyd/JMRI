@@ -1,19 +1,20 @@
-// AppConfigBase.java
 package apps;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import jmri.Application;
+import jmri.ConfigureManager;
 import jmri.InstanceManager;
+import jmri.ShutDownManager;
 import jmri.UserPreferencesManager;
+import jmri.jmrix.ConnectionConfig;
+import jmri.jmrix.ConnectionConfigManager;
 import jmri.jmrix.JmrixConfigPane;
 import jmri.swing.ManagingPreferencesPanel;
 import jmri.swing.PreferencesPanel;
@@ -25,24 +26,19 @@ import org.slf4j.LoggerFactory;
  * Basic configuration infrastructure, to be used by specific GUI
  * implementations
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2008, 2010
+ * @author Bob Jacobsen Copyright (C) 2003, 2008, 2010
  * @author Matthew Harris copyright (c) 2009
- * @author	Ken Cameron Copyright (C) 2011
- * @version	$Revision$
+ * @author Ken Cameron Copyright (C) 2011
  */
 public class AppConfigBase extends JmriPanel {
 
     /**
-     * All preferences panels handled, whether persisted or not. This is a
-     * LinkedHashMap and not just a HashMap because parts of JMRI are dependent
-     * upon the order in which preferences are read. The order is determined by
-     * the 
+     * All preferences panels handled, whether persisted or not.
      */
-    protected LinkedHashMap<String, PreferencesPanel> preferencesPanels = new LinkedHashMap<>();
+    protected HashMap<String, PreferencesPanel> preferencesPanels = new HashMap<>();
 
     protected static final ResourceBundle rb = ResourceBundle.getBundle("apps.AppsConfigBundle");
 
-    private static final long serialVersionUID = -341194769406457667L;
     private static final Logger log = LoggerFactory.getLogger(AppConfigBase.class);
 
     /**
@@ -50,56 +46,6 @@ public class AppConfigBase extends JmriPanel {
      * configuration dialog with default number of connections.
      */
     public AppConfigBase() {
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    public static String getManufacturerName(int index) {
-        return JmrixConfigPane.instance(index).getCurrentManufacturerName();
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    public static String getConnection(int index) {
-        return JmrixConfigPane.instance(index).getCurrentProtocolName();
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    public static String getPort(int index) {
-        return JmrixConfigPane.instance(index).getCurrentProtocolInfo();
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    public static String getConnectionName(int index) {
-        return JmrixConfigPane.instance(index).getConnectionName();
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    public static boolean getDisabled(int index) {
-        return JmrixConfigPane.instance(index).getDisabled();
     }
 
     /**
@@ -113,33 +59,31 @@ public class AppConfigBase extends JmriPanel {
      * @return true if OK, false if duplicates present.
      */
     private boolean checkDups() {
-        Map<String, List<JmrixConfigPane>> ports = new HashMap<>();
-        ArrayList<JmrixConfigPane> configPaneList = JmrixConfigPane.getListOfConfigPanes();
-        for (JmrixConfigPane configPane : configPaneList) {
-            if (!configPane.getDisabled()) {
-                String port = configPane.getCurrentProtocolInfo();
-                /*We need to test to make sure that the connection port is not set to (none)
-                 If it is set to none, then it is likely a simulator.*/
+        Map<String, List<ConnectionConfig>> ports = new HashMap<>();
+        ConnectionConfig[] connections = InstanceManager.getDefault(ConnectionConfigManager.class).getConnections();
+        for (ConnectionConfig connection : connections) {
+            if (!connection.getDisabled()) {
+                String port = connection.getInfo();
                 if (!port.equals(JmrixConfigPane.NONE)) {
                     if (!ports.containsKey(port)) {
-                        List<JmrixConfigPane> arg1 = new ArrayList<>();
-                        arg1.add(configPane);
+                        List<ConnectionConfig> arg1 = new ArrayList<>();
+                        arg1.add(connection);
                         ports.put(port, arg1);
                     } else {
-                        ports.get(port).add(configPane);
+                        ports.get(port).add(connection);
                     }
                 }
             }
         }
         boolean ret = true;
         /* one or more dups or NONE, lets see if it is dups */
-        for (Map.Entry<String, List<JmrixConfigPane>> e : ports.entrySet()) {
+        for (Map.Entry<String, List<ConnectionConfig>> e : ports.entrySet()) {
             if (e.getValue().size() > 1) {
                 /* dup port found */
                 ret = false;
                 StringBuilder nameB = new StringBuilder();
                 for (int n = 0; n < e.getValue().size(); n++) {
-                    nameB.append(e.getValue().get(n).getCurrentManufacturerName());
+                    nameB.append(e.getValue().get(n).getManufacturer());
                     nameB.append("|");
                 }
                 String instanceNames = new String(nameB);
@@ -157,10 +101,15 @@ public class AppConfigBase extends JmriPanel {
      * @return true if okay
      */
     private boolean checkPortNames() {
-        for (JmrixConfigPane configPane : JmrixConfigPane.getListOfConfigPanes()) {
-            String port = configPane.getCurrentProtocolInfo();
+        for (ConnectionConfig connection : InstanceManager.getDefault(ConnectionConfigManager.class).getConnections()) {
+            String port = connection.getInfo();
             if (port.equals(JmrixConfigPane.NONE_SELECTED) || port.equals(JmrixConfigPane.NO_PORTS_FOUND)) {
-                if (JOptionPane.showConfirmDialog(null, MessageFormat.format(rb.getString("MessageSerialPortWarning"), new Object[]{port, configPane.getCurrentProtocolName()}), rb.getString("MessageSerialPortNotValid"), JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE) != JOptionPane.YES_OPTION) {
+                if (JOptionPane.YES_OPTION != JOptionPane.showConfirmDialog(
+                        null,
+                        MessageFormat.format(rb.getString("MessageSerialPortWarning"), new Object[]{port, connection.getConnectionName()}),
+                        rb.getString("MessageSerialPortNotValid"),
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.ERROR_MESSAGE)) {
                     return false;
                 }
             }
@@ -175,17 +124,25 @@ public class AppConfigBase extends JmriPanel {
 
     public void saveContents() {
         // remove old prefs that are registered in ConfigManager
-        InstanceManager.configureManagerInstance().removePrefItems();
+        ConfigureManager cm = InstanceManager.getNullableDefault(jmri.ConfigureManager.class);
+        if (cm != null) {
+            cm.removePrefItems();
+        }
         // put the new GUI managedPreferences on the persistance list
         this.getPreferencesPanels().values().stream().forEach((panel) -> {
             this.registerWithConfigureManager(panel);
         });
-        InstanceManager.configureManagerInstance().storePrefs();
+        if (cm != null) {
+            cm.storePrefs();
+        }
     }
 
     private void registerWithConfigureManager(PreferencesPanel panel) {
         if (panel.isPersistant()) {
-            InstanceManager.configureManagerInstance().registerPref(panel);
+            ConfigureManager cm = InstanceManager.getNullableDefault(jmri.ConfigureManager.class);
+            if (cm != null) {
+                cm.registerPref(panel);
+            }
         }
         if (panel instanceof ManagingPreferencesPanel) {
             log.debug("Iterating over managed panels within {}/{}", panel.getPreferencesItemText(), panel.getTabbedPreferencesTitle());
@@ -218,7 +175,7 @@ public class AppConfigBase extends JmriPanel {
         final UserPreferencesManager p;
         p = InstanceManager.getDefault(UserPreferencesManager.class);
         p.resetChangeMade();
-        if (restartRequired) {
+        if (restartRequired && !InstanceManager.getDefault(ShutDownManager.class).isShuttingDown()) {
             JLabel question = new JLabel(MessageFormat.format(rb.getString("MessageLongQuitWarning"), Application.getApplicationName()));
             Object[] options = {rb.getString("RestartNow"), rb.getString("RestartLater")};
             int retVal = JOptionPane.showOptionDialog(this,
@@ -242,7 +199,7 @@ public class AppConfigBase extends JmriPanel {
         }
         // don't restart the program, just close the window
         if (getTopLevelAncestor() != null) {
-            ((JFrame) getTopLevelAncestor()).setVisible(false);
+            getTopLevelAncestor().setVisible(false);
         }
     }
 

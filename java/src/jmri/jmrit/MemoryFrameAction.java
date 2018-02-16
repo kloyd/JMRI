@@ -1,6 +1,6 @@
-// MemoryFrameAction.java
 package jmri.jmrit;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -9,24 +9,17 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import jmri.InstanceManager;
 import jmri.jmrit.decoderdefn.DecoderIndexFile;
 import jmri.jmrit.roster.Roster;
 import jmri.util.JmriJFrame;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Display memory usage on request
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2008, 2012
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2008, 2012
  */
 public class MemoryFrameAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7755576646931522800L;
 
     public MemoryFrameAction(String s) {
         super(s);
@@ -54,6 +47,7 @@ public class MemoryFrameAction extends AbstractAction {
 
     java.text.NumberFormat nf;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         nf = java.text.NumberFormat.getInstance();
@@ -87,21 +81,24 @@ public class MemoryFrameAction extends AbstractAction {
         p.add(testButton);
 
         updateButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 updateDisplay();
             }
         });
         gcButton.addActionListener(new ActionListener() {
-            @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "DM_GC")  // Garbage collection OK here
+            @SuppressFBWarnings(value = "DM_GC")  // Garbage collection OK here
+            @Override
             public void actionPerformed(ActionEvent event) {
                 Runtime.getRuntime().gc();
                 updateDisplay();
             }
         });
         testButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
-                Roster.instance();
-                DecoderIndexFile.instance();
+                Roster.getDefault();
+                InstanceManager.getDefault(DecoderIndexFile.class);
                 updateDisplay();
             }
         });
@@ -127,8 +124,5 @@ public class MemoryFrameAction extends AbstractAction {
         free1.setText(nf.format(free));
         total1.setText(nf.format(total));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(MemoryFrameAction.class.getName());
 
 }

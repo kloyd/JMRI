@@ -1,23 +1,22 @@
-// CarOwnersTest.java
 package jmri.jmrit.operations.rollingstock.cars;
 
 import javax.swing.JComboBox;
+import jmri.InstanceManager;
 import jmri.jmrit.operations.OperationsTestCase;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the Operations RollingStock Cars class Last manually cross-checked
  * on 20090131
  *
  * @author	Bob Coleman Copyright (C) 2008, 2009
- * @version $Revision$
  */
 public class CarOwnersTest extends OperationsTestCase {
 
-    public void testCarOwners() {
-        CarOwners co1 = CarOwners.instance();
+    public void testAddAndDeleteCarOwners() {
+        CarOwners co1 = InstanceManager.getDefault(CarOwners.class);
 
         co1.addName("Rich Guy 1");
         Assert.assertTrue("Car Owner Add", co1.containsName("Rich Guy 1"));
@@ -51,7 +50,7 @@ public class CarOwnersTest extends OperationsTestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", CarOwnersTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -62,6 +61,6 @@ public class CarOwnersTest extends OperationsTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-       super.tearDown();
+        super.tearDown();
     }
 }

@@ -1,4 +1,3 @@
-// SpecificTrafficController.java
 package jmri.jmrix.powerline.insteon2412s;
 
 import java.io.DataInputStream;
@@ -24,10 +23,9 @@ import org.slf4j.LoggerFactory;
  * <P>
  * This maintains a list of nodes, but doesn't currently do anything with it.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2003, 2005, 2006, 2008, 2009
- * @author	Ken Cameron Copyright (C) 2010 Converted to multiple connection
+ * @author Bob Jacobsen Copyright (C) 2001, 2003, 2005, 2006, 2008, 2009
+ * @author Ken Cameron Copyright (C) 2010 Converted to multiple connection
  * @author kcameron Copyright (C) 2011
- * @version	$Revision$
  */
 public class SpecificTrafficController extends SerialTrafficController {
 
@@ -43,13 +41,12 @@ public class SpecificTrafficController extends SerialTrafficController {
 
     }
 
-    SerialSystemConnectionMemo memo = null;
-
     /**
      * Send a sequence of X10 messages
      * <p>
      * Makes them into the local messages and then queues in order
      */
+    @Override
     synchronized public void sendX10Sequence(X10Sequence s, SerialListener l) {
         s.reset();
         X10Sequence.Command c;
@@ -83,6 +80,7 @@ public class SpecificTrafficController extends SerialTrafficController {
      * <p>
      * Makes them into the local messages and then queues in order
      */
+    @Override
     synchronized public void sendInsteonSequence(InsteonSequence s, SerialListener l) {
         s.reset();
         InsteonSequence.Command c;
@@ -105,7 +103,7 @@ public class SpecificTrafficController extends SerialTrafficController {
              try {
              wait(250);
              } catch (InterruptedException ex) {
-             LoggerFactory.getLogger(SpecificTrafficController.class.getName()).log(Level.SEVERE, null, ex);
+             log.error("", ex);
              }
              */
         }
@@ -114,10 +112,12 @@ public class SpecificTrafficController extends SerialTrafficController {
     /**
      * Get a message of a specific length for filling in.
      */
+    @Override
     public SerialMessage getSerialMessage(int length) {
         return new SpecificMessage(length);
     }
 
+    @Override
     protected void forwardToPort(AbstractMRMessage m, AbstractMRListener reply) {
         if (logDebug) {
             log.debug("forward " + m);
@@ -125,11 +125,13 @@ public class SpecificTrafficController extends SerialTrafficController {
         super.forwardToPort(m, reply);
     }
 
+    @Override
     protected AbstractMRReply newReply() {
         SpecificReply reply = new SpecificReply(memo.getTrafficController());
         return reply;
     }
 
+    @Override
     protected boolean endOfMessage(AbstractMRReply msg) {
         if (msg.getNumDataElements() >= 2) {
             if (msg.getElement(0) != Constants.HEAD_STX) {
@@ -152,7 +154,7 @@ public class SpecificTrafficController extends SerialTrafficController {
                         return true;
                     }
                     break;
-                case 5:	// reply from send X10 command
+                case 5: // reply from send X10 command
                     if (cmd == Constants.FUNCTION_REQ_X10) {
                         return true;
                     }
@@ -162,7 +164,7 @@ public class SpecificTrafficController extends SerialTrafficController {
                         return true;
                     }
                     break;
-                case 12:	// reply from send standard Insteon command
+                case 12: // reply from send standard Insteon command
                     if ((cmd == Constants.FUNCTION_REQ_STD) && ((msg.getElement(5) & Constants.FLAG_BIT_STDEXT) == Constants.FLAG_STD)) {
                         return true;
                     }
@@ -172,10 +174,12 @@ public class SpecificTrafficController extends SerialTrafficController {
                         return true;
                     }
                     break;
-                case 26:	// reply from send extended Insteon command
+                case 26: // reply from send extended Insteon command
                     if ((cmd == Constants.FUNCTION_REQ_STD) && ((msg.getElement(5) & Constants.FLAG_BIT_STDEXT) == Constants.FLAG_EXT)) {
                         return true;
                     }
+                    break;
+                default:
                     break;
             }
         }
@@ -189,6 +193,7 @@ public class SpecificTrafficController extends SerialTrafficController {
      * read a stream and pick packets out of it. knows the size of the packets
      * from the contents.
      */
+    @Override
     protected void loadChars(AbstractMRReply msg, DataInputStream istream) throws java.io.IOException {
         byte char1 = readByteProtected(istream);
         if (logDebug) {
@@ -239,9 +244,9 @@ public class SpecificTrafficController extends SerialTrafficController {
                 msg.setElement(1, char2);
                 byte rawX10data = readByteProtected(istream);
                 msg.setElement(2, rawX10data);
-                byte X10Flag = readByteProtected(istream);
-                msg.setElement(3, X10Flag);
-                if (X10Flag == Constants.FLAG_X10_RECV_CMD) {
+                int x10Flag = readByteProtected(istream);
+                msg.setElement(3, x10Flag);
+                if ((x10Flag&0xFF) == Constants.FLAG_X10_RECV_CMD) {
                     if (logDebug) {
                         log.debug("loadChars: X10 Command Poll Received " + X10Sequence.houseValueToText((rawX10data & 0xF0) >> 4) + " " + X10Sequence.functionName((rawX10data & 0x0F)));
                     }
@@ -264,8 +269,5 @@ public class SpecificTrafficController extends SerialTrafficController {
             }
         }
     }
-    static Logger log = LoggerFactory.getLogger(SpecificTrafficController.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SpecificTrafficController.class);
 }
-
-
-/* @(#)SpecificTrafficController.java */

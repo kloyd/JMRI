@@ -1,22 +1,19 @@
-// DecVariableValueTest.java
 package jmri.jmrit.symbolicprog;
 
 import java.util.HashMap;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * @author	Bob Jacobsen Copyright 2003, 2006
- * @version
  */
-public class DecVariableValueTest extends VariableValueTest {
+public class DecVariableValueTest extends AbstractVariableValueTestBase {
 
-    // abstract members invoked by tests in parent VariableValueTest class
+    // abstract members invoked by tests in parent AbstractVariableValueTestBase class
+    @Override
     VariableValue makeVar(String label, String comment, String cvName,
             boolean readOnly, boolean infoOnly, boolean writeOnly, boolean opsOnly,
             String cvNum, String mask, int minVal, int maxVal,
@@ -24,19 +21,23 @@ public class DecVariableValueTest extends VariableValueTest {
         return new DecVariableValue(label, comment, "", readOnly, infoOnly, writeOnly, opsOnly, cvNum, mask, minVal, maxVal, v, status, item);
     }
 
+    @Override
     void setValue(VariableValue var, String val) {
         ((JTextField) var.getCommonRep()).setText(val);
         ((JTextField) var.getCommonRep()).postActionEvent();
     }
 
+    @Override
     void setReadOnlyValue(VariableValue var, String val) {
         ((DecVariableValue) var).setValue(Integer.valueOf(val).intValue());
     }
 
+    @Override
     void checkValue(VariableValue var, String comment, String val) {
         Assert.assertEquals(comment, val, ((JTextField) var.getCommonRep()).getText());
     }
 
+    @Override
     void checkReadOnlyValue(VariableValue var, String comment, String val) {
         Assert.assertEquals(comment, val, ((JLabel) var.getCommonRep()).getText());
     }
@@ -50,7 +51,7 @@ public class DecVariableValueTest extends VariableValueTest {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", DecVariableValueTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -58,7 +59,5 @@ public class DecVariableValueTest extends VariableValueTest {
         TestSuite suite = new TestSuite(DecVariableValueTest.class);
         return suite;
     }
-
-    static Logger log = LoggerFactory.getLogger(DecVariableValueTest.class.getName());
 
 }

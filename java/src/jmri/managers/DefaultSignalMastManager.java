@@ -1,4 +1,3 @@
-// DefaultSignalMastManager.java
 package jmri.managers;
 
 import java.util.ArrayList;
@@ -17,29 +16,32 @@ import org.slf4j.LoggerFactory;
  * the present time. They're just names...
  *
  * @author Bob Jacobsen Copyright (C) 2009
- * @version	$Revision$
  */
-public class DefaultSignalMastManager extends AbstractManager
+public class DefaultSignalMastManager extends AbstractManager<SignalMast>
         implements SignalMastManager, java.beans.PropertyChangeListener {
 
     public DefaultSignalMastManager() {
         super();
-        jmri.InstanceManager.signalHeadManagerInstance().addVetoableChangeListener(this);
+        jmri.InstanceManager.getDefault(jmri.SignalHeadManager.class).addVetoableChangeListener(this);
         jmri.InstanceManager.turnoutManagerInstance().addVetoableChangeListener(this);
     }
 
+    @Override
     public int getXMLOrder() {
         return Manager.SIGNALMASTS;
     }
 
+    @Override
     public String getSystemPrefix() {
         return "I";
     }
 
+    @Override
     public char typeLetter() {
         return 'F';
     }
 
+    @Override
     public SignalMast getSignalMast(String name) {
         if (name == null || name.length() == 0) {
             return null;
@@ -52,6 +54,7 @@ public class DefaultSignalMastManager extends AbstractManager
         return getBySystemName(name);
     }
 
+    @Override
     public SignalMast provideSignalMast(String prefix, // nominally IF$shsm
             String signalSystem,
             String mastName,
@@ -68,24 +71,27 @@ public class DefaultSignalMastManager extends AbstractManager
         return provideSignalMast(new String(name));
     }
 
+    @Override
     public SignalMast provideSignalMast(String name) {
         SignalMast m = getSignalMast(name);
         if (m == null) {
             m = new jmri.implementation.SignalHeadSignalMast(name);
-
             register(m);
         }
         return m;
     }
 
+    @Override
     public SignalMast getBySystemName(String key) {
-        return (SignalMast) _tsys.get(key);
+        return _tsys.get(key);
     }
 
+    @Override
     public SignalMast getByUserName(String key) {
-        return (SignalMast) _tuser.get(key);
+        return _tuser.get(key);
     }
 
+    @Override
     public String getBeanTypeHandled() {
         return Bundle.getMessage("BeanNameSignalMast");
     }
@@ -124,7 +130,5 @@ public class DefaultSignalMastManager extends AbstractManager
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(DefaultSignalMastManager.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DefaultSignalMastManager.class);
 }
-
-/* @(#)DefaultSignalMastManager.java */

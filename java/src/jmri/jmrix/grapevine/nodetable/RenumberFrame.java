@@ -1,37 +1,31 @@
-// RenumberFrame.java
 package jmri.jmrix.grapevine.nodetable;
 
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ResourceBundle;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import jmri.jmrix.grapevine.SerialMessage;
-import jmri.jmrix.grapevine.SerialTrafficController;
+import jmri.jmrix.grapevine.GrapevineSystemConnectionMemo;
 
 /**
  * Frame lets user renumber a Grapevine node
  *
- * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2008
  */
 public class RenumberFrame extends jmri.util.JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5432314146936737538L;
-    ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.grapevine.nodetable.NodeTableBundle");
+    private GrapevineSystemConnectionMemo memo = null;
 
     /**
      * Constructor method
      */
-    public RenumberFrame() {
+    public RenumberFrame(GrapevineSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
     }
 
     JTextField from;
@@ -40,8 +34,9 @@ public class RenumberFrame extends jmri.util.JmriJFrame {
     /**
      * Initialize the window
      */
+    @Override
     public void initComponents() {
-        setTitle(rb.getString("WindowTitleRenumber"));
+        setTitle(Bundle.getMessage("WindowTitleRenumber"));
 
         Container contentPane = getContentPane();
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
@@ -50,11 +45,11 @@ public class RenumberFrame extends jmri.util.JmriJFrame {
         p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
         contentPane.add(p);
 
-        p.add(new JLabel(rb.getString("LabelFrom")));
+        p.add(new JLabel(Bundle.getMessage("LabelFrom")));
         from = new JTextField(4);
         p.add(from);
 
-        p.add(new JLabel(rb.getString("LabelTo")));
+        p.add(new JLabel(Bundle.getMessage("LabelTo")));
         to = new JTextField(4);
         p.add(to);
 
@@ -62,9 +57,10 @@ public class RenumberFrame extends jmri.util.JmriJFrame {
         p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
         contentPane.add(p);
 
-        JButton b = new JButton(rb.getString("ButtonExec"));
+        JButton b = new JButton(Bundle.getMessage("ButtonExec"));
         p.add(b);
         b.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 execute();
             }
@@ -91,6 +87,7 @@ public class RenumberFrame extends jmri.util.JmriJFrame {
         m.setElement(2, 0x80 + (f & 0x7F));
         m.setElement(3, 0x60);
         m.setParity();
-        SerialTrafficController.instance().sendSerialMessage(m, null);
+        memo.getTrafficController().sendSerialMessage(m, null);
     }
+
 }

@@ -1,11 +1,9 @@
-// TestBean1.java
 package jmri.configurexml;
 
 /**
  * Test bean for DefaultJavaBeanConfigXMLTest
  *
  * @author Bob Jacobsen Copyright 2009
- * @version $Revision$
  */
 public class TestBean1 {
 
@@ -29,6 +27,7 @@ public class TestBean1 {
         return b;
     }
 
+    @Override
     public boolean equals(Object o1) {
         TestBean1 o2 = (TestBean1) o1;
         return a.equals(o2.a) && (b == o2.b);

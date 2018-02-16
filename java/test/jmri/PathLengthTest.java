@@ -1,10 +1,9 @@
-// PathLengthTest.java
 package jmri;
 
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for setting and changing path lengths of the Path class
@@ -12,7 +11,6 @@ import junit.framework.TestSuite;
  * explicitly set and must not exceed the length of their block.
  *
  * @author  Pete Cressman Copyright (C) 2015
- * @version $Revision$
  */
 public class PathLengthTest extends TestCase {
 
@@ -22,10 +20,10 @@ public class PathLengthTest extends TestCase {
         p.setBlock(b);
         b.setLength(100);
 
-        Assert.assertEquals("check default path length millimeters", 100f, p.getLengthMm());
-        Assert.assertEquals("check default path length centimeters", 10f, p.getLengthCm());
-        Assert.assertEquals("check default path length inches", 100/25.4f, p.getLengthIn());
-        Assert.assertEquals("check raw path length", p.getLength(), 0f);
+        Assert.assertEquals("check default path length millimeters", 100f, p.getLengthMm(), 0.0);
+        Assert.assertEquals("check default path length centimeters", 10f, p.getLengthCm(), 0.0);
+        Assert.assertEquals("check default path length inches", 100/25.4f, p.getLengthIn(), 0.0);
+        Assert.assertEquals("check raw path length", p.getLength(), 0f, 0.0);
     }
 
     public void testSetPathLength() {
@@ -36,12 +34,12 @@ public class PathLengthTest extends TestCase {
         b.setLength(100);
         p.setLength(50);
 
-        Assert.assertEquals("check path length", 50f, p.getLengthMm());
-        Assert.assertEquals("check block length", 100f, b.getLengthMm());
+        Assert.assertEquals("check path length", 50f, p.getLengthMm(), 0.0);
+        Assert.assertEquals("check block length", 100f, b.getLengthMm(), 0.0);
 
         p.setLength(150);
-        Assert.assertEquals("check path length", b.getLengthMm(), p.getLengthMm());
-        Assert.assertEquals("check block length", 100f, b.getLengthMm());
+        Assert.assertEquals("check path length", b.getLengthMm(), p.getLengthMm(), 0.0);
+        Assert.assertEquals("check block length", 100f, b.getLengthMm(), 0.0);
     }
 
     public void testChangePathLength() {
@@ -59,18 +57,18 @@ public class PathLengthTest extends TestCase {
         p1.setLength(80);
         p2.setLength(50);
 
-        Assert.assertEquals("check path p1 length Millimeters", 80f, p1.getLengthMm());
-        Assert.assertEquals("check path p2 length Millimeters", 50f, p2.getLengthMm());
-        Assert.assertEquals("check path p3 length Millimeters", 100f, p3.getLengthMm());
+        Assert.assertEquals("check path p1 length Millimeters", 80f, p1.getLengthMm(), 0.0);
+        Assert.assertEquals("check path p2 length Millimeters", 50f, p2.getLengthMm(), 0.0);
+        Assert.assertEquals("check path p3 length Millimeters", 100f, p3.getLengthMm(), 0.0);
         
         b.setLength(60);
-        Assert.assertEquals("check change block length", 60f, b.getLengthMm());
-        Assert.assertEquals("check change path p1 length", 60f, p1.getLengthMm());
-        Assert.assertEquals("check raw path p1 length", 0f, p1.getLength());
-        Assert.assertEquals("check change path p2 length", 50f, p2.getLengthMm());
-        Assert.assertEquals("check raw path p2 length", 50f, p2.getLength());
-        Assert.assertEquals("check change path p3 length", 60f, p3.getLengthMm());
-        Assert.assertEquals("check raw path p3 length", 0f, p1.getLength());
+        Assert.assertEquals("check change block length", 60f, b.getLengthMm(), 0.0);
+        Assert.assertEquals("check change path p1 length", 60f, p1.getLengthMm(), 0.0);
+        Assert.assertEquals("check raw path p1 length", 0f, p1.getLength(), 0.0);
+        Assert.assertEquals("check change path p2 length", 50f, p2.getLengthMm(), 0.0);
+        Assert.assertEquals("check raw path p2 length", 50f, p2.getLength(), 0.0);
+        Assert.assertEquals("check change path p3 length", 60f, p3.getLengthMm(), 0.0);
+        Assert.assertEquals("check raw path p3 length", 0f, p1.getLength(), 0.0);
     }
 
     // from here down is testing infrastructure
@@ -81,7 +79,7 @@ public class PathLengthTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {PathLengthTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -90,6 +88,7 @@ public class PathLengthTest extends TestCase {
         return suite;
     }
 
+    @Override
     protected void setUp() {
         jmri.InstanceManager.store(new jmri.NamedBeanHandleManager(), jmri.NamedBeanHandleManager.class);
     }

@@ -6,7 +6,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EventObject;
 import javax.swing.CellEditor;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
@@ -24,32 +23,39 @@ public class BasicCellEditor implements CellEditor,
         editor.addPropertyChangeListener(this);
     }
 
+    @Override
     public Object getCellEditorValue() {
         return null;
     }
 
+    @Override
     public boolean isCellEditable(EventObject evt) {
         editingEvent = evt;
         return true;
     }
 
+    @Override
     public boolean shouldSelectCell(EventObject evt) {
         return true;
     }
 
+    @Override
     public boolean stopCellEditing() {
         fireEditingStopped();
         return true;
     }
 
+    @Override
     public void cancelCellEditing() {
         fireEditingCanceled();
     }
 
+    @Override
     public void addCellEditorListener(CellEditorListener l) {
         listeners.add(CellEditorListener.class, l);
     }
 
+    @Override
     public void removeCellEditorListener(CellEditorListener l) {
         listeners.remove(CellEditorListener.class, l);
     }
@@ -100,6 +106,7 @@ public class BasicCellEditor implements CellEditor,
     }
 
     // Implementation of the PropertyChangeListener interface
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("ancestor")
                 && evt.getNewValue() != null) {
@@ -108,7 +115,6 @@ public class BasicCellEditor implements CellEditor,
         }
     }
 
-    static JCheckBox checkBox = new JCheckBox();
     static ChangeEvent changeEvent;
     protected JComponent editor;
     protected EventListenerList listeners = new EventListenerList();

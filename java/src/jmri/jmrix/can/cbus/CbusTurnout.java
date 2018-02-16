@@ -1,4 +1,3 @@
-// CbusTurnout.java
 package jmri.jmrix.can.cbus;
 
 import jmri.Turnout;
@@ -13,15 +12,10 @@ import org.slf4j.LoggerFactory;
  * Turnout for CBUS connections.
  *
  * @author Bob Jacobsen Copyright (C) 2001
- * @version $Revision$
  */
 public class CbusTurnout extends jmri.implementation.AbstractTurnout
         implements CanListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 6522418534748086660L;
     CbusAddress addrThrown;   // go to thrown state
     CbusAddress addrClosed;   // go to closed state
 
@@ -78,6 +72,7 @@ public class CbusTurnout extends jmri.implementation.AbstractTurnout
      *
      * @param s new state value
      */
+    @Override
     protected void forwardCommandChangeToLayout(int s) {
         CanMessage m;
         if (s == Turnout.THROWN) {
@@ -89,6 +84,7 @@ public class CbusTurnout extends jmri.implementation.AbstractTurnout
         }
     }
 
+    @Override
     public void message(CanMessage f) {
         if (addrThrown.match(f)) {
             newCommandedState(THROWN);
@@ -97,6 +93,7 @@ public class CbusTurnout extends jmri.implementation.AbstractTurnout
         }
     }
 
+    @Override
     public void reply(CanReply f) {
         if (addrThrown.match(f)) {
             newCommandedState(THROWN);
@@ -105,10 +102,9 @@ public class CbusTurnout extends jmri.implementation.AbstractTurnout
         }
     }
 
+    @Override
     protected void turnoutPushbuttonLockout(boolean locked) {
     }
 
-    static Logger log = LoggerFactory.getLogger(CbusTurnout.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CbusTurnout.class);
 }
-
-/* @(#)CbusTurnout.java */

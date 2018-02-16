@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
  * Based upon the TurnoutIconXml by Bob Jacobsen
  *
  * @author Kevin Dickerson Copyright: Copyright (c) 2010
- * @version $Revision$
  */
 public class SlipTurnoutIconXml extends PositionableLabelXml {
 
@@ -27,6 +26,7 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
      * @param o Object to store, of type TurnoutIcon
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
 
         SlipTurnoutIcon p = (SlipTurnoutIcon) o;
@@ -34,8 +34,7 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
             return null;  // if flagged as inactive, don't store
         }
         Element element = new Element("slipturnouticon");
-        //element.setAttribute("turnoutEast", p.getNamedTurnout(SlipTurnoutIcon.WEST).getName());
-        //element.setAttribute("turnoutWest", p.getNamedTurnout(SlipTurnoutIcon.EAST).getName());
+
         element.addContent(new Element("turnoutEast").addContent(p.getNamedTurnout(SlipTurnoutIcon.EAST).getName()));
         element.addContent(new Element("turnoutWest").addContent(p.getNamedTurnout(SlipTurnoutIcon.WEST).getName()));
 
@@ -62,7 +61,9 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
                 }
                 element.addContent(storeIcon("lowerWestToLowerEast", p.getLowerWestToLowerEastIcon(), p.getLWLEText()));
                 element.setAttribute("turnoutType", "scissor");
-
+            default:
+                log.warn("Unhandled turnout type: {}", p.getTurnoutType());
+                break;
         }
 
         storeCommonAttributes(p, element);
@@ -95,6 +96,7 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
      * @param o       Editor as an Object
      */
     @SuppressWarnings("null")
+    @Override
     public void load(Element element, Object o) {
         // create the objects
         Editor p = (Editor) o;
@@ -130,7 +132,7 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
             } else if (a.getValue().equals("singleSlip")) {
                 l.setTurnoutType(SlipTurnoutIcon.SINGLESLIP);
                 a = element.getAttribute("singleSlipRoute");
-                if ((a == null) || ((a != null) && a.getValue().equals("upperWestToUpperEast"))) {
+                if ((a == null) || a.getValue().equals("upperWestToUpperEast")) {
                     l.setSingleSlipRoute(true);
                 } else {
                     l.setSingleSlipRoute(false);
@@ -138,7 +140,7 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
             } else if (a.getValue().equals("threeWay")) {
                 l.setTurnoutType(SlipTurnoutIcon.THREEWAY);
                 a = element.getAttribute("firstTurnoutExit");
-                if ((a == null) || ((a != null) && a.getValue().equals("lower"))) {
+                if ((a == null) || a.getValue().equals("lower")) {
                     l.setSingleSlipRoute(false);
                 } else {
                     l.setSingleSlipRoute(true);
@@ -172,7 +174,7 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
         loadTurnoutIcon("inconsistent", rotation, l, element, p);
 
         a = element.getAttribute("tristate");
-        if ((a == null) || ((a != null) && a.getValue().equals("true"))) {
+        if ((a == null) || a.getValue().equals("true")) {
             l.setTristate(true);
         } else {
             l.setTristate(false);
@@ -237,6 +239,5 @@ public class SlipTurnoutIconXml extends PositionableLabelXml {
             }
         }
     }
-
-    static Logger log = LoggerFactory.getLogger(SlipTurnoutIconXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SlipTurnoutIconXml.class);
 }

@@ -22,8 +22,8 @@ package jmri.jmrit.vsdecoder.listener;
  * for more details.
  * <P>
  *
- * @author			Mark Underwood Copyright (C) 2012
- * @version			$Revision: 21510 $
+ * @author   Mark Underwood Copyright (C) 2012
+ * 
  */
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -228,6 +228,7 @@ public class ListeningSpot {
         }
     }
 
+    @Override
     public String toString() {
         if ((_location == null) || (_lookAt == null) || (_up == null)) {
             return ("ListeningSpot (undefined)");
@@ -238,7 +239,7 @@ public class ListeningSpot {
 
     public Element getXml(String elementName) {
         Element me = new Element(elementName);
-        me.setAttribute("name", _name);
+        me.setAttribute("name", (_name == null ? "default" : _name));
         me.setAttribute("location", _location.toString());
         me.setAttribute("up", _up.toString());
         me.setAttribute("look_at", _lookAt.toString());
@@ -254,6 +255,6 @@ public class ListeningSpot {
             _lookAt = parseVector3d(e.getAttributeValue("look_at"));
         }
     }
-    private static final Logger log = LoggerFactory.getLogger(ListeningSpot.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ListeningSpot.class);
 
 }

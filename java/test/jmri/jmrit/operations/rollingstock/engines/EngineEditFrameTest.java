@@ -1,33 +1,38 @@
 //EngineEditFrameTest.java
 package jmri.jmrit.operations.rollingstock.engines;
 
+import java.awt.GraphicsEnvironment;
 import java.util.List;
+import jmri.InstanceManager;
 import jmri.jmrit.operations.OperationsSwingTestCase;
 import jmri.jmrit.operations.locations.Location;
 import jmri.jmrit.operations.locations.LocationManager;
 import jmri.jmrit.operations.locations.Track;
 import jmri.jmrit.operations.rollingstock.cars.CarOwners;
 import jmri.jmrit.operations.rollingstock.cars.CarRoads;
-import junit.extensions.jfcunit.eventdata.MouseEventData;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the Operations EngineEditFrame class
  *
  * @author	Dan Boudreau Copyright (C) 2010
- * @version $Revision: 28746 $
+ *
  */
-public class EngineEditFrameTest  extends OperationsSwingTestCase {
+public class EngineEditFrameTest extends OperationsSwingTestCase {
 
     List<String> tempEngines;
 
+    @Test
     public void testEngineEditFrame() {
-
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         EngineEditFrame f = new EngineEditFrame();
-        f.setTitle("Test Add Engine Frame");
         f.initComponents();
+        f.setTitle("Test Add Engine Frame");
 
         // add a new Engine
         f.roadComboBox.setSelectedItem("SP");
@@ -36,9 +41,9 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         f.builtTextField.setText("1999");
         f.ownerComboBox.setSelectedItem("Owner1");
         f.commentTextField.setText("test Engine comment field");
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.saveButton));
+        enterClickAndLeave(f.addButton);
 
-        EngineManager cManager = EngineManager.instance();
+        EngineManager cManager = InstanceManager.getDefault(EngineManager.class);
         // should have 6 Engines
         Assert.assertEquals("number of Engines", 6, cManager.getNumEntries());
 
@@ -52,20 +57,25 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         Assert.assertEquals("Engine owner", "Owner1", c6.getOwner());
         Assert.assertEquals("Engine comment", "test Engine comment field", c6.getComment());
 
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.saveButton));
+        enterClickAndLeave(f.saveButton);
         // should have 6 Engines now
         Assert.assertEquals("number of Engines", 6, cManager.getNumEntries());
 
-        f.dispose();
+        JUnitUtil.dispose(f);
     }
 
+    @Test
     public void testEngineEditFrameRead() {
-        EngineManager cManager = EngineManager.instance();
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
+        EngineManager cManager = InstanceManager.getDefault(EngineManager.class);
         Engine e1 = cManager.getByRoadAndNumber("NH", "1");
+        EngineLengths el = InstanceManager.getDefault(EngineLengths.class);
+        el.addName("51");
+
         EngineEditFrame f = new EngineEditFrame();
         f.initComponents();
-        f.setTitle("Test Edit Engine Frame");
         f.loadEngine(e1);
+        f.setTitle("Test Edit Engine Frame");
 
         Assert.assertEquals("Engine road", "NH", f.roadComboBox.getSelectedItem());
         Assert.assertEquals("Engine number", "1", f.roadNumberTextField.getText());
@@ -78,16 +88,17 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         Assert.assertEquals("Engine comment", "Test Engine NH 1 Comment", f.commentTextField.getText());
 
         // test delete button
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.deleteButton));
+        enterClickAndLeave(f.deleteButton);
 
         // should have 5 Engines now
         Assert.assertEquals("number of Engines", 4, cManager.getNumEntries());
 
-        f.dispose();
+        JUnitUtil.dispose(f);
     }
 
     @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         loadEngines();
@@ -96,17 +107,19 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
     private void loadEngines() {
 
         // add Owner1 and Owner2
-        CarOwners co = CarOwners.instance();
+        CarOwners co = InstanceManager.getDefault(CarOwners.class);
         co.addName("Owner1");
         co.addName("Owner2");
         // add road names
-        CarRoads cr = CarRoads.instance();
+        CarRoads cr = InstanceManager.getDefault(CarRoads.class);
         cr.addName("NH");
         cr.addName("UP");
         cr.addName("AA");
         cr.addName("SP");
+        EngineLengths el = InstanceManager.getDefault(EngineLengths.class);
+        el.addName("44");
         // add locations
-        LocationManager lManager = LocationManager.instance();
+        LocationManager lManager = InstanceManager.getDefault(LocationManager.class);
         Location westford = lManager.newLocation("Westford");
         Track westfordYard = westford.addTrack("Yard", Track.YARD);
         westfordYard.setLength(300);
@@ -122,9 +135,9 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         Track boxfordHood = boxford.addTrack("Hood", Track.SPUR);
         boxfordHood.setLength(300);
 
-        EngineManager cManager = EngineManager.instance();
+        EngineManager eManager = InstanceManager.getDefault(EngineManager.class);
         // add 5 Engines to table
-        Engine e1 = cManager.newEngine("NH", "1");
+        Engine e1 = eManager.newEngine("NH", "1");
         e1.setModel("RS1");
         e1.setBuilt("2009");
         e1.setMoves(55);
@@ -136,7 +149,7 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         Assert.assertEquals("e1 location", Track.OKAY, e1.setLocation(westford, westfordYard));
         Assert.assertEquals("e1 destination", Track.OKAY, e1.setDestination(boxford, boxfordJacobson));
 
-        Engine e2 = cManager.newEngine("UP", "2");
+        Engine e2 = eManager.newEngine("UP", "2");
         e2.setModel("FT");
         e2.setBuilt("2004");
         e2.setMoves(50);
@@ -144,7 +157,7 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         jmri.InstanceManager.getDefault(jmri.IdTagManager.class).provideIdTag("RFID 2");
         e2.setRfid("RFID 2");
 
-        Engine e3 = cManager.newEngine("AA", "3");
+        Engine e3 = eManager.newEngine("AA", "3");
         e3.setModel("SW8");
         e3.setBuilt("2006");
         e3.setMoves(40);
@@ -154,7 +167,7 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         Assert.assertEquals("e3 location", Track.OKAY, e3.setLocation(boxford, boxfordHood));
         Assert.assertEquals("e3 destination", Track.OKAY, e3.setDestination(boxford, boxfordYard));
 
-        Engine e4 = cManager.newEngine("SP", "2");
+        Engine e4 = eManager.newEngine("SP", "2");
         e4.setModel("GP35");
         e4.setBuilt("1990");
         e4.setMoves(30);
@@ -164,7 +177,7 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         Assert.assertEquals("e4 location", Track.OKAY, e4.setLocation(westford, westfordSiding));
         Assert.assertEquals("e4 destination", Track.OKAY, e4.setDestination(boxford, boxfordHood));
 
-        Engine e5 = cManager.newEngine("NH", "5");
+        Engine e5 = eManager.newEngine("NH", "5");
         e5.setModel("SW1200");
         e5.setBuilt("1956");
         e5.setMoves(25);
@@ -175,24 +188,9 @@ public class EngineEditFrameTest  extends OperationsSwingTestCase {
         Assert.assertEquals("e5 destination", Track.OKAY, e5.setDestination(westford, westfordAble));
     }
 
-    public EngineEditFrameTest (String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", EngineEditFrameTest .class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(EngineEditFrameTest .class);
-        return suite;
-    }
-
     @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 }

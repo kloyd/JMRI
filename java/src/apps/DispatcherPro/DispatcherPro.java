@@ -1,4 +1,3 @@
-// DispatcherPro.java
 package apps.DispatcherPro;
 
 import apps.Apps;
@@ -8,7 +7,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import jmri.util.JmriJFrame;
@@ -34,37 +32,36 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright 2003
  */
 public class DispatcherPro extends Apps {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3275818803083884156L;
-
-    DispatcherPro(JFrame p) {
-        super(p);
+    DispatcherPro() {
+        super();
     }
 
+    @Override
     protected String logo() {
         return "resources/logo.gif";
     }
 
+    @Override
     protected String mainWindowHelpID() {
         return "package.apps.DispatcherPro.DispatcherPro";
     }
 
+    @Override
     protected String line1() {
         return MessageFormat.format(Bundle.getMessage("DispatcherProVersionCredit"),
                 new Object[]{jmri.Version.name()});
     }
 
+    @Override
     protected String line2() {
         return "http://jmri.org/DispatcherPro ";
     }
 
+    @Override
     protected JPanel statusPanel() {
         JPanel j = new JPanel();
         j.setLayout(new BoxLayout(j, BoxLayout.Y_AXIS));
@@ -72,11 +69,7 @@ public class DispatcherPro extends Apps {
 
         // Buttons
         Action quit = new AbstractAction(Bundle.getMessage("MenuItemQuit")) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -670021141772027717L;
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Apps.handleQuit();
             }
@@ -106,12 +99,13 @@ public class DispatcherPro extends Apps {
         Apps.setStartupInfo("DispatcherPro");
 
         setConfigFilename("DispatcherProConfig2.xml", args);
-        JmriJFrame f = new JmriJFrame("DispatcherPro");
-        createFrame(new DispatcherPro(f), f);
+        DispatcherPro dp = new DispatcherPro();
+        JmriJFrame f = new JmriJFrame(jmri.Application.getApplicationName());
+        createFrame(dp, f);
 
         log.debug("main initialization done");
         splash(false);
     }
 
-    static Logger log = LoggerFactory.getLogger(DispatcherPro.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DispatcherPro.class);
 }

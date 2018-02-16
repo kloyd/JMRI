@@ -1,4 +1,3 @@
-// LnConstants.java
 package jmri.jmrix.loconet;
 
 /**
@@ -19,50 +18,50 @@ package jmri.jmrix.loconet;
  *<p>
  * Slot Status byte definitions and macros
  * <UL>
- * <li>D7-SL_SPURGE : 1=SLOT purge en,  ALSO adrSEL (INTERNAL use only) (not seen on NET!) 
- * 
+ * <li>D7-SL_SPURGE : 1=SLOT purge en,  ALSO adrSEL (INTERNAL use only) (not seen on NET!)
+ *
  * <li>D6-SL_CONUP : CONDN/CONUP: bit encoding-Control double
- * linked Consist List 
+ * linked Consist List
  *    <ul>
  *    <li> 11=LOGICAL MID CONSIST , Linked up AND down
- *    <li> 10=LOGICAL CONSIST TOP, Only linked downwards 
- *    <li> 01=LOGICAL CONSIST SUB-MEMBER, Only linked upwards 
- *    <li> 00=FREE locomotive, no CONSIST indirection/linking 
+ *    <li> 10=LOGICAL CONSIST TOP, Only linked downwards
+ *    <li> 01=LOGICAL CONSIST SUB-MEMBER, Only linked upwards
+ *    <li> 00=FREE locomotive, no CONSIST indirection/linking
  *    </ul>
- * ALLOWS "CONSISTS of CONSISTS". Uplinked means that Slot SPD number is 
- * now SLOT adr of SPD/DIR and STATUS of 
- * consist. i.e. is an Indirect pointer. This Slot 
- * has same BUSY/ACTIVE bits as TOP of Consist. TOP is 
- * loco with SPD/DIR for whole consist. (top of list). 
- * 
- * <li> D5-SL_BUSY: BUSY/ACTIVE: bit encoding for SLOT activity 
+ * ALLOWS "CONSISTS of CONSISTS". Uplinked means that Slot SPD number is
+ * now SLOT adr of SPD/DIR and STATUS of
+ * consist. i.e. is an Indirect pointer. This Slot
+ * has same BUSY/ACTIVE bits as TOP of Consist. TOP is
+ * loco with SPD/DIR for whole consist. (top of list).
+ *
+ * <li> D5-SL_BUSY: BUSY/ACTIVE: bit encoding for SLOT activity
  *      <ul>
- *      <li> 11=IN_USE loco adr in SLOT -REFRESHED 
+ *      <li> 11=IN_USE loco adr in SLOT -REFRESHED
  *      </ul>
  *
  * <li> D4-SL_ACTIVE ;
  *      <ul>
- *      <li>10=IDLE loco adr in SLOT -NOT refreshed 
- *      <li>01=COMMON loco adr IN SLOT-refreshed 
- *      <li>00=FREE SLOT, no valid DATA -not refreshed 
+ *      <li>10=IDLE loco adr in SLOT -NOT refreshed
+ *      <li>01=COMMON loco adr IN SLOT-refreshed
+ *      <li>00=FREE SLOT, no valid DATA -not refreshed
  *      </ul>
  *
- * <li>D3-SL_CONDN : shows other SLOT Consist linked INTO this slot, see SL_CONUP 
- * 
- * <li>D2-SL_SPDEX ; 3 BITS for Decoder TYPE encoding for this SLOT 
- * 
+ * <li>D3-SL_CONDN : shows other SLOT Consist linked INTO this slot, see SL_CONUP
+ *
+ * <li>D2-SL_SPDEX ; 3 BITS for Decoder TYPE encoding for this SLOT
+ *
  * <li>D1-SL_SPD14
  *      <ul>
- *      <li>011=send 128 speed mode packets 
- *      </ul> 
- * 
+ *      <li>011=send 128 speed mode packets
+ *      </ul>
+ *
  * <li>D0-SL_SPD28
  *      <ul>
- *      <li>010=14 step MODE 
- *      <li>001=28 step. Generate Trinary packets for this Mobile ADR 
- *      <li>000=28 step. 3 BYTE PKT regular mode 
- *      <li>111=128 Step decoder, Allow Advanced DCC consisting 
- *      <li>100=28 Step decoder ,Allow Advanced DCC consisting 
+ *      <li>010=14 step MODE
+ *      <li>001=28 step. Generate Trinary packets for this Mobile ADR
+ *      <li>000=28 step. 3 BYTE PKT regular mode
+ *      <li>111=128 Step decoder, Allow Advanced DCC consisting
+ *      <li>100=28 Step decoder ,Allow Advanced DCC consisting
  *      </ul>
  * </ul><p>
  * Note that the values in this class have been taken from the llnmom C program
@@ -86,11 +85,11 @@ package jmri.jmrix.loconet;
  * algorithm or these message formats outside of JMRI, please contact Digitrax
  * Inc for separate permission.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2008, 2015
+ * @author Bob Jacobsen Copyright (C) 2001, 2008, 2015
  * @author  Ron W. Auld
  * @author  John Kabat
  * @author  Alain Le Marchand
- * @version $Revision$
+ * @author B. Milhaupt Copyright (C) 2018
  *
  */
 public final class LnConstants {
@@ -150,29 +149,29 @@ public final class LnConstants {
     public final static int STAT1_SL_SPURGE = 0x80;  /* internal use only, not seen on net */
 
     /** consist status                     */
-    public final static int STAT1_SL_CONUP = 0x40; 
+    public final static int STAT1_SL_CONUP = 0x40;
 
     /** Used with STAT1_SL_ACTIVE         */
     public final static int STAT1_SL_BUSY = 0x20;
 
-    public final static int STAT1_SL_ACTIVE = 0x10; 
+    public final static int STAT1_SL_ACTIVE = 0x10;
 
-    public final static int STAT1_SL_CONDN = 0x08; 
+    public final static int STAT1_SL_CONDN = 0x08;
 
-    public final static int STAT1_SL_SPDEX = 0x04; 
+    public final static int STAT1_SL_SPDEX = 0x04;
 
-    public final static int STAT1_SL_SPD14 = 0x02; 
+    public final static int STAT1_SL_SPD14 = 0x02;
 
     public final static int STAT1_SL_SPD28 = 0x01;
 
     /** 1 = Adv. Consisting supressed      */
-    public final static int STAT2_SL_SUPPRESS = 0x01;  
+    public final static int STAT2_SL_SUPPRESS = 0x01;
 
     /** 1 = ID1/ID2 is not ID usage        */
-    public final static int STAT2_SL_NOT_ID = 0x04;  
+    public final static int STAT2_SL_NOT_ID = 0x04;
 
     /** 1 = ID1/ID2 is not encoded alias   */
-    public final static int STAT2_SL_NOTENCOD = 0x08;  
+    public final static int STAT2_SL_NOTENCOD = 0x08;
 
     public final static int STAT2_ALIAS_MASK = STAT2_SL_NOTENCOD | STAT2_SL_NOT_ID;
     public final static int STAT2_ID_IS_ALIAS = STAT2_SL_NOT_ID;
@@ -186,15 +185,15 @@ public final class LnConstants {
 
     /** Encode consisting status as a string */
     public final static String CONSIST_STAT(int s) {
-        return ((s & CONSIST_MASK) == CONSIST_MID) ? "Mid Consist"
-                : (((s & CONSIST_MASK) == CONSIST_TOP) ? "Consist TOP"
-                        : (((s & CONSIST_MASK) == CONSIST_SUB) ? "Sub Consist"
-                                : "Not Consisted"));
+        return ((s & CONSIST_MASK) == CONSIST_MID) ? "Mid Consist" // NOI18N
+                : (((s & CONSIST_MASK) == CONSIST_TOP) ? "Consist TOP" // NOI18N
+                        : (((s & CONSIST_MASK) == CONSIST_SUB) ? "Sub Consist" // NOI18N
+                                : "Not Consisted")); // NOI18N
     }
 
-    /** Mask for locomotive use determination. 
-    * Compare value to {@link #LOCO_IN_USE},  {@link #LOCO_IDLE},  
-    * {@link #LOCO_COMMON},  {@link #LOCO_FREE} 
+    /** Mask for locomotive use determination.
+    * Compare value to {@link #LOCO_IN_USE},  {@link #LOCO_IDLE},
+    * {@link #LOCO_COMMON},  {@link #LOCO_FREE}
     */
     public final static int LOCOSTAT_MASK = STAT1_SL_BUSY | STAT1_SL_ACTIVE;
     /** Value for locomotive use determination */
@@ -207,16 +206,16 @@ public final class LnConstants {
     public final static int LOCO_FREE = 0;
 
     /**Encode loco status as a string */
-    public final static String LOCO_STAT(int s) { 
-        return ((s & LOCOSTAT_MASK) == LOCO_IN_USE) ? "In-Use"
-                : (((s & LOCOSTAT_MASK) == LOCO_IDLE) ? "Idle"
-                        : (((s & LOCOSTAT_MASK) == LOCO_COMMON) ? "Common"
-                                : "Free"));
+    public final static String LOCO_STAT(int s) {
+        return ((s & LOCOSTAT_MASK) == LOCO_IN_USE) ? "In-Use" // NOI18N
+                : (((s & LOCOSTAT_MASK) == LOCO_IDLE) ? "Idle" // NOI18N
+                        : (((s & LOCOSTAT_MASK) == LOCO_COMMON) ? "Common" // NOI18N
+                                : "Free")); // NOI18N
     }
 
     /** Mask for decoder type encoding for this slot.
-    * Compare value to 
-    * {@link #DEC_MODE_128A}, {@link #DEC_MODE_28A}, {@link #DEC_MODE_128}, 
+    * Compare value to
+    * {@link #DEC_MODE_128A}, {@link #DEC_MODE_28A}, {@link #DEC_MODE_128},
     * {@link #DEC_MODE_14}, {@link #DEC_MODE_28TRI}, {@link #DEC_MODE_28}
     */
     public final static int DEC_MODE_MASK = STAT1_SL_SPDEX | STAT1_SL_SPD14 | STAT1_SL_SPD28;
@@ -234,12 +233,12 @@ public final class LnConstants {
     public final static int DEC_MODE_28 = 0;
 
     public final static String DEC_MODE(int s) { // encode decoder type as a string
-        return ((s & DEC_MODE_MASK) == DEC_MODE_128A) ? "128 (Allow Adv. consisting)"
-                : (((s & DEC_MODE_MASK) == DEC_MODE_28A) ? "28 (Allow Adv. consisting)"
-                        : (((s & DEC_MODE_MASK) == DEC_MODE_128) ? "128"
-                                : (((s & DEC_MODE_MASK) == DEC_MODE_14) ? "14"
-                                        : (((s & DEC_MODE_MASK) == DEC_MODE_28TRI) ? "28 (Motorola)"
-                                                : "28"))));
+        return ((s & DEC_MODE_MASK) == DEC_MODE_128A) ? "128 (Allow Adv. consisting)" // NOI18N
+                : (((s & DEC_MODE_MASK) == DEC_MODE_28A) ? "28 (Allow Adv. consisting)" // NOI18N
+                        : (((s & DEC_MODE_MASK) == DEC_MODE_128) ? "128" // NOI18N
+                                : (((s & DEC_MODE_MASK) == DEC_MODE_14) ? "14" // NOI18N
+                                        : (((s & DEC_MODE_MASK) == DEC_MODE_28TRI) ? "28 (Motorola)" // NOI18N
+                                                : "28")))); // NOI18N
     }
 
     /* values for track status encoding for this slot */
@@ -252,13 +251,16 @@ public final class LnConstants {
     public final static int GTRK_POWER = 0x01;      /* 1=DCC packets are ON in MASTER, Global POWER up      */
 
     /** Fast clock is in this slot                           */
-    public final static int FC_SLOT = 0x7b;      
+    public final static int FC_SLOT = 0x7b;
 
      /** This slot communicates with the programming track    */
-    public final static int PRG_SLOT = 0x7c;     
+    public final static int PRG_SLOT = 0x7c;
+
+    /** This slot holds extended configuration bits for some command stations */
+    public final static int CFG_EXT_SLOT = 0x7e;
 
     /** This slot holds configuration bits                   */
-    public final static int CFG_SLOT = 0x7f;      
+    public final static int CFG_SLOT = 0x7f;
 
     /** Values and macros to decode programming messages */
     public final static int PCMD_RW = 0x40;      /* 1 = write, 0 = read                                  */
@@ -374,40 +376,42 @@ public final class LnConstants {
 
     /** Encode LocoNet Opcode as a string */
     public final static String OPC_NAME(int opcode) {
-        return (opcode == OPC_GPBUSY) ? "OPC_GPBUSY"
-                : (opcode == OPC_GPOFF) ? "OPC_GPOFF"
-                        : (opcode == OPC_GPON) ? "OPC_GPON"
-                                : (opcode == OPC_IDLE) ? "OPC_IDLE"
-                                        : (opcode == OPC_LOCO_SPD) ? "OPC_LOCO_SPD"
-                                                : (opcode == OPC_LOCO_DIRF) ? "OPC_LOCO_DIRF"
-                                                        : (opcode == OPC_LOCO_SND) ? "OPC_LOCO_SND"
-                                                                : (opcode == OPC_SW_REQ) ? "OPC_SW_REQ"
-                                                                        : (opcode == OPC_SW_REP) ? "OPC_SW_REP"
-                                                                                : (opcode == OPC_INPUT_REP) ? "OPC_INPUT_REP"
-                                                                                        : (opcode == OPC_UNKNOWN) ? "OPC_UNKNOWN"
-                                                                                                : (opcode == OPC_LONG_ACK) ? "OPC_LONG_ACK"
-                                                                                                        : (opcode == OPC_SLOT_STAT1) ? "OPC_SLOT_STAT1"
-                                                                                                                : (opcode == OPC_CONSIST_FUNC) ? "OPC_CONSIST_FUNC"
-                                                                                                                        : (opcode == OPC_UNLINK_SLOTS) ? "OPC_UNLINK_SLOTS"
-                                                                                                                                : (opcode == OPC_LINK_SLOTS) ? "OPC_LINK_SLOTS"
-                                                                                                                                        : (opcode == OPC_MOVE_SLOTS) ? "OPC_MOVE_SLOTS"
-                                                                                                                                                : (opcode == OPC_RQ_SL_DATA) ? "OPC_RQ_SL_DATA"
-                                                                                                                                                        : (opcode == OPC_SW_STATE) ? "OPC_SW_STATE"
-                                                                                                                                                                : (opcode == OPC_SW_ACK) ? "OPC_SW_ACK"
-                                                                                                                                                                        : (opcode == OPC_LOCO_ADR) ? "OPC_LOCO_ADR"
-                                                                                                                                                                                : (opcode == OPC_MULTI_SENSE) ? "OPC_MULTI_SENSE"
-                                                                                                                                                                                        : (opcode == OPC_PANEL_QUERY) ? "OPC_PANEL_QUERY"
-                                                                                                                                                                                                : (opcode == OPC_PANEL_RESPONSE) ? "OPC_PANEL_RESPONSE"
-                                                                                                                                                                                                        : (opcode == OPC_LISSY_UPDATE) ? "OPC_LISSY_UPDATE"
-                                                                                                                                                                                                                : (opcode == OPC_PEER_XFER) ? "OPC_PEER_XFER"
-                                                                                                                                                                                                                        : (opcode == OPC_ALM_READ) ? "OPC_ALM_READ"
-                                                                                                                                                                                                                                : (opcode == OPC_SL_RD_DATA) ? "OPC_SL_RD_DATA"
-                                                                                                                                                                                                                                        : (opcode == OPC_IMM_PACKET) ? "OPC_IMM_PACKET"
-                                                                                                                                                                                                                                                : (opcode == OPC_IMM_PACKET_2) ? "OPC_IMM_PACKET_2"
-                                                                                                                                                                                                                                                        : (opcode == OPC_WR_SL_DATA) ? "OPC_WR_SL_DATA"
-                                                                                                                                                                                                                                                                : (opcode == OPC_WR_SL_DATA_EXP) ? "OPC_WR_SL_DATA_EXP"
-                                                                                                                                                                                                                                                                        : (opcode == OPC_ALM_WRITE) ? "OPC_ALM_WRITE"
-                                                                                                                                                                                                                                                                                : "<unknown>";
+        switch (opcode) {
+            case OPC_GPBUSY     : return "OPC_GPBUSY"; // NOI18N
+            case OPC_GPOFF      : return "OPC_GPOFF"; // NOI18N
+            case OPC_GPON       : return "OPC_GPON"; // NOI18N
+            case OPC_IDLE       : return "OPC_IDLE"; // NOI18N
+            case OPC_LOCO_SPD   : return "OPC_LOCO_SPD"; // NOI18N
+            case OPC_LOCO_DIRF  : return "OPC_LOCO_DIRF"; // NOI18N
+            case OPC_LOCO_SND   : return "OPC_LOCO_SND"; // NOI18N
+            case OPC_SW_REQ     : return "OPC_SW_REQ"; // NOI18N
+            case OPC_SW_REP     : return "OPC_SW_REP"; // NOI18N
+            case OPC_INPUT_REP  : return "OPC_INPUT_REP"; // NOI18N
+            case OPC_UNKNOWN    : return "OPC_UNKNOWN"; // NOI18N
+            case OPC_LONG_ACK   : return "OPC_LONG_ACK"; // NOI18N
+            case OPC_SLOT_STAT1 : return "OPC_SLOT_STAT1"; // NOI18N
+            case OPC_CONSIST_FUNC: return "OPC_CONSIST_FUNC"; // NOI18N
+            case OPC_UNLINK_SLOTS: return "OPC_UNLINK_SLOTS"; // NOI18N
+            case OPC_LINK_SLOTS : return "OPC_LINK_SLOTS"; // NOI18N
+            case OPC_MOVE_SLOTS : return "OPC_MOVE_SLOTS"; // NOI18N
+            case OPC_RQ_SL_DATA : return "OPC_RQ_SL_DATA"; // NOI18N
+            case OPC_SW_STATE   : return "OPC_SW_STATE"; // NOI18N
+            case OPC_SW_ACK     : return "OPC_SW_ACK"; // NOI18N
+            case OPC_LOCO_ADR   : return "OPC_LOCO_ADR"; // NOI18N
+            case OPC_MULTI_SENSE: return "OPC_MULTI_SENSE"; // NOI18N
+            case OPC_PANEL_QUERY: return "OPC_PANEL_QUERY"; // NOI18N
+            case OPC_PANEL_RESPONSE: return "OPC_PANEL_RESPONSE"; // NOI18N
+            case OPC_LISSY_UPDATE: return "OPC_LISSY_UPDATE"; // NOI18N
+            case OPC_PEER_XFER  : return "OPC_PEER_XFER"; // NOI18N
+            case OPC_ALM_READ   : return "OPC_ALM_READ"; // NOI18N
+            case OPC_SL_RD_DATA : return "OPC_SL_RD_DATA"; // NOI18N
+            case OPC_IMM_PACKET : return "OPC_IMM_PACKET"; // NOI18N
+            case OPC_IMM_PACKET_2: return "OPC_IMM_PACKET_2"; // NOI18N
+            case OPC_WR_SL_DATA : return "OPC_WR_SL_DATA"; // NOI18N
+            // case OPC_WR_SL_DATA_EXP: return "OPC_WR_SL_DATA_EXP"; // duplicates 0xEE
+            // case OPC_ALM_WRITE: return "OPC_ALM_WRITE"; // duplicates 0xEE
+            default: return "<unknown>"; // NOI18N
+        }
     }
 
 // start of values not from llnmon.c
@@ -462,11 +466,16 @@ public final class LnConstants {
 // reverse-engineered constants
     public final static int RE_IPL_MFR_DIGITRAX = 0x00;
     public final static int RE_IPL_MFR_ALL = 0x00;
+    public final static int RE_IPL_DIGITRAX_HOST_LNRP = 0x01;
     public final static int RE_IPL_DIGITRAX_HOST_UT4 = 0x04;
-    public final static int RE_IPL_DIGITRAX_HOST_UR92 = 0x5C;
-    public final static int RE_IPL_DIGITRAX_HOST_DCS51 = 0x33;
-    public final static int RE_IPL_DIGITRAX_HOST_DT402 = 0x2A;
+    public final static int RE_IPL_DIGITRAX_HOST_WTL12 = 0x0c;
+    public final static int RE_IPL_DIGITRAX_HOST_DCS210 = 0x1b;
+    public final static int RE_IPL_DIGITRAX_HOST_DCS240 = 0x1c;
     public final static int RE_IPL_DIGITRAX_HOST_PR3 = 0x23;
+    public final static int RE_IPL_DIGITRAX_HOST_DT402 = 0x2A;
+    public final static int RE_IPL_DIGITRAX_HOST_DT500 = 0x32;
+    public final static int RE_IPL_DIGITRAX_HOST_DCS51 = 0x33;
+    public final static int RE_IPL_DIGITRAX_HOST_UR92 = 0x5C;
     public final static int RE_IPL_DIGITRAX_HOST_ALL = 0x00;
     public final static int RE_IPL_DIGITRAX_SLAVE_RF24 = 0x18;
     public final static int RE_IPL_DIGITRAX_SLAVE_ALL = 0x00;
@@ -617,6 +626,3 @@ public final class LnConstants {
     public final static int RE_IB2_SPECIAL_F28_MASK = 0x40;
 
 }
-
-
-/* @(#)LnConstants.java */

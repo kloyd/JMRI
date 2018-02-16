@@ -2,6 +2,7 @@ package jmri;
 
 import java.util.Arrays;
 import java.util.List;
+import jmri.profile.ProfileManager;
 
 /**
  * Meta data concerning the JMRI application.
@@ -16,16 +17,15 @@ import java.util.List;
  * JMRI is free software; you can redistribute it and/or modify it under the
  * terms of version 2 of the GNU General Public License as published by the Free
  * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
+ * </P><P>
  * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
+ * </P>
  *
- * @author	Randall Wood Copyright (C) 2011
- * @version	$Revision$
+ * @author Randall Wood Copyright (C) 2011
  */
-public class Metadata {
+public interface Metadata {
 
     public static final String JMRIVERSION = "JMRIVERSION"; // NOI18N
     public static final String JMRIVERCANON = "JMRIVERCANON"; // NOI18N
@@ -34,11 +34,13 @@ public class Metadata {
     public static final String JMRIVERTEST = "JMRIVERTEST"; // NOI18N
     public static final String JVMVERSION = "JVMVERSION"; // NOI18N
     public static final String JVMVENDOR = "JVMVENDOR"; // NOI18N
+    public static final String ACTIVEPROFILE = "activeProfile"; // NOI18N
+    public static final String COPYRIGHT = "copyright"; // NOI18N
 
     /**
      * Return the value of the named meta data, or any valid system property.
      *
-     * @param name
+     * @param name name of meta data or property to return
      * @return String value of requested data or null
      */
     public static String getBySystemName(String name) {
@@ -56,6 +58,10 @@ public class Metadata {
             return System.getProperty("java.version", "<unknown>"); // NOI18N
         } else if (name.equalsIgnoreCase(JVMVENDOR)) {
             return System.getProperty("java.vendor", "<unknown>"); // NOI18N
+        } else if (name.equalsIgnoreCase(ACTIVEPROFILE)) {
+            return ProfileManager.getDefault().getActiveProfileName();
+        } else if (name.equalsIgnoreCase(COPYRIGHT)) {
+            return jmri.Version.getCopyright();
         }
         // returns null if name is not a system property
         return System.getProperty(name);
@@ -73,14 +79,15 @@ public class Metadata {
             JMRIVERMINOR,
             JMRIVERTEST,
             JVMVERSION,
-            JVMVENDOR};
+            JVMVENDOR,
+            ACTIVEPROFILE,
+            COPYRIGHT};
         return names;
     }
 
     /**
-     * A list of known meta data names.
-     *
-     * @return List<String>
+     * Get the list of known meta-data names.
+     * @return the list of names
      */
     public static List<String> getSystemNameList() {
         return Arrays.asList(Metadata.getSystemNameArray());

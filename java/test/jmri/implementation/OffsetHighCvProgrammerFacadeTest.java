@@ -1,13 +1,12 @@
-// OffsetHighCvProgrammerFacadeTest.java
 package jmri.implementation;
 
 import jmri.ProgListener;
 import jmri.Programmer;
 import jmri.progdebugger.ProgDebugger;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * Test the OffsetHighCvProgrammerFacade class.
  *
  * @author	Bob Jacobsen Copyright 2013
- * @version $Revision: 24246 $
+ * 
  */
 public class OffsetHighCvProgrammerFacadeTest extends TestCase {
 
@@ -30,6 +29,7 @@ public class OffsetHighCvProgrammerFacadeTest extends TestCase {
 
         Programmer p = new OffsetHighCvProgrammerFacade(dp, "256", "7", "10", "100");
         ProgListener l = new ProgListener() {
+            @Override
             public void programmingOpReply(int value, int status) {
                 log.debug("callback value=" + value + " status=" + status);
                 replied = true;
@@ -54,6 +54,7 @@ public class OffsetHighCvProgrammerFacadeTest extends TestCase {
 
         Programmer p = new OffsetHighCvProgrammerFacade(dp, "256", "7", "10", "100");
         ProgListener l = new ProgListener() {
+            @Override
             public void programmingOpReply(int value, int status) {
                 log.debug("callback value=" + value + " status=" + status);
                 replied = true;
@@ -77,6 +78,7 @@ public class OffsetHighCvProgrammerFacadeTest extends TestCase {
         dp.setTestWriteLimit(256);
         Programmer p = new OffsetHighCvProgrammerFacade(dp, "256", "7", "10", "100");
         ProgListener l = new ProgListener() {
+            @Override
             public void programmingOpReply(int value, int status) {
                 log.debug("callback value=" + value + " status=" + status);
                 replied = true;
@@ -121,7 +123,7 @@ public class OffsetHighCvProgrammerFacadeTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {OffsetHighCvProgrammerFacadeTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -131,6 +133,6 @@ public class OffsetHighCvProgrammerFacadeTest extends TestCase {
         return suite;
     }
 
-    static Logger log = LoggerFactory.getLogger(OffsetHighCvProgrammerFacadeTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(OffsetHighCvProgrammerFacadeTest.class);
 
 }

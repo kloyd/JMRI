@@ -1,4 +1,3 @@
-//AbstractSensorServer.java
 package jmri.jmris;
 
 import java.beans.PropertyChangeEvent;
@@ -16,12 +15,11 @@ import org.slf4j.LoggerFactory;
  * Abstract interface between the a JMRI sensor and a network connection
  *
  * @author Paul Bender Copyright (C) 2010
- * @version $Revision$
  */
 abstract public class AbstractSensorServer {
 
     private final HashMap<String, SensorListener> sensors;
-    static Logger log = LoggerFactory.getLogger(AbstractSensorServer.class);
+    private final static Logger log = LoggerFactory.getLogger(AbstractSensorServer.class);
 
     public AbstractSensorServer() {
         sensors = new HashMap<String, SensorListener>();
@@ -38,19 +36,26 @@ abstract public class AbstractSensorServer {
 
     synchronized protected void addSensorToList(String sensorName) {
         if (!sensors.containsKey(sensorName)) {
-            sensors.put(sensorName, new SensorListener(sensorName));
-            InstanceManager.sensorManagerInstance().getSensor(sensorName).addPropertyChangeListener(sensors.get(sensorName));
+            Sensor s = InstanceManager.sensorManagerInstance().getSensor(sensorName);
+            if(s!=null) {
+               SensorListener sl = new SensorListener(sensorName);
+               s.addPropertyChangeListener(sl);
+               sensors.put(sensorName, sl );
+            }
         }
     }
 
     synchronized protected void removeSensorFromList(String sensorName) {
         if (sensors.containsKey(sensorName)) {
-            InstanceManager.sensorManagerInstance().getSensor(sensorName).removePropertyChangeListener(sensors.get(sensorName));
-            sensors.remove(sensorName);
+            Sensor s = InstanceManager.sensorManagerInstance().getSensor(sensorName);
+            if(s!=null) {
+               s.removePropertyChangeListener(sensors.get(sensorName));
+               sensors.remove(sensorName);
+            }
         }
     }
 
-    public Sensor initSensor(String sensorName) {
+    public Sensor initSensor(String sensorName) throws IllegalArgumentException {
         Sensor sensor = InstanceManager.sensorManagerInstance().provideSensor(sensorName);
         this.addSensorToList(sensorName);
         return sensor;
@@ -86,7 +91,10 @@ abstract public class AbstractSensorServer {
 
     public void dispose() {
         for (Map.Entry<String, SensorListener> sensor : this.sensors.entrySet()) {
-            InstanceManager.sensorManagerInstance().getSensor(sensor.getKey()).removePropertyChangeListener(sensor.getValue());
+            Sensor s = InstanceManager.sensorManagerInstance().getSensor(sensor.getKey());
+            if(s!=null) {
+               s.removePropertyChangeListener(sensor.getValue());
+            }
         }
         this.sensors.clear();
     }

@@ -1,11 +1,12 @@
-// CarManagerXml.java
 package jmri.jmrit.operations.rollingstock.engines;
 
 import java.io.File;
+import jmri.InstanceManager;
+import jmri.InstanceManagerAutoDefault;
+import jmri.InstanceManagerAutoInitialize;
 import jmri.jmrit.operations.OperationsXml;
 import jmri.jmrit.operations.locations.LocationManagerXml;
 import jmri.jmrit.operations.rollingstock.RollingStockLogger;
-import jmri.jmrit.operations.setup.Control;
 import jmri.jmrit.operations.setup.Setup;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -18,37 +19,27 @@ import org.slf4j.LoggerFactory;
  * models, engine types, engine lengths, and engine consist names.
  *
  * @author Daniel Boudreau Copyright (C) 2008
- * @version $Revision$
  */
-public class EngineManagerXml extends OperationsXml {
+public class EngineManagerXml extends OperationsXml implements InstanceManagerAutoDefault, InstanceManagerAutoInitialize {
 
     public EngineManagerXml() {
     }
 
     /**
-     * record the single instance *
+     * Get the default instance of this class.
+     *
+     * @return the default instance of this class
+     * @deprecated since 4.9.2; use
+     * {@link jmri.InstanceManager#getDefault(java.lang.Class)} instead
      */
-    private static EngineManagerXml _instance = null;
-
+    @Deprecated
     public static synchronized EngineManagerXml instance() {
-        if (_instance == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("EngineManagerXml creating instance");
-            }
-            // create and load
-            _instance = new EngineManagerXml();
-            _instance.load();
-        }
-        if (Control.showInstance) {
-            log.debug("EngineManagerXml returns instance {}", _instance);
-        }
-        return _instance;
+        return InstanceManager.getDefault(EngineManagerXml.class);
     }
 
+    @Override
     public void writeFile(String name) throws java.io.FileNotFoundException, java.io.IOException {
-        if (log.isDebugEnabled()) {
-            log.debug("writeFile {}", name);
-        }
+        log.debug("writeFile {}", name);
         // This is taken in large part from "Java and XML" page 368
         File file = findFile(name);
         if (file == null) {
@@ -59,16 +50,16 @@ public class EngineManagerXml extends OperationsXml {
         Document doc = newDocument(root, dtdLocation + "operations-engines.dtd"); // NOI18N
 
         // add XSLT processing instruction
-        java.util.Map<String, String> m = new java.util.HashMap<String, String>();
+        java.util.Map<String, String> m = new java.util.HashMap<>();
         m.put("type", "text/xsl"); // NOI18N
         m.put("href", xsltLocation + "operations-engines.xsl"); // NOI18N
         ProcessingInstruction p = new ProcessingInstruction("xml-stylesheet", m); // NOI18N
         doc.addContent(0, p);
 
-        EngineModels.instance().store(root);
-        EngineTypes.instance().store(root);
-        EngineLengths.instance().store(root);
-        EngineManager.instance().store(root);
+        InstanceManager.getDefault(EngineModels.class).store(root);
+        InstanceManager.getDefault(EngineTypes.class).store(root);
+        InstanceManager.getDefault(EngineLengths.class).store(root);
+        InstanceManager.getDefault(EngineManager.class).store(root);
 
         writeXML(file, doc);
 
@@ -94,34 +85,39 @@ public class EngineManagerXml extends OperationsXml {
             return;
         }
 
-        EngineModels.instance().load(root);
-        EngineTypes.instance().load(root);
-        EngineLengths.instance().load(root);
-        EngineManager.instance().load(root);
+        InstanceManager.getDefault(EngineModels.class).load(root);
+        InstanceManager.getDefault(EngineTypes.class).load(root);
+        InstanceManager.getDefault(EngineLengths.class).load(root);
+        InstanceManager.getDefault(EngineManager.class).load(root);
 
         log.debug("Engines have been loaded!");
-        RollingStockLogger.instance().enableEngineLogging(Setup.isEngineLoggerEnabled());
+        InstanceManager.getDefault(RollingStockLogger.class).enableEngineLogging(Setup.isEngineLoggerEnabled());
         // clear dirty bit
         setDirty(false);
         // clear location dirty flag, locations get modified during the loading of cars and locos
-        LocationManagerXml.instance().setDirty(false);
+        InstanceManager.getDefault(LocationManagerXml.class).setDirty(false);
     }
 
+    @Override
     public void setOperationsFileName(String name) {
         operationsFileName = name;
     }
 
+    @Override
     public String getOperationsFileName() {
         return operationsFileName;
     }
 
     private String operationsFileName = "OperationsEngineRoster.xml"; // NOI18N
 
-    public void dispose(){
-        _instance = null;
+    public void dispose() {
     }
 
+    private final static Logger log = LoggerFactory.getLogger(EngineManagerXml.class);
 
-    static Logger log = LoggerFactory.getLogger(EngineManagerXml.class.getName());
+    @Override
+    public void initialize() {
+        load();
+    }
 
 }

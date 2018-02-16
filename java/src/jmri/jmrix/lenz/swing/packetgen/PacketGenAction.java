@@ -1,36 +1,27 @@
 /**
- * PacketGenAction.java
- *
- * Description:	Swing action to create and register a XpressNet PacketGenFrame
+ * Swing action to create and register an XpressNet PacketGenFrame
  * object
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
- */
+ * @author Bob Jacobsen Copyright (C) 2001, 2002
+  */
 package jmri.jmrix.lenz.swing.packetgen;
 
 import java.awt.event.ActionEvent;
-import javax.swing.AbstractAction;
+import jmri.jmrix.lenz.swing.AbstractXPressNetAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PacketGenAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5884805612020376097L;
-    jmri.jmrix.lenz.XNetSystemConnectionMemo _memo = null;
+public class PacketGenAction extends AbstractXPressNetAction {
 
     public PacketGenAction(String s, jmri.jmrix.lenz.XNetSystemConnectionMemo memo) {
-        super(s);
-        _memo = memo;
+        super(s,memo);
     }
 
     public PacketGenAction(jmri.jmrix.lenz.XNetSystemConnectionMemo memo) {
-        this("Generate XPressNet message", memo);
+        this(Bundle.getMessage("PacketGenFrameTitle"), memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         // create a PacketGenFrame
         PacketGenFrame f = new PacketGenFrame();
@@ -44,8 +35,7 @@ public class PacketGenAction extends AbstractAction {
         // connect to the TrafficController
         f.connect(_memo.getXNetTrafficController());
     }
-    static Logger log = LoggerFactory.getLogger(PacketGenAction.class.getName());
+
+    private final static Logger log = LoggerFactory.getLogger(PacketGenAction.class);
+
 }
-
-
-/* @(#)LocoGenAction.java */

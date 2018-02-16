@@ -1,36 +1,27 @@
-// AddSensorPanel.java
 package jmri.jmrit.beantable;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ResourceBundle;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * JPanel to create a new JMRI devices HiJacked to serve other beantable tables.
  *
- * @author	Bob Jacobsen Copyright (C) 2009
+ * @author Bob Jacobsen Copyright (C) 2009
  * @author Pete Cressman Copyright (C) 2010
- * @version $Revision$
  */
 public class AddNewDevicePanel extends jmri.util.swing.JmriPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5114030241732110250L;
-
     public AddNewDevicePanel(JTextField sys, JTextField userName,
-            String addButtonLabel, ActionListener listener) {
+            String addButtonLabel, ActionListener okListener, ActionListener cancelListener) {
         sysName = sys;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         JPanel p;
@@ -56,20 +47,33 @@ public class AddNewDevicePanel extends jmri.util.swing.JmriPanel {
         p.add(userName, c);
         add(p);
 
-        add(ok = new JButton(rb.getString(addButtonLabel)));
-        ok.addActionListener(listener);
+        // button(s) at bottom of window
+        JPanel panelBottom = new JPanel();
+        panelBottom.setLayout(new FlowLayout(FlowLayout.TRAILING));
+        // only add a Cancel button when the the OKbutton string is OK (so don't show on Picker Panels)
+        if (addButtonLabel.equals("ButtonOK")) {
+            panelBottom.add(cancel = new JButton(Bundle.getMessage("ButtonCancel")));
+            cancel.addActionListener(cancelListener);
+        }
+
+        panelBottom.add(ok = new JButton(Bundle.getMessage(addButtonLabel)));
+        ok.addActionListener(okListener);
+
         ok.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 reset();
             }
         });
 
+        add(panelBottom);
+
         reset();
         sysName.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyReleased(KeyEvent a) {
                 if (sysName.getText().length() > 0) {
-                    ok.setEnabled(true);
-                    ok.setToolTipText(null);
+                    setOK();
                 }
             }
         });
@@ -77,7 +81,24 @@ public class AddNewDevicePanel extends jmri.util.swing.JmriPanel {
 
     void reset() {
         ok.setEnabled(false);
-        ok.setToolTipText(rb.getString("ToolTipWillActivate"));
+        ok.setToolTipText(Bundle.getMessage("ToolTipWillActivate"));
+    }
+
+    /**
+     * Activate the OK button without user key activity.
+     */
+    public void setOK() {
+        ok.setEnabled(true);
+        ok.setToolTipText(null);
+    }
+
+    /**
+     * Lock the System Name JTextField.
+     */
+    public void setSystemNameFieldIneditable() {
+        sysName.setEditable(false);
+        sysName.setBorder(null);
+        sysName.setDisabledTextColor(Color.black);
     }
 
     public void addLabels(String labelSystemName, String labelUserName) {
@@ -86,13 +107,9 @@ public class AddNewDevicePanel extends jmri.util.swing.JmriPanel {
     }
 
     JButton ok;
+    JButton cancel;
     JTextField sysName;
-    JLabel sysNameLabel = new JLabel(rb.getString("LabelSystemName"));
-    JLabel userNameLabel = new JLabel(rb.getString("LabelUserName"));
+    JLabel sysNameLabel = new JLabel(Bundle.getMessage("LabelSystemName"));
+    JLabel userNameLabel = new JLabel(Bundle.getMessage("LabelUserName"));
 
-    static final ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrit.beantable.BeanTableBundle");
-    static final Logger log = LoggerFactory.getLogger(AddNewDevicePanel.class.getName());
 }
-
-
-/* @(#)AddNewDevicePanel.java */

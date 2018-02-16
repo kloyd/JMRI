@@ -1,11 +1,10 @@
 package jmri.jmrix.lenz;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * XNetInitializationManagerTest.java
@@ -13,10 +12,10 @@ import org.slf4j.LoggerFactory;
  * Description:	tests for the jmri.jmrix.lenz.XNetInitializationManager class
  *
  * @author	Paul Bender
- * @version $Revision$
  */
-public class XNetInitializationManagerTest extends TestCase {
+public class XNetInitializationManagerTest {
 
+    @Test
     public void testCtor() {
 
 // infrastructure objects
@@ -26,6 +25,7 @@ public class XNetInitializationManagerTest extends TestCase {
         XNetSystemConnectionMemo memo = new XNetSystemConnectionMemo(t);
 
         XNetInitializationManager m = new XNetInitializationManager(memo) {
+            @Override
             protected int getInitTimeout() {
                 return 50;   // shorten, because this will fail & delay test
             }
@@ -37,34 +37,13 @@ public class XNetInitializationManagerTest extends TestCase {
         jmri.util.JUnitAppender.assertWarnMessage("Command Station disconnected, or powered down assuming LZ100/LZV100 V3.x");
     }
 
-    // from here down is testing infrastructure
-    public XNetInitializationManagerTest(String s) {
-        super(s);
+@Before
+public void setUp() {
+        JUnitUtil.setUp();
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", XNetInitializationManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+    @After public void tearDown() throws Exception {
+        JUnitUtil.tearDown();
     }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(XNetInitializationManagerTest.class);
-        return suite;
-    }
-
-    // The minimal setup for log4J
-    protected void setUp() throws Exception {
-        apps.tests.Log4JFixture.setUp();
-        super.setUp();
-    }
-
-    protected void tearDown() throws Exception {
-        super.tearDown();
-        apps.tests.Log4JFixture.tearDown();
-    }
-
-    static Logger log = LoggerFactory.getLogger(XNetInitializationManagerTest.class.getName());
 
 }

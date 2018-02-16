@@ -3,8 +3,6 @@ package jmri.jmrix.mrc.simulator.configurexml;
 import jmri.jmrix.configurexml.AbstractSerialConnectionConfigXml;
 import jmri.jmrix.mrc.simulator.ConnectionConfig;
 import jmri.jmrix.mrc.simulator.SimulatorAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handle XML persistence of layout connections by persisting the
@@ -18,7 +16,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003 copied from NCE code
  * @author kcameron Copyright (c) 2014
- * @version $Revision: 22821 $
  */
 public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
 
@@ -26,10 +23,12 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
         super();
     }
 
+    @Override
     protected void getInstance(Object object) {
         adapter = ((ConnectionConfig) object).getAdapter();
     }
 
+    @Override
     protected void getInstance() {
         adapter = new SimulatorAdapter();
     }
@@ -38,8 +37,5 @@ public class ConnectionConfigXml extends AbstractSerialConnectionConfigXml {
     protected void register() {
         this.register(new ConnectionConfig(adapter));
     }
-
-    // initialize logging
-    static Logger log = LoggerFactory.getLogger(ConnectionConfigXml.class.getName());
 
 }

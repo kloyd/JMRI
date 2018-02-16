@@ -1,4 +1,3 @@
-// LIUSBEthernetAdapter.java
 package jmri.jmrix.dccpp.network;
 
 import java.util.ResourceBundle;
@@ -6,7 +5,6 @@ import jmri.jmrix.dccpp.DCCppCommandStation;
 import jmri.jmrix.dccpp.DCCppInitializationManager;
 import jmri.jmrix.dccpp.DCCppNetworkPortController;
 import jmri.jmrix.dccpp.DCCppTrafficController;
-import jmri.jmrix.dccpp.DCCppSystemConnectionMemo;
 import jmri.util.zeroconf.ZeroConfClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +17,8 @@ import org.slf4j.LoggerFactory;
  * 
  * Based on LIUSBEthernetAdapter
 o*
- * @author	Paul Bender (C) 2011-2013
+ * @author Paul Bender (C) 2011-2013
  * @author      Mark Underwood (C) 2015
- * @version	$Revision$
  */
 public class DCCppEthernetAdapter extends DCCppNetworkPortController {
 
@@ -36,7 +33,7 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
     private static final int keepAliveTimeoutValue = 30000; // Interval 
     // to send a message
     // Must be < 60s.
-
+    
     public DCCppEthernetAdapter() {
         super();
         if (log.isDebugEnabled()) {
@@ -44,31 +41,30 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
         }
         setHostName(DEFAULT_IP_ADDRESS);
         setPort(COMMUNICATION_TCP_PORT);
-        this.manufacturerName = jmri.jmrix.DCCManufacturerList.DCCPP;
+        this.manufacturerName = jmri.jmrix.dccpp.DCCppConnectionTypeList.DCCPP;
     }
-
+    
     @Override
-    public void connect() throws Exception {
+    public void connect() throws java.io.IOException {
         super.connect();
-        if (log.isDebugEnabled()) {
-            log.debug("openPort called");
-        }
+        log.debug("openPort called");
         keepAliveTimer();
     }
-
+    
     /**
      * Can the port accept additional characters? return true if the port is
      * opened.
      */
-     public boolean okToSend() {
+    @Override
+    public boolean okToSend() {
         return status();
     }
-
+    
     @Override
     public boolean status() {
         return (opened);
     }
-
+    
     /**
      * set up all of the other objects to operate with a LIUSB Ethernet
      * interface
@@ -81,17 +77,14 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
         // connect to a packetizing traffic controller
         DCCppTrafficController packets = (new DCCppEthernetPacketizer(new DCCppCommandStation()));
         packets.connectPort(this);
-
+        
         // start operation
         // packets.startThreads();
         this.getSystemConnectionMemo().setDCCppTrafficController(packets);
-
+        
         new DCCppInitializationManager(this.getSystemConnectionMemo());
-
-        jmri.jmrix.dccpp.ActiveFlag.setActive();
-
     }
-
+    
     /**
      * Local method to do specific configuration
      */
@@ -103,29 +96,30 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
         return mInstance;
     }
     volatile static DCCppEthernetAdapter mInstance = null;
-
+    
     /*
      * Set up the keepAliveTimer, and start it.
      */
     private void keepAliveTimer() {
         if (keepAliveTimer == null) {
             keepAliveTimer = new java.util.TimerTask(){
-                public void run() {
-                    // If the timer times out, send a request for status
-                    DCCppEthernetAdapter.this.getSystemConnectionMemo().getDCCppTrafficController()
+                    @Override
+                    public void run() {
+                        // If the timer times out, send a request for status
+                        DCCppEthernetAdapter.this.getSystemConnectionMemo().getDCCppTrafficController()
                             .sendDCCppMessage(
-                                    jmri.jmrix.dccpp.DCCppMessage.makeCSStatusMsg(),
-                                    null);
-                }
-            };
+                                              jmri.jmrix.dccpp.DCCppMessage.makeCSStatusMsg(),
+                                              null);
+                    }
+                };
         } else {
-           keepAliveTimer.cancel();
+            keepAliveTimer.cancel();
         }
-        new java.util.Timer().schedule(keepAliveTimer,keepAliveTimeoutValue,keepAliveTimeoutValue);
+        new java.util.Timer("DCC++ Keepalive Timer").schedule(keepAliveTimer,keepAliveTimeoutValue,keepAliveTimeoutValue);
     }
-
+    
     private boolean mDNSConfigure = false;
-
+    
     /*
      * Set whether or not this adapter should be
      * configured automatically via MDNS.
@@ -134,10 +128,10 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
     @Override
     public void setMdnsConfigure(boolean autoconfig) {
         log.debug("Setting DCC++ Ethernet adapter autoconfiguration to: "
-                + autoconfig);
+                  + autoconfig);
         mDNSConfigure = autoconfig;
     }
-
+    
     /*
      * Get whether or not this adapter is configured
      * to use autoconfiguration via MDNS
@@ -147,7 +141,7 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
     public boolean getMdnsConfigure() {
         return mDNSConfigure;
     }
-
+    
     /*
      * set the server's host name and port
      * using mdns autoconfiguration.
@@ -160,7 +154,7 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
         }
         String serviceType = rb.getString("defaultMDNSServiceType");
         log.debug("Listening for service: " + serviceType);
-
+        
         if (mdnsClient == null) {
             mdnsClient = new ZeroConfClient();
             mdnsClient.startServiceListener(serviceType);
@@ -181,21 +175,21 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
             // if there is a hostname set, use the host name (which can
             // be changed) to find the service.
             String qualifiedHostName = m_HostName
-                    + "." + rb.getString("defaultMDNSDomainName");
+                + "." + rb.getString("defaultMDNSDomainName");
             setHostAddress(mdnsClient.getServiceOnHost(serviceType,
-                    qualifiedHostName).getHostAddresses()[0]);
+                                                       qualifiedHostName).getHostAddresses()[0]);
         } catch (java.lang.NullPointerException npe) {
             // if there is no hostname set, use the service name (which can't
             // be changed) to find the service.
             String qualifiedServiceName = rb.getString("defaultMDNSServiceName")
-                    + "." + serviceType;
+                + "." + serviceType;
             setHostAddress(mdnsClient.getServicebyAdName(serviceType,
-                    qualifiedServiceName).getHostAddresses()[0]);
+                                                         qualifiedServiceName).getHostAddresses()[0]);
         }
     }
-
+    
     ZeroConfClient mdnsClient = null;
-
+    
     /*
      * Get the ZeroConf/mDNS advertisement name.
      * this value is fixed on the LIUSB-Ethernet, so return the default
@@ -205,7 +199,7 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
     public String getAdvertisementName() {
         return rb.getString("defaultMDNSServiceName");
     }
-
+    
     /*
      * Get the ZeroConf/mDNS service type.
      * this value is fixed on the LIUSB-Ethernet, so return the default
@@ -216,6 +210,6 @@ public class DCCppEthernetAdapter extends DCCppNetworkPortController {
         return rb.getString("defaultMDNSServiceType");
     }
 
-    static Logger log = LoggerFactory.getLogger(DCCppEthernetAdapter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DCCppEthernetAdapter.class);
 
 }

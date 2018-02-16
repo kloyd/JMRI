@@ -38,10 +38,6 @@ import org.slf4j.LoggerFactory;
  */
 public class FunctionButton extends JToggleButton implements ActionListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2228118723029439168L;
     private ArrayList<FunctionListener> listeners = new ArrayList<FunctionListener>();
     private int identity; // F0, F1, etc?
     private boolean isOn;
@@ -224,6 +220,7 @@ public class FunctionButton extends JToggleButton implements ActionListener {
         buttonLabel = label;
     }
 
+    @Override
     public void setText(String s) {
         if (s != null) {
             buttonLabel = s;
@@ -275,6 +272,7 @@ public class FunctionButton extends JToggleButton implements ActionListener {
      *
      * @param e The ActionEvent causing the action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         FunctionButtonPropertyEditor editor = new FunctionButtonPropertyEditor();
         editor.setFunctionButton(this);
@@ -344,6 +342,7 @@ public class FunctionButton extends JToggleButton implements ActionListener {
          *
          * @param e The MouseEvent causing the action.
          */
+        @Override
         public void mousePressed(MouseEvent e) {
             if (log.isDebugEnabled()) {
                 log.debug("pressed " + (e.getModifiers() & MouseEvent.BUTTON1_MASK) + " " + e.isPopupTrigger()
@@ -372,6 +371,7 @@ public class FunctionButton extends JToggleButton implements ActionListener {
          *
          * @param e The MouseEvent causing the action.
          */
+        @Override
         public void mouseReleased(MouseEvent e) {
             if (log.isDebugEnabled()) {
                 log.debug("released " + (e.getModifiers() & MouseEvent.BUTTON1_MASK) + " " + e.isPopupTrigger()
@@ -536,6 +536,6 @@ public class FunctionButton extends JToggleButton implements ActionListener {
         return isSelectedImageOK;
     }
 
-    static Logger log = LoggerFactory.getLogger(FunctionButton.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(FunctionButton.class);
 
 }

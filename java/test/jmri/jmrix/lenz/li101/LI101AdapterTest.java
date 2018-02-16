@@ -1,11 +1,10 @@
 package jmri.jmrix.lenz.li101;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * LI101AdapterTest.java
@@ -13,41 +12,24 @@ import org.slf4j.LoggerFactory;
  * Description:	tests for the jmri.jmrix.lenz.li101.LI101Adapter class
  *
  * @author	Paul Bender
- * @version $Revision$
  */
-public class LI101AdapterTest extends TestCase {
+public class LI101AdapterTest {
 
+    @Test
     public void testCtor() {
         LI101Adapter a = new LI101Adapter();
         Assert.assertNotNull(a);
     }
 
-    // from here down is testing infrastructure
-    public LI101AdapterTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", LI101AdapterTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(LI101AdapterTest.class);
-        return suite;
-    }
-
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(LI101AdapterTest.class.getName());
 
 }

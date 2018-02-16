@@ -1,12 +1,11 @@
 package jmri.managers;
 
 import jmri.implementation.SignalSystemTestUtil;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * Tests for the jmri.managers.InternalTurnoutManager class.
@@ -96,7 +95,7 @@ public class DefaultSignalSystemManagerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", DefaultSignalSystemManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -106,14 +105,14 @@ public class DefaultSignalSystemManagerTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(DefaultSignalSystemManagerTest.class.getName());
 
 }

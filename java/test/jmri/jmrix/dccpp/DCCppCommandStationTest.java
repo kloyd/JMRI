@@ -1,9 +1,10 @@
 package jmri.jmrix.dccpp;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author	Paul Bender
  * @author      Mark Underwood
- * @version $Revision$
  *
  * Based on LenzCommandStationTest
  */
@@ -33,6 +33,7 @@ public class DCCppCommandStationTest extends TestCase {
         //DCCppReply r = new DCCppReply("iDCC++BASE STATION vUNO_1.0: BUILD 23 Feb 2015 09:23:57");
 	// V1.1 Status Message
         DCCppReply r = DCCppReply.parseDCCppReply("iDCC++ BASE STATION FOR ARDUINO MEGA / ARDUINO MOTOR SHIELD: BUILD 23 Feb 2015 09:23:57");
+        Assert.assertNotNull(r);
 	log.debug("Status Reply: {}", r.toString());
         c.setCommandStationInfo(r);
 	// Assert.assertTrue(c.getBaseStationType().equals("UNO_1.0"));
@@ -67,7 +68,7 @@ public class DCCppCommandStationTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", DCCppCommandStationTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -77,14 +78,16 @@ public class DCCppCommandStationTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
-    static Logger log = LoggerFactory.getLogger(DCCppCommandStationTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DCCppCommandStationTest.class);
 
 }

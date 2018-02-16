@@ -1,4 +1,3 @@
-// AbstractReporterManager.java
 package jmri.managers;
 
 import jmri.Manager;
@@ -11,19 +10,21 @@ import org.slf4j.LoggerFactory;
  * Abstract partial implementation of a ReporterManager.
  *
  * @author	Bob Jacobsen Copyright (C) 2004
- * @version	$Revision$
  */
-public abstract class AbstractReporterManager extends AbstractManager
+public abstract class AbstractReporterManager extends AbstractManager<Reporter>
         implements ReporterManager {
 
+    @Override
     public int getXMLOrder() {
         return Manager.REPORTERS;
     }
 
+    @Override
     public char typeLetter() {
         return 'R';
     }
 
+    @Override
     public Reporter provideReporter(String sName) {
         Reporter t = getReporter(sName);
         if (t != null) {
@@ -36,6 +37,7 @@ public abstract class AbstractReporterManager extends AbstractManager
         }
     }
 
+    @Override
     public Reporter getReporter(String name) {
         Reporter t = getByUserName(name);
         if (t != null) {
@@ -45,18 +47,22 @@ public abstract class AbstractReporterManager extends AbstractManager
         return getBySystemName(name);
     }
 
+    @Override
     public Reporter getBySystemName(String name) {
-        return (Reporter) _tsys.get(name);
+        return _tsys.get(name);
     }
 
+    @Override
     public Reporter getByUserName(String key) {
-        return (Reporter) _tuser.get(key);
+        return _tuser.get(key);
     }
 
+    @Override
     public String getBeanTypeHandled() {
         return Bundle.getMessage("BeanNameReporter");
     }
 
+    @Override
     public Reporter getByDisplayName(String key) {
         // First try to find it in the user list.
         // If that fails, look it up in the system list
@@ -68,17 +74,12 @@ public abstract class AbstractReporterManager extends AbstractManager
         return (retv);
     }
 
+    @Override
     public Reporter newReporter(String systemName, String userName) {
         if (log.isDebugEnabled()) {
             log.debug("new Reporter:"
                     + ((systemName == null) ? "null" : systemName)
                     + ";" + ((userName == null) ? "null" : userName));
-        }
-        if (systemName == null) {
-            log.error("SystemName cannot be null. UserName was "
-                    + ((userName == null) ? "null" : userName));
-            throw new IllegalArgumentException("SystemName cannot be null. UserName was "
-                    + ((userName == null) ? "null" : userName));
         }
         // return existing if there is one
         Reporter r;
@@ -104,11 +105,6 @@ public abstract class AbstractReporterManager extends AbstractManager
         // save in the maps
         register(r);
 
-        // if that failed, blame it on the input arguements
-        if (r == null) {
-            throw new IllegalArgumentException();
-        }
-
         return r;
     }
 
@@ -116,21 +112,22 @@ public abstract class AbstractReporterManager extends AbstractManager
      * Internal method to invoke the factory, after all the logic for returning
      * an existing method has been invoked.
      *
-     * @return never null
+     * @return Never null
      */
     abstract protected Reporter createNewReporter(String systemName, String userName);
 
     /**
      * A temporary method that determines if it is possible to add a range of
-     * turnouts in numerical order eg 10 to 30
-     *
+     * turnouts in numerical order eg. 10 to 30
      */
+    @Override
     public boolean allowMultipleAdditions(String systemName) {
         return false;
     }
 
+    @Override
     public String getNextValidAddress(String curAddress, String prefix) {
-        //If the hardware address past does not already exist then this can
+        //If the hardware address passed does not already exist then this can
         //be considered the next valid address.
         Reporter r = getBySystemName(prefix + typeLetter() + curAddress);
         if (r == null) {
@@ -144,7 +141,7 @@ public abstract class AbstractReporterManager extends AbstractManager
         } catch (NumberFormatException ex) {
             log.error("Unable to convert " + curAddress + " Hardware Address to a number");
             jmri.InstanceManager.getDefault(jmri.UserPreferencesManager.class).
-                    showErrorMessage("Error", "Unable to convert " + curAddress + " to a valid Hardware Address", "" + ex, "", true, false);
+                    showErrorMessage(Bundle.getMessage("WarningTitle"), "Unable to convert " + curAddress + " to a valid Hardware Address", "" + ex, "", true, false);
             return null;
         }
 
@@ -164,7 +161,17 @@ public abstract class AbstractReporterManager extends AbstractManager
             return Integer.toString(iName);
         }
     }
-    static Logger log = LoggerFactory.getLogger(AbstractReporterManager.class.getName());
-}
 
-/* @(#)AbstractReporterManager.java */
+    /**
+     * Provide a manager-agnostic tooltip for the Add new item beantable pane.
+     *
+     * @return the tooltip
+     */
+    @Override
+    public String getEntryToolTip() {
+        return "Enter a number from 1 to 9999"; // Basic number format help
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(AbstractReporterManager.class);
+
+}

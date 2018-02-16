@@ -1,46 +1,50 @@
-// SprogVersionFrame.java
 package jmri.jmrix.sprog.update;
 
 import javax.swing.JOptionPane;
+import jmri.jmrix.sprog.SprogSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Get the firmware version of the attached SPROG hardware
+ * Display the firmware version of the attached SPROG hardware.
  *
  * @author	Andrew Crosland Copyright (C) 2008
- * @version	$Revision$
  */
 public class SprogVersionFrame extends jmri.util.JmriJFrame implements SprogVersionListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 8607639215087566190L;
+    private SprogSystemConnectionMemo _memo = null;
 
-    public SprogVersionFrame() {
+    public SprogVersionFrame(SprogSystemConnectionMemo memo) {
         super();
+        _memo = memo;
     }
 
-    synchronized public void initComponents() throws Exception {
-        setTitle("SPROG Version");
+    /** 
+     * {@inheritDoc}
+     */
+    @Override
+    synchronized public void initComponents() {
+        setTitle(Bundle.getMessage("SprogVersionTitle"));
 
         // add help menu to window
         addHelpMenu("package.jmri.jmrix.sprog.update.SprogVersionFrame", true);
 
         // Start the query
-        SprogVersionQuery.requestVersion(this);
+        SprogVersionQuery query = _memo.getSprogVersionQuery();
+        query.requestVersion(this);
     }
 
+    /** 
+     * {@inheritDoc}
+     */
+    @Override
     synchronized public void notifyVersion(SprogVersion v) {
-        if (log.isDebugEnabled()) {
-            log.debug("Version " + v.toString() + " notified");
-        }
-        JOptionPane.showMessageDialog(null, v.toString(),
-                "SPROG Version", JOptionPane.INFORMATION_MESSAGE);
+        log.debug("Version {} notified", v.toString());
+        JOptionPane.showMessageDialog(null, Bundle.getMessage("SprogVersionDialogString", v.toString()),
+                Bundle.getMessage("SprogVersionTitle"), JOptionPane.INFORMATION_MESSAGE);
         setVisible(false);
         dispose();
     }
 
-    static Logger log = LoggerFactory.getLogger(SprogVersionFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SprogVersionFrame.class);
 }

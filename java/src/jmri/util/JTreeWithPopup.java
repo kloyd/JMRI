@@ -1,4 +1,3 @@
-// StringUtil.java
 package jmri.util;
 
 import java.awt.event.ActionEvent;
@@ -19,15 +18,9 @@ import javax.swing.tree.TreePath;
  * From the
  * <A HREF="http://www.java-tips.org/java-se-tips/javax.swing/have-a-popup-attached-to-a-jtree.html">Java
  * Tips</a> web site.
- *
- * @version $Revision$
  */
 class JTreeWithPopup extends JTree implements ActionListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4666689892833282531L;
     JPopupMenu popup;
     JMenuItem mi;
 
@@ -48,6 +41,7 @@ class JTreeWithPopup extends JTree implements ActionListener {
 
         addMouseListener(
                 new MouseAdapter() {
+                    @Override
                     public void mouseReleased(MouseEvent e) {
                         if (e.isPopupTrigger()) {
                             popup.show((JComponent) e.getSource(), e.getX(), e.getY());
@@ -58,6 +52,7 @@ class JTreeWithPopup extends JTree implements ActionListener {
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent ae) {
         DefaultMutableTreeNode dmtn, node;
 

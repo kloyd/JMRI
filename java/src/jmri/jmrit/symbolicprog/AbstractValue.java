@@ -1,4 +1,3 @@
-// AbstractValue.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.Color;
@@ -19,10 +18,9 @@ import java.beans.PropertyChangeSupport;
  * The Available parameter (boolean, unbound) remembers whether the variable
  * should be displayed, programmed, etc.
  *
- * Description:	Represents a single CV value
+ * Description: Represents a single CV value
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2005
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2005
  */
 public abstract class AbstractValue {
 

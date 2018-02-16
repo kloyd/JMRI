@@ -1,17 +1,24 @@
-// InternalSensorManager.java
 package jmri.managers;
 
 import jmri.Sensor;
 import jmri.implementation.AbstractSensor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the InternalSensorManager interface.
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2003, 2006
- * @version	$Revision$
+ * @deprecated As of 4.3.5, use jmri.jmrix.internal classes
  */
+@Deprecated
 public class InternalSensorManager extends AbstractSensorManager {
 
+    public InternalSensorManager() {
+        log.debug("InternalSensorManager constructed");
+    }
+    
+    @Override
     public boolean allowMultipleAdditions(String systemName) {
         return true;
     }
@@ -21,20 +28,17 @@ public class InternalSensorManager extends AbstractSensorManager {
      *
      * @return new null
      */
+    @Override
     protected Sensor createNewSensor(String systemName, String userName) {
         Sensor sen = new AbstractSensor(systemName, userName) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 6281257500525818919L;
-
+            @Override
             public void requestUpdateFromLayout() {
             }
         };
         try {
             sen.setKnownState(getDefaultStateForNewSensors());
         } catch (jmri.JmriException ex) {
-            log.error("An error occured while trying to set initial state for sensor " + sen.getDisplayName());
+            log.error("An error occurred while trying to set initial state for sensor " + sen.getDisplayName());
             log.error(ex.toString());
         }
         log.debug("Internal Sensor \"{}\", \"{}\" created", systemName, userName);
@@ -44,6 +48,7 @@ public class InternalSensorManager extends AbstractSensorManager {
     static int defaultState = Sensor.UNKNOWN;
 
     public static synchronized void setDefaultStateForNewSensors(int defaultSetting) {
+        log.debug("Default new-Sensor state set to {}", defaultSetting);
         defaultState = defaultSetting;
     }
 
@@ -53,8 +58,14 @@ public class InternalSensorManager extends AbstractSensorManager {
 
     protected String prefix = "I";
 
+    @Override
+    public NameValidity validSystemNameFormat(String systemName) {
+        return NameValidity.VALID;
+    }
+
+    @Override
     public String getNextValidAddress(String curAddress, String prefix) {
-        //If the hardware address past does not already exist then this can
+        //If the hardware address passed does not already exist then this can
         //be considered the next valid address.
         Sensor s = getBySystemName(prefix + typeLetter() + curAddress);
         if (s == null) {
@@ -88,9 +99,11 @@ public class InternalSensorManager extends AbstractSensorManager {
         }
     }
 
+    @Override
     public String getSystemPrefix() {
         return prefix;
     }
-}
 
-/* @(#)InternalSensorManager.java */
+    private final static Logger log = LoggerFactory.getLogger(InternalSensorManager.class);
+
+}

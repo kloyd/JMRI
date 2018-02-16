@@ -1,4 +1,3 @@
-// Pr1Importer.java
 package jmri.jmrit.symbolicprog;
 
 import java.io.File;
@@ -25,12 +24,11 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Alex Shepherd Copyright (C) 2003
- * @version	$Revision$
+ * @author Alex Shepherd Copyright (C) 2003
  */
 public class Pr1Importer {
 
-    static Logger log = LoggerFactory.getLogger(Pr1Importer.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(Pr1Importer.class);
     private static final String VERSION_KEY = "Version";
     private static final String CV_PREFIX = "CV";
     private static final int CV_INDEX_OFFSET = 2;

@@ -1,4 +1,3 @@
-// SplitVariableValue.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.Color;
@@ -24,14 +23,13 @@ import org.slf4j.LoggerFactory;
  * The original use is for addresses of stationary (accessory)
  * <P>
  * Factor and Offset are applied when going <i>to</i> value of the variable
- * <i>to</> the CV values:
+ * <i>to</i> the CV values:
  * <PRE>
  * Value to put in CVs = ((value in text field) - Offset)/Factor
  * Value to put in text field = ((value in CVs) * Factor) + Offset
  * </PRE> decoders.
  *
- * @author	Bob Jacobsen Copyright (C) 2002, 2003, 2004, 2013
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002, 2003, 2004, 2013
  *
  */
 public class SplitVariableValue extends VariableValue
@@ -85,12 +83,14 @@ public class SplitVariableValue extends VariableValue
         cv1.setState(CvValue.FROMFILE);
     }
 
+    @Override
     public CvValue[] usesCVs() {
         return new CvValue[]{
             _cvMap.get(getCvNum()),
             _cvMap.get(getSecondCvNum())};
     }
 
+    @Override
     public String getMask() {
         return _uppermask + _mask;
     }
@@ -98,6 +98,7 @@ public class SplitVariableValue extends VariableValue
     /**
      * Provide a user-readable description of the CVs accessed by this variable.
      */
+    @Override
     public String getCvDescription() {
         return "CV" + getCvNum() + " & CV" + getSecondCvNum();
     }
@@ -119,6 +120,7 @@ public class SplitVariableValue extends VariableValue
     // e.g. multiply by 256, then shift by this
     int upperbitoffset;
 
+    @Override
     public void setToolTipText(String t) {
         super.setToolTipText(t);   // do default stuff
         _value.setToolTipText(t);  // set our value
@@ -128,6 +130,7 @@ public class SplitVariableValue extends VariableValue
     int _maxVal;
     int _minVal;
 
+    @Override
     public Object rangeVal() {
         return "Split value";
     }
@@ -148,6 +151,7 @@ public class SplitVariableValue extends VariableValue
         }
     }
 
+    @Override
     void updatedTextField() {
         if (log.isDebugEnabled()) {
             log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " enter updatedTextField in SplitVal");
@@ -202,6 +206,7 @@ public class SplitVariableValue extends VariableValue
     /**
      * ActionListener implementations
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " actionPerformed");
@@ -214,6 +219,7 @@ public class SplitVariableValue extends VariableValue
     /**
      * FocusListener implementations
      */
+    @Override
     public void focusGained(FocusEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " focusGained");
@@ -221,6 +227,7 @@ public class SplitVariableValue extends VariableValue
         enterField();
     }
 
+    @Override
     public void focusLost(FocusEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " focusLost");
@@ -230,26 +237,31 @@ public class SplitVariableValue extends VariableValue
 
     // to complete this class, fill in the routines to handle "Value" parameter
     // and to read/write/hear parameter changes.
+    @Override
     public String getValueString() {
         // until 2.9.5, this was just the 1st CV value
         //int newVal = ((Integer.valueOf(_value.getText()).intValue())-mOffset)/mFactor;
         return _value.getText();
     }
 
+    @Override
     public void setIntValue(int i) {
         // until 2.9.5, this was just the 1st CV value
         //setValue((i-mOffset)/mFactor);
         setValue(i);
     }
 
+    @Override
     public int getIntValue() {
         return ((Integer.valueOf(_value.getText()).intValue()) - mOffset) / mFactor;
     }
 
+    @Override
     public Object getValueObject() {
         return Integer.valueOf(_value.getText());
     }
 
+    @Override
     public Component getCommonRep() {
         if (getReadOnly()) {
             JLabel r = new JLabel(_value.getText());
@@ -286,6 +298,7 @@ public class SplitVariableValue extends VariableValue
     Color _defaultColor;
 
     // implement an abstract member to set colors
+    @Override
     void setColor(Color c) {
         if (c != null) {
             _value.setBackground(c);
@@ -295,6 +308,7 @@ public class SplitVariableValue extends VariableValue
         // prop.firePropertyChange("Value", null, null);
     }
 
+    @Override
     public Component getNewRep(String format) {
         JTextField value = new VarTextField(_value.getDocument(), _value.getText(), 5, this);
         if (getReadOnly() || getInfoOnly()) {
@@ -304,6 +318,7 @@ public class SplitVariableValue extends VariableValue
         return updateRepresentation(value);
     }
 
+    @Override
     public void setAvailable(boolean a) {
         _value.setVisible(a);
         for (Component c : reps) {
@@ -324,19 +339,21 @@ public class SplitVariableValue extends VariableValue
     /**
      * Notify the connected CVs of a state change from above
      *
-     * @param state
      */
+    @Override
     public void setCvState(int state) {
         (_cvMap.get(getCvNum())).setState(state);
         (_cvMap.get(mSecondCV)).setState(state);
     }
 
+    @Override
     public boolean isChanged() {
         CvValue cv1 = (_cvMap.get(getCvNum()));
         CvValue cv2 = (_cvMap.get(getSecondCvNum()));
         return (considerChanged(cv1) || considerChanged(cv2));
     }
 
+    @Override
     public void readChanges() {
         if (isToRead() && !isChanged()) {
             log.debug("!!!!!!! unacceptable combination in readChanges: " + label());
@@ -346,6 +363,7 @@ public class SplitVariableValue extends VariableValue
         }
     }
 
+    @Override
     public void writeChanges() {
         if (isToWrite() && !isChanged()) {
             log.debug("!!!!!! unacceptable combination in writeChanges: " + label());
@@ -355,6 +373,7 @@ public class SplitVariableValue extends VariableValue
         }
     }
 
+    @Override
     public void readAll() {
         if (log.isDebugEnabled()) {
             log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " splitval read() invoked");
@@ -372,6 +391,7 @@ public class SplitVariableValue extends VariableValue
         (_cvMap.get(getCvNum())).read(_status);
     }
 
+    @Override
     public void writeAll() {
         if (log.isDebugEnabled()) {
             log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " write() invoked");
@@ -392,6 +412,7 @@ public class SplitVariableValue extends VariableValue
     }
 
     // handle incoming parameter notification
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " property changed event - name: "
@@ -506,15 +527,10 @@ public class SplitVariableValue extends VariableValue
     /* Internal class extends a JTextField so that its color is consistent with
      * an underlying variable
      *
-     * @author	Bob Jacobsen   Copyright (C) 2001
-     * @version     $Revision$
+     * @author Bob Jacobsen   Copyright (C) 2001
+     * 
      */
     public class VarTextField extends JTextField {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = -4853000377889737952L;
 
         VarTextField(Document doc, String text, int col, SplitVariableValue var) {
             super(doc, text, col);
@@ -523,11 +539,13 @@ public class SplitVariableValue extends VariableValue
             setBackground(_var._value.getBackground());
             // listen for changes to ourself
             addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     thisActionPerformed(e);
                 }
             });
             addFocusListener(new java.awt.event.FocusListener() {
+                @Override
                 public void focusGained(FocusEvent e) {
                     if (log.isDebugEnabled()) {
                         log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " focusGained");
@@ -535,6 +553,7 @@ public class SplitVariableValue extends VariableValue
                     enterField();
                 }
 
+                @Override
                 public void focusLost(FocusEvent e) {
                     if (log.isDebugEnabled()) {
                         log.debug("CV " + getCvNum() + "," + getSecondCvNum() + " focusLost");
@@ -544,6 +563,7 @@ public class SplitVariableValue extends VariableValue
             });
             // listen for changes to original state
             _var.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+                @Override
                 public void propertyChange(java.beans.PropertyChangeEvent e) {
                     originalPropertyChanged(e);
                 }
@@ -567,6 +587,7 @@ public class SplitVariableValue extends VariableValue
     }
 
     // clean up connections when done
+    @Override
     public void dispose() {
         if (log.isDebugEnabled()) {
             log.debug("dispose");
@@ -582,6 +603,6 @@ public class SplitVariableValue extends VariableValue
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(SplitVariableValue.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SplitVariableValue.class);
 
 }

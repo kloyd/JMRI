@@ -1,11 +1,10 @@
 package jmri.jmrix.lenz;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 /**
  * XNetMessageExceptionTest.java
@@ -13,11 +12,16 @@ import org.slf4j.LoggerFactory;
  * Description:	tests for the jmri.jmrix.lenz.XNetMessageException class
  *
  * @author	Paul Bender
- * @version $Revision$
  */
 public class XNetMessageExceptionTest extends TestCase {
 
     public void testCtor() {
+
+        XNetMessageException c = new XNetMessageException();
+        Assert.assertNotNull(c);
+    }
+
+    public void testStringCtor() {
 
         XNetMessageException c = new XNetMessageException("Test Exception");
         Assert.assertNotNull(c);
@@ -31,7 +35,7 @@ public class XNetMessageExceptionTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", XNetMessageExceptionTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -41,14 +45,14 @@ public class XNetMessageExceptionTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(XNetMessageExceptionTest.class.getName());
 
 }

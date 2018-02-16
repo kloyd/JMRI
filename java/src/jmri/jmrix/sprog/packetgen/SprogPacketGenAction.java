@@ -1,8 +1,8 @@
-// SprogPacketGenAction.java
 package jmri.jmrix.sprog.packetgen;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
+import jmri.jmrix.sprog.SprogSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,21 +10,19 @@ import org.slf4j.LoggerFactory;
  * Swing action to create and register a SprogPacketGenFrame object
  *
  * @author	Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
- */
+  */
 public class SprogPacketGenAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4279427035479187090L;
+    private SprogSystemConnectionMemo _memo;
 
-    public SprogPacketGenAction(String s) {
+    public SprogPacketGenAction(String s,SprogSystemConnectionMemo memo) {
         super(s);
+        _memo = memo;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        SprogPacketGenFrame f = new SprogPacketGenFrame();
+        SprogPacketGenFrame f = new SprogPacketGenFrame(_memo);
         try {
             f.initComponents();
         } catch (Exception ex) {
@@ -32,8 +30,8 @@ public class SprogPacketGenAction extends AbstractAction {
         }
         f.setVisible(true);
     }
-    static Logger log = LoggerFactory.getLogger(SprogPacketGenAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SprogPacketGenAction.class);
 }
 
 
-/* @(#)SprogPacketGenAction.java */
+

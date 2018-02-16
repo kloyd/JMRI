@@ -1,26 +1,26 @@
-// PipeListener.java
 package jmri.util;
 
 import java.io.IOException;
 import java.io.PipedReader;
+import javax.swing.JTextArea;
 
 /**
  * Small service class to read characters from a pipe and post them to a
  * JTextArea for display
  *
  * @author	Bob Jacobsen Copyright (C) 2004
- * @version $Revision$
  */
-class PipeListener extends Thread {
+public class PipeListener extends Thread {
 
-    private PipedReader pr;
-    private javax.swing.JTextArea ta;
+    private final PipedReader pr;
+    private final JTextArea ta;
 
     public PipeListener(PipedReader pr, javax.swing.JTextArea ta) {
         this.pr = pr;
         this.ta = ta;
     }
 
+    @Override
     public void run() {
         try {
             char[] c = new char[1];
@@ -32,7 +32,7 @@ class PipeListener extends Thread {
                     // new object created
                 } catch (IOException ex) {
                     if (ex.getMessage().equals("Write end dead") || ex.getMessage().equals("Pipe broken")) {
-                        // happens when the writer thread, e.g. a script, terminates
+                        // happens when the writer thread, possibly a script, terminates
                         synchronized (this) {
                             try {
                                 wait(500);

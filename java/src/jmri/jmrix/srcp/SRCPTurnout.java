@@ -1,4 +1,3 @@
-// SRCPTurnout.java
 package jmri.jmrix.srcp;
 
 import jmri.Turnout;
@@ -17,18 +16,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2008
  * @author	Paul Bender Copyright (C) 2014
- * @version	$Revision$
  */
 public class SRCPTurnout extends AbstractTurnout {
 
     /**
-     *
-     */
-    private static final long serialVersionUID = -5621580488773391864L;
-
-    /**
      * SRCP turnouts use the NMRA number (0-511) as their numerical
      * identification.
+     *
+     * @param number the turnout number
+     * @param memo   the associated connection
      */
     public SRCPTurnout(int number, SRCPBusConnectionMemo memo) {
         super(memo.getSystemPrefix() + memo.getTurnoutManager().typeLetter() + number);
@@ -52,11 +48,12 @@ public class SRCPTurnout extends AbstractTurnout {
     }
 
     // Handle a request to change state by sending a formatted DCC packet
+    @Override
     protected void forwardCommandChangeToLayout(int s) {
         // sort out states
-        if ((s & Turnout.CLOSED) > 0) {
+        if ((s & Turnout.CLOSED) != 0) {
             // first look for the double case, which we can't handle
-            if ((s & Turnout.THROWN) > 0) {
+            if ((s & Turnout.THROWN) != 0) {
                 // this is the disaster case!
                 log.error("Cannot command both CLOSED and THROWN " + s);
                 return;
@@ -70,6 +67,7 @@ public class SRCPTurnout extends AbstractTurnout {
         }
     }
 
+    @Override
     protected void turnoutPushbuttonLockout(boolean _pushButtonLockout) {
         if (log.isDebugEnabled()) {
             log.debug("Send command to " + (_pushButtonLockout ? "Lock" : "Unlock") + " Pushbutton ET" + _number);
@@ -96,9 +94,6 @@ public class SRCPTurnout extends AbstractTurnout {
 
     }
 
-    static Logger log = LoggerFactory.getLogger(SRCPTurnout.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SRCPTurnout.class);
 
 }
-
-
-/* @(#)SRCPTurnout.java */

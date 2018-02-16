@@ -1,4 +1,3 @@
-// NetworkDriverAdapter.java
 package jmri.jmrix.jmriclient.networkdriver;
 
 import java.util.ResourceBundle;
@@ -13,8 +12,7 @@ import org.slf4j.LoggerFactory;
  * <P>
  * This connects a JMRI server (daemon) via a telnet connection.
  *
- * @author	Paul Bender Copyright (C) 2010
- * @version	$Revision$
+ * @author Paul Bender Copyright (C) 2010
  */
 public class NetworkDriverAdapter extends JMRIClientPortController {
 
@@ -29,17 +27,16 @@ public class NetworkDriverAdapter extends JMRIClientPortController {
      * set up all of the other objects to operate with an JMRI server connected
      * to this port
      */
+    @Override
     public void configure() {
         // connect to the traffic controller
         JMRIClientTrafficController control = new JMRIClientTrafficController();
         control.connectPort(this);
         this.getSystemConnectionMemo().setJMRIClientTrafficController(control);
         this.getSystemConnectionMemo().configureManagers();
-
-        // mark OK for menus
-        jmri.jmrix.jmriclient.ActiveFlag.setActive();
     }
 
+    @Override
     public boolean status() {
         return opened;
     }
@@ -49,19 +46,9 @@ public class NetworkDriverAdapter extends JMRIClientPortController {
 
     @Deprecated
     static public NetworkDriverAdapter instance() {
-        log.error("Deprecated method instance Called");
-        new java.lang.Exception().printStackTrace();
-        if (mInstance == null) {
-            // create a new one and initialize
-            NetworkDriverAdapter m = new NetworkDriverAdapter();
-            m.setManufacturer(jmri.jmrix.DCCManufacturerList.JMRI);
-
-            // and set as instance
-            mInstance = m;
-        }
-        return mInstance;
+        log.error("Deprecated method instance Called", new Exception());
+        return null;
     }
-    static NetworkDriverAdapter mInstance = null;
 
     private boolean mDNSConfigure = false;
 
@@ -142,6 +129,6 @@ public class NetworkDriverAdapter extends JMRIClientPortController {
         return rb.getString("defaultMDNSServiceType");
     }
 
-    static Logger log = LoggerFactory.getLogger(NetworkDriverAdapter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(NetworkDriverAdapter.class);
 
 }

@@ -1,87 +1,82 @@
-// SerialSensorManagerTest.java
 package jmri.jmrix.secsi;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * JUnit tests for the SerialSensorManager class.
  *
  * @author	Bob Jacobsen Copyright 2003, 2007
- * @version	$Revision$
+ * @author Paul Bender Copyright (C) 2016
  */
-public class SerialSensorManagerTest extends TestCase {
+public class SerialSensorManagerTest extends jmri.managers.AbstractSensorMgrTestBase {
 
+    private SerialTrafficControlScaffold tcis = null;
+    private SecsiSystemConnectionMemo memo = null;
+
+    private SerialNode n0 = null;
+    private SerialNode n1 = null;
+    private SerialNode n2 = null;
+
+    @Override
+    public String getSystemName(int i) {
+        return "VS" + i;
+    }
+
+    @Test
     public void testSensorCreationAndRegistration() {
-        // replace the SerialTrafficController to get clean reset
-        SerialTrafficController t = new SerialTrafficController() {
-            SerialTrafficController test() {
-                setInstance();
-                return this;
-            }
-        }.test();
-
-        // construct nodes
-        SerialNode n0 = new SerialNode(0, SerialNode.DAUGHTER);
-        SerialNode n1 = new SerialNode(1, SerialNode.DAUGHTER);
-        SerialNode n2 = new SerialNode(2, SerialNode.CABDRIVER);
-
-        SerialSensorManager s = new SerialSensorManager();
-        Assert.assertNotNull("exists", t);
         Assert.assertTrue("none expected A0", !(n0.getSensorsActive()));
         Assert.assertTrue("none expected A1", !(n1.getSensorsActive()));
         Assert.assertTrue("none expected A2", !(n2.getSensorsActive()));
-        s.provideSensor("3");
+        l.provideSensor("3");
         Assert.assertTrue("UA 0", n0.getSensorsActive());
         Assert.assertTrue("2nd none expected A1", !(n1.getSensorsActive()));
         Assert.assertTrue("2nd none expected A2", !(n2.getSensorsActive()));
-        s.provideSensor("11");
-        s.provideSensor("8");
-        s.provideSensor("9");
-        s.provideSensor("13");
-        s.provideSensor("VS2006");
+        l.provideSensor("11");
+        l.provideSensor("8");
+        l.provideSensor("9");
+        l.provideSensor("13");
+        l.provideSensor("VS2006");
         Assert.assertTrue("2nd UA 0", n0.getSensorsActive());
         Assert.assertTrue("3rd none expected UA 1", !(n1.getSensorsActive()));
         Assert.assertTrue("UA 2", n2.getSensorsActive());
-        s.provideSensor("15");
-        s.provideSensor("1001");
+        l.provideSensor("15");
+        l.provideSensor("1001");
         Assert.assertTrue("3rd UA 0", n0.getSensorsActive());
         Assert.assertTrue("UA 1", n1.getSensorsActive());
         Assert.assertTrue("2nd UA 2", n0.getSensorsActive());
-        s.provideSensor("7");
-        s.provideSensor("1007");
-        s.provideSensor("2007");
+        l.provideSensor("7");
+        l.provideSensor("1007");
+        l.provideSensor("2007");
         Assert.assertTrue("4th UA 0", n0.getSensorsActive());
         Assert.assertTrue("2nd UA 1", n1.getSensorsActive());
         Assert.assertTrue("3rd UA 2", n0.getSensorsActive());
     }
 
-    // from here down is testing infrastructure
-    public SerialSensorManagerTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {SerialSensorManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(SerialSensorManagerTest.class);
-        return suite;
-    }
-
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Override
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
+        tcis = new SerialTrafficControlScaffold();
+        memo = new SecsiSystemConnectionMemo();
+        memo.setTrafficController(tcis);
+
+        // construct nodes
+        n0 = new SerialNode(0, SerialNode.DAUGHTER,tcis);
+        n1 = new SerialNode(1, SerialNode.DAUGHTER,tcis);
+        n2 = new SerialNode(2, SerialNode.CABDRIVER,tcis);
+
+        l = new SerialSensorManager(memo);
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        l.dispose();
+        JUnitUtil.tearDown();
     }
 
 }

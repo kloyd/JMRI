@@ -1,4 +1,3 @@
-// DebuggerFrame.java
 package jmri.jmrix.rps.swing.debugger;
 
 import java.awt.FlowLayout;
@@ -19,6 +18,7 @@ import jmri.jmrix.rps.Measurement;
 import jmri.jmrix.rps.MeasurementListener;
 import jmri.jmrix.rps.Reading;
 import jmri.jmrix.rps.ReadingListener;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,18 +26,15 @@ import org.slf4j.LoggerFactory;
  * Frame for manual operation and debugging of the RPS system
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
  */
 public class DebuggerFrame extends jmri.util.JmriJFrame
         implements ReadingListener, MeasurementListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4663988863071182111L;
+    RpsSystemConnectionMemo memo = null;
 
-    public DebuggerFrame() {
+    public DebuggerFrame(RpsSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
 
         NUMSENSORS = Engine.instance().getMaxReceiverNumber();
 
@@ -48,6 +45,7 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
         return "RPS Debugger";
     }  // product name, not translated
 
+    @Override
     public void dispose() {
         // separate from data source
         Distributor.instance().removeReadingListener(this);
@@ -75,6 +73,7 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
 
     int NUMSENSORS;
 
+    @Override
     public void initComponents() {
 
         nf = java.text.NumberFormat.getInstance();
@@ -145,6 +144,7 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
 
         doButton = new JButton("Do Once");
         doButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 doOnce();
             }
@@ -160,8 +160,8 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
-        fileMenu.add(new jmri.jmrix.rps.swing.CsvExportAction("Export Readings as CSV..."));
-        fileMenu.add(new jmri.jmrix.rps.swing.CsvExportMeasurementAction("Export Measurements as CSV..."));
+        fileMenu.add(new jmri.jmrix.rps.swing.CsvExportAction("Export Readings as CSV...",memo));
+        fileMenu.add(new jmri.jmrix.rps.swing.CsvExportMeasurementAction("Export Measurements as CSV...",memo));
         setJMenuBar(menuBar);
 
         // add help
@@ -313,6 +313,7 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
         Distributor.instance().submitReading(r);
     }
 
+    @Override
     public void notify(Reading r) {
         // This implementation creates a new Calculator
         // each time to ensure that the most recent
@@ -320,7 +321,7 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
         // replaced with some notification system
         // to reduce the work used.
 
-        id.setText("" + r.getID());
+        id.setText("" + r.getId());
         timep.notify(r);
     }
 
@@ -341,6 +342,7 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
         Distributor.instance().submitMeasurement(m);
     }
 
+    @Override
     public void notify(Measurement m) {
         // show result
         x.setText(nf.format(m.getX()));
@@ -358,5 +360,5 @@ public class DebuggerFrame extends jmri.util.JmriJFrame
     com.csvreader.CsvReader measurementInput = null;
     final javax.swing.JFileChooser measurementFileChooser = new JFileChooser("rps/positions.csv");
 
-    static Logger log = LoggerFactory.getLogger(DebuggerFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DebuggerFrame.class);
 }

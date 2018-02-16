@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * method here.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2002, 2008
- * @version $Revision: 17977 $
  */
 public class MarklinTurnoutManagerXml extends jmri.managers.configurexml.AbstractTurnoutManagerConfigXML {
 
@@ -19,10 +18,12 @@ public class MarklinTurnoutManagerXml extends jmri.managers.configurexml.Abstrac
         super();
     }
 
+    @Override
     public void setStoreElementClass(Element turnouts) {
         turnouts.setAttribute("class", "jmri.jmrix.marklin.configurexml.MarklinTurnoutManagerXml");
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -35,5 +36,5 @@ public class MarklinTurnoutManagerXml extends jmri.managers.configurexml.Abstrac
         return loadTurnouts(shared, perNode);
     }
 
-    static Logger log = LoggerFactory.getLogger(MarklinTurnoutManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(MarklinTurnoutManagerXml.class);
 }

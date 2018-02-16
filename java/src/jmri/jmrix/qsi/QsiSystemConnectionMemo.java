@@ -1,11 +1,9 @@
-// QsiSystemConnectionMemo.javaf
 package jmri.jmrix.qsi;
 
 import java.util.ResourceBundle;
+import jmri.GlobalProgrammerManager;
 import jmri.InstanceManager;
-import jmri.ProgrammerManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.managers.DefaultProgrammerManager;
 
 /**
  * Lightweight class to denote that a system is active, and provide general
@@ -16,7 +14,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author	Kevin Dickerson Copyright (C) 2012
  * @author	Bob Jacobsen Copyright (C) 2010
- * @version $Revision: 19712 $
  */
 public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
 
@@ -25,6 +22,8 @@ public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
         this.st = st;
         register();
         InstanceManager.store(this, QsiSystemConnectionMemo.class); // also register as specific type
+        InstanceManager.store(cf = new jmri.jmrix.qsi.swing.QsiComponentFactory(this),
+        jmri.jmrix.swing.ComponentFactory.class);
     }
 
     public QsiSystemConnectionMemo() {
@@ -32,9 +31,8 @@ public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
         register(); // registers general type
         InstanceManager.store(this, QsiSystemConnectionMemo.class); // also register as specific type
 
-        //Needs to be implemented
-        /*InstanceManager.store(cf = new jmri.jmrix.ecos.swing.ComponentFactory(this), 
-         jmri.jmrix.swing.ComponentFactory.class);*/
+        InstanceManager.store(cf = new jmri.jmrix.qsi.swing.QsiComponentFactory(this),
+        jmri.jmrix.swing.ComponentFactory.class);
     }
 
     jmri.jmrix.swing.ComponentFactory cf = null;
@@ -55,7 +53,7 @@ public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
      * Provide a menu with all items attached to this system connection
      */
     public javax.swing.JMenu getMenu() {
-        return new QSIMenu("QSI");
+        return new QSIMenu("QSI",this);
     }
 
     /**
@@ -69,9 +67,6 @@ public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
     public boolean provides(Class<?> type) {
         if (getDisabled()) {
             return false;
-        }
-        if (type.equals(jmri.ProgrammerManager.class)) {
-            return true;
         }
         if (type.equals(jmri.GlobalProgrammerManager.class)) {
             return getProgrammerManager().isGlobalProgrammerAvailable();
@@ -88,9 +83,6 @@ public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
         if (getDisabled()) {
             return null;
         }
-        if (T.equals(jmri.ProgrammerManager.class)) {
-            return (T) getProgrammerManager();
-        }
         if (T.equals(jmri.GlobalProgrammerManager.class)) {
             return (T) getProgrammerManager();
         }
@@ -102,32 +94,32 @@ public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
 
     /**
      * Configure the common managers for Qsi connections. This puts the common
-     * manager config in one place. This method is static so that it can be
-     * referenced from classes that don't inherit, including
-     * hexfile.HexFileFrame and locormi.LnMessageClient
+     * manager config in one place.
      */
     public void configureManagers() {
-        jmri.InstanceManager.setProgrammerManager(
-                getProgrammerManager());
+        InstanceManager.setAddressedProgrammerManager(getProgrammerManager());
+        InstanceManager.store(getProgrammerManager(), GlobalProgrammerManager.class);
     }
 
-    private ProgrammerManager programmerManager;
+    private DefaultProgrammerManager programmerManager;
 
-    public ProgrammerManager getProgrammerManager() {
+    public DefaultProgrammerManager getProgrammerManager() {
         if (programmerManager == null) {
-            programmerManager = new jmri.managers.DefaultProgrammerManager(jmri.jmrix.qsi.QsiProgrammer.instance(), this);
+            programmerManager = new jmri.managers.DefaultProgrammerManager(new jmri.jmrix.qsi.QsiProgrammer(this), this);
         }
         return programmerManager;
     }
 
-    public void setProgrammerManager(ProgrammerManager p) {
+    public void setProgrammerManager(DefaultProgrammerManager p) {
         programmerManager = p;
     }
 
+    @Override
     protected ResourceBundle getActionModelResourceBundle() {
         return ResourceBundle.getBundle("jmri.jmrix.qsi.QsiActionListBundle");
     }
 
+    @Override
     public void dispose() {
         st = null;
         InstanceManager.deregister(this, QsiSystemConnectionMemo.class);
@@ -136,9 +128,7 @@ public class QsiSystemConnectionMemo extends jmri.jmrix.SystemConnectionMemo {
         }
         super.dispose();
     }
-
-    static Logger log = LoggerFactory.getLogger(QsiSystemConnectionMemo.class.getName());
 }
 
 
-/* @(#)QsiSystemConnectionMemo.java */
+

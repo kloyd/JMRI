@@ -1,4 +1,3 @@
-// ProgServiceModePane.java
 package jmri.jmrit.progsupport;
 
 import java.awt.event.ActionListener;
@@ -6,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
@@ -19,46 +19,46 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Provide a JPanel to configure the service mode programmer.
- * <P>
+ * <p>
  * The using code should get a configured programmer with getProgrammer. Since
  * there's only one service mode programmer, maybe this isn't critical, but it's
  * a good idea for the future.
- * <P>
+ * <p>
  * A ProgModePane may "share" between one of these and a ProgOpsModePane, which
  * means that there might be _none_ of these buttons selected. When that
  * happens, the mode of the underlying programmer is left unchanged and no
  * message is propagated.
- * <P>
+ * <p>
  * Note that you should call the dispose() method when you're really done, so
  * that a ProgModePane object can disconnect its listeners.
- *
  * <hr>
  * This file is part of JMRI.
- * <P>
+ * <p>
  * JMRI is free software; you can redistribute it and/or modify it under the
  * terms of version 2 of the GNU General Public License as published by the Free
  * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
+ * <p>
  * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
- * @author	Bob Jacobsen Copyright (C) 2001, 2014
- * @version	$Revision$
+ *
+ * @author Bob Jacobsen Copyright (C) 2001, 2014
  */
 public class ProgServiceModePane extends ProgModeSelector implements PropertyChangeListener, ActionListener {
 
-    private static final long serialVersionUID = 9075947253729508706L;
     ButtonGroup modeGroup = new ButtonGroup();
-    HashMap<ProgrammingMode, JRadioButton> buttonMap = new HashMap<ProgrammingMode, JRadioButton>();
+    HashMap<ProgrammingMode, JRadioButton> buttonMap = new HashMap<>();
     JComboBox<GlobalProgrammerManager> progBox;
-    ArrayList<JRadioButton> buttonPool = new ArrayList<JRadioButton>();
+    ArrayList<JRadioButton> buttonPool = new ArrayList<>();
 
     /**
      * Get the selected programmer
      */
+    @Override
     public Programmer getProgrammer() {
-        if (progBox.getSelectedItem() == null) return null;
+        if (progBox.getSelectedItem() == null) {
+            return null;
+        }
         return ((GlobalProgrammerManager) progBox.getSelectedItem()).getGlobalProgrammer();
     }
 
@@ -67,6 +67,7 @@ public class ProgServiceModePane extends ProgModeSelector implements PropertyCha
      *
      * @return true is any button is selected
      */
+    @Override
     public boolean isSelected() {
         for (JRadioButton button : buttonMap.values()) {
             if (button.isSelected()) {
@@ -85,15 +86,13 @@ public class ProgServiceModePane extends ProgModeSelector implements PropertyCha
     }
 
     /**
-     * Get the list of global managers
+     * Get the list of global managers.
+     *
      * @return empty list if none
      */
-    protected List<GlobalProgrammerManager> getMgrList() {
-        List<GlobalProgrammerManager> retval;
-        
-        retval = InstanceManager.getList(jmri.GlobalProgrammerManager.class);
-        if (retval!=null) return retval;
-        return new ArrayList<>();
+    @Nonnull
+    public List<GlobalProgrammerManager> getMgrList() {
+        return InstanceManager.getList(jmri.GlobalProgrammerManager.class);
     }
 
     /**
@@ -107,24 +106,25 @@ public class ProgServiceModePane extends ProgModeSelector implements PropertyCha
         setLayout(new BoxLayout(this, direction));
 
         // create the programmer display combo box
-        java.util.Vector<GlobalProgrammerManager> v = new java.util.Vector<GlobalProgrammerManager>();
+        java.util.Vector<GlobalProgrammerManager> v = new java.util.Vector<>();
         for (GlobalProgrammerManager pm : getMgrList()) {
-            v.add(pm);
-            // listen for changes
-            if (pm.getGlobalProgrammer() != null) {
+            if (pm != null && pm.getGlobalProgrammer() != null) {
+                v.add(pm);
+                // listen for changes
                 pm.getGlobalProgrammer().addPropertyChangeListener(this);
-            } else {
-                log.warn("No GlobalProgrammer present in GlobalProgrammerManager, is there a problem with layout connection?");
             }
         }
-        add(progBox = new JComboBox<GlobalProgrammerManager>(v));
+
+        add(progBox = new JComboBox<>(v));
         // if only one, don't show
         if (progBox.getItemCount() < 2) {
             // no choice, so don't display, don't monitor for changes
             progBox.setVisible(false);
         } else {
+            log.debug("Set combobox box selection to InstanceManager global default: {}", InstanceManager.getDefault(jmri.GlobalProgrammerManager.class));
             progBox.setSelectedItem(InstanceManager.getDefault(jmri.GlobalProgrammerManager.class)); // set default
             progBox.addActionListener(new java.awt.event.ActionListener() {
+                @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     // new programmer selection
                     programmerSelected();
@@ -182,7 +182,8 @@ public class ProgServiceModePane extends ProgModeSelector implements PropertyCha
     /**
      * Listen to buttons for mode changes
      */
-    public void actionPerformed(java.awt.event.ActionEvent e) {
+    @Override
+    public void actionPerformed(@Nonnull java.awt.event.ActionEvent e) {
         // find selected button
         log.debug("Selected button: {}", e.getActionCommand());
         for (ProgrammingMode mode : buttonMap.keySet()) {
@@ -197,7 +198,8 @@ public class ProgServiceModePane extends ProgModeSelector implements PropertyCha
     /**
      * Listen to programmer for mode changes
      */
-    public void propertyChange(java.beans.PropertyChangeEvent e) {
+    @Override
+    public void propertyChange(@Nonnull java.beans.PropertyChangeEvent e) {
         if ("Mode".equals(e.getPropertyName()) && getProgrammer().equals(e.getSource())) {
             // mode changed in programmer, change GUI here if needed
             log.debug("Mode propertyChange with {}", isSelected());
@@ -219,11 +221,15 @@ public class ProgServiceModePane extends ProgModeSelector implements PropertyCha
     }
 
     // no longer needed, disconnect if still connected
+    @Override
     public void dispose() {
         for (GlobalProgrammerManager pm : getMgrList()) {
-            pm.getGlobalProgrammer().removePropertyChangeListener(this);
+            Programmer gp = pm.getGlobalProgrammer();
+            if (gp != null) {
+                gp.removePropertyChangeListener(this);
+            }
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(ProgServiceModePane.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ProgServiceModePane.class);
 }

@@ -1,16 +1,20 @@
-// NameCheckAction.java
 package jmri.jmrit.decoderdefn;
 
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import jmri.InstanceManager;
 import jmri.jmrit.XmlFile;
+import jmri.jmrit.symbolicprog.NameFile;
 import org.jdom2.Attribute;
 import org.jdom2.Element;
+import org.jdom2.JDOMException;
 import org.jdom2.filter.ElementFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,16 +22,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Check the names in an XML decoder file against the names.xml definitions
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2007
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2007
  * @see jmri.jmrit.XmlFile
  */
 public class NameCheckAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8721690694443271221L;
 
     public NameCheckAction(String s, JPanel who) {
         super(s);
@@ -39,9 +37,7 @@ public class NameCheckAction extends AbstractAction {
     JPanel _who;
 
     @SuppressWarnings("unchecked")
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION")
-    // Only used occasionally, so inefficient String processing not really a problem
-    // though it would be good to fix it if you're working in this area
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (fci == null) {
             fci = jmri.jmrit.XmlFile.userFileChooser("XML files", "xml");
@@ -71,7 +67,7 @@ public class NameCheckAction extends AbstractAction {
                 Iterator<Element> iter = root.getChild("decoder").getChild("variables")
                         .getDescendants(new ElementFilter("variable"));
 
-                jmri.jmrit.symbolicprog.NameFile nfile = jmri.jmrit.symbolicprog.NameFile.instance();
+                NameFile nfile = InstanceManager.getDefault(NameFile.class);
 
                 String warnings = "";
 
@@ -111,9 +107,8 @@ public class NameCheckAction extends AbstractAction {
                     JOptionPane.showMessageDialog(_who, "No mismatched items found");
                 }
 
-            } catch (Exception ex) {
+            } catch (HeadlessException | IOException | JDOMException ex) {
                 JOptionPane.showMessageDialog(_who, "Error parsing decoder file: " + ex);
-                return;
             }
 
         } else {
@@ -122,7 +117,12 @@ public class NameCheckAction extends AbstractAction {
     }
 
     /**
-     * Ask SAX to read and verify a file
+     * Read and verify an XML file.
+     *
+     * @param file the file to read
+     * @return the root element in the file
+     * @throws org.jdom2.JDOMException if the file cannot be parsed
+     * @throws java.io.IOException     if the file cannot be read
      */
     Element readFile(File file) throws org.jdom2.JDOMException, java.io.IOException {
         XmlFile xf = new XmlFile() {
@@ -133,6 +133,6 @@ public class NameCheckAction extends AbstractAction {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(NameCheckAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(NameCheckAction.class);
 
 }

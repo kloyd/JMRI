@@ -1,20 +1,17 @@
-// LocaleSelectorTest.java
 package jmri.util.jdom;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
+import org.junit.Assert;
 
 /**
  * Tests for the jmri.util.LocaleSelector class.
  *
  * @author	Bob Jacobsen Copyright 2010
- * @version	$Revision$
  */
 public class LocaleSelectorTest extends TestCase {
 
@@ -188,7 +185,7 @@ public class LocaleSelectorTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {LocaleSelectorTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -200,13 +197,11 @@ public class LocaleSelectorTest extends TestCase {
     // The minimal setup for log4J
     @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
     @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(LocaleSelectorTest.class.getName());
 }

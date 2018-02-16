@@ -1,12 +1,7 @@
-/**
- *
- */
 package jmri;
 
 import jmri.implementation.AbstractTurnout;
 import jmri.implementation.RawTurnoutOperator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * RawTurnoutOperation class - specialization of TurnoutOperation to provide
@@ -14,7 +9,6 @@ import org.slf4j.LoggerFactory;
  * to the turnout. This class is based on the NoTurnoutOperation class.
  *
  * @author Paul Bender
- * @version $Revision$
  */
 public class RawTurnoutOperation extends CommonTurnoutOperation {
 
@@ -39,21 +33,22 @@ public class RawTurnoutOperation extends CommonTurnoutOperation {
      * constructor with default values - this creates the "defining instance" of
      * the operation type hence it cannot be deleted
      */
-    public RawTurnoutOperation() {
-        this("Raw", defaultInterval, defaultMaxTries);
-    }
+    public RawTurnoutOperation() { this("Raw", defaultInterval, defaultMaxTries); }
 
     /**
      * return clone with different name
      */
+    @Override
     public TurnoutOperation makeCopy(String n) {
         return new NoFeedbackTurnoutOperation(n, interval, maxTries);
     }
 
+    @Override
     public int getDefaultInterval() {
         return defaultInterval;
     }
 
+    @Override
     public int getDefaultMaxTries() {
         return defaultMaxTries;
     }
@@ -69,11 +64,10 @@ public class RawTurnoutOperation extends CommonTurnoutOperation {
     /**
      * get a TurnoutOperator instance for this operation
      *
-     * @return	the operator
+     * @return the operator
      */
+    @Override
     public TurnoutOperator getOperator(AbstractTurnout t) {
         return new RawTurnoutOperator(t, interval, maxTries);
     }
-
-    static Logger log = LoggerFactory.getLogger(RawTurnoutOperation.class.getName());
 }

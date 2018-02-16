@@ -1,4 +1,3 @@
-// XpaTurnout.java
 package jmri.jmrix.xpa;
 
 import jmri.Turnout;
@@ -11,24 +10,27 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author	Paul Bender Copyright (C) 2004
- * @version	$Revision$
  */
 public class XpaTurnout extends AbstractTurnout {
 
     /**
      *
      */
-    private static final long serialVersionUID = -1847371708656010119L;
     // Private data member to keep track of what turnout we control.
-    int _number;
+    private final int _number;
+    private XpaTrafficController tc = null;
 
     /**
-     * Xpa turnouts use any addres allowed as an accessory decoder address on
+     * Xpa turnouts use any address allowed as an accessory decoder address on
      * the particular command station.
+     *
+     * @param number turnout number
+     * @param m      connection turnout is associated with
      */
-    public XpaTurnout(int number) {
-        super("PT" + number);
+    public XpaTurnout(int number, XpaSystemConnectionMemo m) {
+        super(m.getSystemPrefix() + "T" + number);
         _number = number;
+        tc = m.getXpaTrafficController();
     }
 
     public int getNumber() {
@@ -36,12 +38,13 @@ public class XpaTurnout extends AbstractTurnout {
     }
 
     // Handle a request to change state by sending a formatted DCC packet
+    @Override
     protected void forwardCommandChangeToLayout(int s) {
-        XpaMessage m = null;
+        XpaMessage m;
         // sort out states
-        if ((s & Turnout.CLOSED) > 0) {
+        if ((s & Turnout.CLOSED) != 0) {
             // first look for the double case, which we can't handle
-            if ((s & Turnout.THROWN) > 0) {
+            if ((s & Turnout.THROWN) != 0) {
                 // this is the disaster case!
                 log.error("Cannot command both CLOSED and THROWN " + s);
                 return;
@@ -53,20 +56,16 @@ public class XpaTurnout extends AbstractTurnout {
             // send a THROWN command
             m = XpaMessage.getSwitchReverseMsg(_number);
         }
-        if (m != null) {
-            XpaTrafficController.instance().sendXpaMessage(m, null);
-        }
-
+        tc.sendXpaMessage(m, null);
     }
 
+    @Override
     protected void turnoutPushbuttonLockout(boolean _pushButtonLockout) {
         if (log.isDebugEnabled()) {
             log.debug("Send command to " + (_pushButtonLockout ? "Lock" : "Unlock") + " Pushbutton PT" + _number);
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(XpaTurnout.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(XpaTurnout.class);
 
 }
-
-/* @(#)XpaTurnout.java */

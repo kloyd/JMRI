@@ -1,4 +1,3 @@
-// CombinedLocoSelListPane.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.event.ActionListener;
@@ -14,12 +13,14 @@ import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import jmri.GlobalProgrammerManager;
+import jmri.InstanceManager;
+import jmri.Programmer;
 import jmri.jmrit.decoderdefn.DecoderFile;
 import jmri.jmrit.decoderdefn.DecoderIndexFile;
+import jmri.jmrit.progsupport.ProgModeSelector;
 import jmri.jmrit.roster.Roster;
 import jmri.jmrit.roster.RosterEntry;
-import jmri.jmrit.progsupport.ProgModeSelector;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,19 +33,13 @@ import org.slf4j.LoggerFactory;
  * parts are unchanged.
  * <P>
  * The JComboBox implementation always had to have selected entries, so we added
- * dummy "select from .." items at the top & used those to indicate that there
- * was no selection in that box. Here, the lack of a selection indicates there's
- * no selection.
+ * dummy "select from .." items at the top {@literal &} used those to indicate
+ * that there was no selection in that box. Here, the lack of a selection
+ * indicates there's no selection.
  *
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002
  */
 public class CombinedLocoSelListPane extends CombinedLocoSelPane {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8124040231760463058L;
 
     public CombinedLocoSelListPane(JLabel s, ProgModeSelector selector) {
         super(s, selector);
@@ -53,23 +48,25 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
     /**
      * Create the panel used to select the decoder
      */
+    @Override
     protected JPanel layoutDecoderSelection() {
         JPanel pane1a = new JPanel();
         pane1a.setLayout(new BoxLayout(pane1a, BoxLayout.X_AXIS));
         pane1a.add(new JLabel("Decoder installed: "));
         // create the list of manufacturers
-        mMfgList = new JList<String>();
+        mMfgList = new JList<>();
         updateMfgListContents(null);
         mMfgList.clearSelection();
         mMfgList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         mMfgListener = new ListSelectionListener() {
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!mMfgList.isSelectionEmpty()) {
                     // manufacturer selected, update decoder list
                     String vMfg = mMfgList.getSelectedValue();
                     try {
                         int vMfgID = Integer.parseInt(
-                                DecoderIndexFile.instance().mfgIdFromName(vMfg));
+                                InstanceManager.getDefault(DecoderIndexFile.class).mfgIdFromName(vMfg));
 
                         listDecodersFromMfg(vMfgID, vMfg);
                     } catch (java.lang.NumberFormatException ex) {
@@ -82,22 +79,23 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
         };
         mMfgList.addListSelectionListener(mMfgListener);
 
-        mDecoderList = new JList<String>(DecoderIndexFile.instance()
+        mDecoderList = new JList<String>(InstanceManager.getDefault(DecoderIndexFile.class)
                 .matchingComboBox(null, null, null, null, null, null).getModel());
         mDecoderList.clearSelection();
         mDecoderList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         mDecoderListener = new ListSelectionListener() {
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!mDecoderList.isSelectionEmpty()) {
                     // decoder selected - reset and disable loco selection
                     locoBox.setSelectedIndex(0);
                     go2.setEnabled(true);
-                    go2.setToolTipText("Click to open the programmer");
+                    go2.setToolTipText(Bundle.getMessage("TipClickToOpen"));
                     updateMfgListToSelectedDecoder();
                 } else {
                     // decoder not selected - require one
                     go2.setEnabled(false);
-                    go2.setToolTipText("Select a locomotive or decoder to enable");
+                    go2.setToolTipText(Bundle.getMessage("TipSelectLoco"));
                 }
             }
         };
@@ -107,14 +105,16 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
         pane1a.add(new JScrollPane(mDecoderList));
         iddecoder = new JToggleButton("Ident");
         iddecoder.setToolTipText("Read the decoders mfg and version, then attempt to select its type");
-        if (jmri.InstanceManager.programmerManagerInstance() != null
-                && jmri.InstanceManager.programmerManagerInstance().getGlobalProgrammer() != null
-                && !jmri.InstanceManager.programmerManagerInstance().getGlobalProgrammer().getCanRead()) {
-            // can't read, disable the button
-            iddecoder.setEnabled(false);
-            iddecoder.setToolTipText("Button disabled because configured command station can't read CVs");
+        if (InstanceManager.getNullableDefault(GlobalProgrammerManager.class) != null) {
+            Programmer p = InstanceManager.getDefault(GlobalProgrammerManager.class).getGlobalProgrammer();
+            if (p != null && !p.getCanRead()) {
+                // can't read, disable the button
+                iddecoder.setEnabled(false);
+                iddecoder.setToolTipText("Button disabled because configured command station can't read CVs");
+            }
         }
         iddecoder.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 if (log.isDebugEnabled()) {
                     log.debug("identify decoder pressed");
@@ -141,16 +141,16 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
         }
         String currentValue = mMfgList.getSelectedValue();
 
-        List<String> allMfgList = DecoderIndexFile.instance().getMfgNameList();
-        List<String> theMfgList = new ArrayList<String>();
+        List<String> allMfgList = InstanceManager.getDefault(DecoderIndexFile.class).getMfgNameList();
+        List<String> theMfgList = new ArrayList<>();
 
         for (int i = 0; i < allMfgList.size(); i++) {
             // see if this qualifies; either a non-zero set of decoders, or
             // matches the specific name
-            if ((specific != null && (allMfgList.get(i) == specific))
-                    || (0 != DecoderIndexFile.instance()
-                    .matchingDecoderList(allMfgList.get(i), null, null, null, null, null)
-                    .size())) {
+            if ((specific != null && (allMfgList.get(i).equals(specific)))
+                    || (0 != InstanceManager.getDefault(DecoderIndexFile.class)
+                            .matchingDecoderList(allMfgList.get(i), null, null, null, null, null)
+                            .size())) {
                 theMfgList.add(allMfgList.get(i));
             }
         }
@@ -170,7 +170,7 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
      */
     void updateMfgListToSelectedDecoder() {
         // update to point at this mfg, _without_ changing the decoder list
-        DecoderFile df = DecoderIndexFile.instance()
+        DecoderFile df = InstanceManager.getDefault(DecoderIndexFile.class)
                 .fileFromTitle(mDecoderList.getSelectedValue());
         if (log.isDebugEnabled()) {
             log.debug("decoder selection changed to "
@@ -198,6 +198,7 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
     /**
      * Decoder identify has matched one or more specific types
      */
+    @Override
     void updateForDecoderTypeID(List<DecoderFile> pModelList) {
         // use a DefaultComboBoxModel to get the efficient ctor
         mDecoderList.setModel(DecoderIndexFile.jComboBoxModelFromList(pModelList));
@@ -213,6 +214,7 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
      * @param pMfgID   Manufacturer ID number (CV8)
      * @param pModelID Model ID number (CV7)
      */
+    @Override
     void updateForDecoderMfgID(String pMfg, int pMfgID, int pModelID) {
         String msg = "Found mfg " + pMfgID + " (" + pMfg + ") version " + pModelID + "; no such decoder defined";
         log.warn(msg);
@@ -226,7 +228,7 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
 
     void listDecodersFromMfg(int pMfgID, String pMfg) {
         // try to select all decoders from that MFG
-        JComboBox<String> temp = DecoderIndexFile.instance().matchingComboBox(null, null, Integer.toString(pMfgID), null, null, null);
+        JComboBox<String> temp = InstanceManager.getDefault(DecoderIndexFile.class).matchingComboBox(null, null, Integer.toString(pMfgID), null, null, null);
         if (log.isDebugEnabled()) {
             log.debug("mfg-only selectDecoder found " + temp.getItemCount() + " matches");
         }
@@ -239,13 +241,14 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
     /**
      * Decoder identify did not match anything, warn and show all
      */
+    @Override
     void updateForDecoderNotID(int pMfgID, int pModelID) {
         String msg = "Found mfg " + pMfgID + " version " + pModelID + "; no such manufacterer defined";
         log.warn(msg);
         _statusLabel.setText(msg);
         mMfgList.setSelectedIndex(1);
         mMfgList.clearSelection();
-        JComboBox<String> temp = DecoderIndexFile.instance().matchingComboBox(null, null, null, null, null, null);
+        JComboBox<String> temp = InstanceManager.getDefault(DecoderIndexFile.class).matchingComboBox(null, null, null, null, null, null);
         mDecoderList.setModel(temp.getModel());
         mDecoderList.clearSelection();
     }
@@ -253,16 +256,17 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
     /**
      * Set the decoder selection to a specific decoder from a selected Loco
      */
+    @Override
     void setDecoderSelectionFromLoco(String loco) {
         // if there's a valid loco entry...
-        RosterEntry locoEntry = Roster.instance().entryFromTitle(loco);
+        RosterEntry locoEntry = Roster.getDefault().entryFromTitle(loco);
         if (locoEntry == null) {
             return;
         }
         // get the decoder type, it has to be there (assumption!),
         String modelString = locoEntry.getDecoderModel();
         // find the decoder mfg
-        String mfgString = DecoderIndexFile.instance().fileFromTitle(modelString)
+        String mfgString = InstanceManager.getDefault(DecoderIndexFile.class).fileFromTitle(modelString)
                 .getMfg();
 
         // then select it
@@ -285,6 +289,7 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
      *
      * @return true if a decoder type is selected
      */
+    @Override
     boolean isDecoderSelected() {
         return !mDecoderList.isSelectionEmpty();
     }
@@ -294,6 +299,7 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
      *
      * @return The selected decoder type name, or null if none selected.
      */
+    @Override
     protected String selectedDecoderType() {
         if (!isDecoderSelected()) {
             return null;
@@ -308,6 +314,6 @@ public class CombinedLocoSelListPane extends CombinedLocoSelPane {
     JList<String> mMfgList;
     ListSelectionListener mMfgListener;
 
-    static Logger log = LoggerFactory.getLogger(CombinedLocoSelListPane.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CombinedLocoSelListPane.class);
 
 }

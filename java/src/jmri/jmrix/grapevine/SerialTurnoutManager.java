@@ -1,4 +1,3 @@
-// SerialTurnoutManager.java
 package jmri.jmrix.grapevine;
 
 import jmri.JmriException;
@@ -12,23 +11,26 @@ import org.slf4j.LoggerFactory;
  * <P>
  * System names are "GTnnn", where nnn is the turnout number without padding.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2006, 2007, 2008
- * @version	$Revision$
- */
+ * @author Bob Jacobsen Copyright (C) 2003, 2006, 2007, 2008
+  */
 public class SerialTurnoutManager extends AbstractTurnoutManager {
 
-    public SerialTurnoutManager() {
+    GrapevineSystemConnectionMemo memo = null;
 
+    public SerialTurnoutManager(GrapevineSystemConnectionMemo _memo) {
+       memo = _memo;
     }
 
+    @Override
     public String getSystemPrefix() {
-        return "G";
+        return memo.getSystemPrefix();
     }
 
+    @Override
     public Turnout createNewTurnout(String systemName, String userName) {
         // validate the system name, and normalize it
         String sName = SerialAddress.normalizeSystemName(systemName);
-        if (sName == "") {
+        if (sName.equals("")) {
             // system name is not valid
             return null;
         }
@@ -44,29 +46,27 @@ public class SerialTurnoutManager extends AbstractTurnoutManager {
             return null;
         }
         // create the turnout
-        t = new SerialTurnout(sName, userName);
+        t = new SerialTurnout(sName, userName,memo);
 
         // does system name correspond to configured hardware
-        if (!SerialAddress.validSystemNameConfig(sName, 'T')) {
+        if (!SerialAddress.validSystemNameConfig(sName, 'T',memo.getTrafficController())) {
             // system name does not correspond to configured hardware
             log.warn("Turnout '" + sName + "' refers to an undefined Serial Node.");
         }
         return t;
     }
 
+    @Deprecated
     static public SerialTurnoutManager instance() {
-        if (_instance == null) {
-            _instance = new SerialTurnoutManager();
-        }
-        return _instance;
-    }
-    static SerialTurnoutManager _instance = null;
-
-    //Turnout address format is more than a simple number.
-    public boolean allowMultipleAdditions() {
-        return false;
+        return null;
     }
 
+    @Override
+    public boolean allowMultipleAdditions(String systemName) {
+        return false; //Turnout address format is more than a simple number.
+    }
+
+    @Override
     public String createSystemName(String curAddress, String prefix) throws JmriException {
         String tmpSName = prefix + "T" + curAddress;
 
@@ -102,8 +102,9 @@ public class SerialTurnoutManager extends AbstractTurnoutManager {
     int nNode = 0;
 
     /**
-     * A method that returns the next valid free turnout hardware address
+     * A method that returns the next valid free turnout hardware address.
      */
+    @Override
     public String getNextValidAddress(String curAddress, String prefix) throws JmriException {
 
         String tmpSName = "";
@@ -113,7 +114,7 @@ public class SerialTurnoutManager extends AbstractTurnoutManager {
             throw ex;
         }
 
-        //If the hardware address past does not already exist then this can
+        //If the hardware address passed does not already exist then this can
         //be considered the next valid address.
         Turnout t = getBySystemName(tmpSName);
         if (t == null) {
@@ -144,8 +145,40 @@ public class SerialTurnoutManager extends AbstractTurnoutManager {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialTurnoutManager.class.getName());
+
+    /**
+     * Public method to validate system name format.
+     *
+     * @return 'true' if system name has a valid format,
+     * else returns 'false'
+     */
+    @Override
+    public NameValidity validSystemNameFormat(String systemName) {
+        return (SerialAddress.validSystemNameFormat(systemName, 'T'));
+    }
+
+    /**
+     * Public method to normalize a system name.
+     *
+     * @return a normalized system name if system name has a valid format, else
+     * returns ""
+     */
+    @Override
+    public String normalizeSystemName(String systemName) {
+        return (SerialAddress.normalizeSystemName(systemName));
+    }
+
+    /**
+     * Provide a manager-specific tooltip for the Add new item beantable pane.
+     */
+    @Override
+    public String getEntryToolTip() {
+        String entryToolTip = Bundle.getMessage("AddOutputEntryToolTip");
+        return entryToolTip;
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(SerialTurnoutManager.class);
 
 }
 
-/* @(#)SerialTurnoutManager.java */
+

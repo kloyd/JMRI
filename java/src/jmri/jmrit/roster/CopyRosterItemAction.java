@@ -1,4 +1,3 @@
-// CopyRosterItemAction.java
 package jmri.jmrit.roster;
 
 import java.awt.Component;
@@ -24,16 +23,10 @@ import org.slf4j.LoggerFactory;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2001, 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2002
  * @see jmri.jmrit.XmlFile
  */
 public class CopyRosterItemAction extends AbstractRosterItemAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1887063385344105392L;
 
     public CopyRosterItemAction(String s, WindowInterface wi) {
         super(s, wi);
@@ -97,7 +90,7 @@ public class CopyRosterItemAction extends AbstractRosterItemAction {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(CopyRosterItemAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CopyRosterItemAction.class);
 
     // never invoked, because we overrode actionPerformed above
     @Override

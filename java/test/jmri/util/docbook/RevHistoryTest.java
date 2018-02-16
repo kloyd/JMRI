@@ -1,16 +1,15 @@
-// RevHistoryTest.java
 package jmri.util.docbook;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the jmri.util.docbook.RevHistory class.
  *
  * @author	Bob Jacobsen Copyright (C) 2010
- * @version $Revision$
  */
 public class RevHistoryTest extends TestCase {
 
@@ -52,7 +51,7 @@ public class RevHistoryTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", RevHistoryTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -62,12 +61,14 @@ public class RevHistoryTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

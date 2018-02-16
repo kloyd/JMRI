@@ -9,20 +9,19 @@ import jmri.LocoAddress;
 
 public class ThrottlesTableModel extends AbstractTableModel implements AddressListener, java.beans.PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2173804644663235326L;
     private ArrayList<ThrottleFrame> throttleFrames = new ArrayList<ThrottleFrame>(5);
 
+    @Override
     public int getRowCount() {
         return throttleFrames.size();
     }
 
+    @Override
     public int getColumnCount() {
         return 1;
     }
 
+    @Override
     public Object getValueAt(int i, int i1) {
         return throttleFrames.get(i);
     }
@@ -44,29 +43,38 @@ public class ThrottlesTableModel extends AbstractTableModel implements AddressLi
         fireTableDataChanged();
     }
 
+    @Override
     public void notifyAddressChosen(LocoAddress la) {
     }
 
+    @Override
     public void notifyAddressReleased(LocoAddress addr) {
-        DccLocoAddress la = (DccLocoAddress) addr;
-        fireTableDataChanged();
-        jmri.InstanceManager.throttleManagerInstance().removeListener(la, this);
+        if(addr instanceof DccLocoAddress ) {
+           DccLocoAddress la = (DccLocoAddress) addr;
+           fireTableDataChanged();
+           jmri.InstanceManager.throttleManagerInstance().removeListener(la, this);
+        }
     }
 
+    @Override
     public void notifyAddressThrottleFound(DccThrottle throttle) {
         fireTableDataChanged();
         throttle.addPropertyChangeListener(this);
     }
 
+    @Override
     public void notifyConsistAddressChosen(int newAddress, boolean isLong) {
     }
 
+    @Override
     public void notifyConsistAddressReleased(int address, boolean isLong) {
     }
 
+    @Override
     public void notifyConsistAddressThrottleFound(DccThrottle throttle) {
     }
 
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         if ((e.getPropertyName().equals("SpeedSetting")) || (e.getPropertyName().equals("SpeedSteps")) || (e.getPropertyName().equals("IsForward"))) {
             fireTableDataChanged();

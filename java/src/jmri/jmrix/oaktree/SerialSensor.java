@@ -1,22 +1,13 @@
-// SerialSensor.java
 package jmri.jmrix.oaktree;
 
 import jmri.implementation.AbstractSensor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Extend jmri.AbstractSensor for serial systems
- * <P>
- * @author	Bob Jacobsen Copyright (C) 2003, 2006
- * @version $Revision$
+ *
+ * @author Bob Jacobsen Copyright (C) 2003, 2006
  */
 public class SerialSensor extends AbstractSensor {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2538135903910579736L;
 
     public SerialSensor(String systemName) {
         super(systemName);
@@ -35,11 +26,8 @@ public class SerialSensor extends AbstractSensor {
      * Eventually, we may want to have this move the related AIU to the top of
      * the polling queue.
      */
+    @Override
     public void requestUpdateFromLayout() {
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialSensor.class.getName());
-
 }
-
-/* @(#)SerialSensor.java */

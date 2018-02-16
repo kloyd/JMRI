@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id$ -->
+<?xml version="1.0" encoding="iso-8859-1"?>
 
 <!-- Stylesheet to convert a JMRI roster XML file into displayable HTML -->
 
@@ -61,13 +60,12 @@
 				</table>
 				<hr />
 				This page was produced by
-				<A href="http://jmri.sf.net">
-					<IMG src="http://jmri.sourceforge.net/images/logo-jmri.gif"
+				<A href="http://jmri.org">
+					<IMG src="http://jmri.org/images/logo-jmri.gif"
 						height="31" border="0" alt="JMRI project" />
 				</A>
-				<A href="http://sourceforge.net">
-					<IMG src="http://sourceforge.net/sflogo.php?group_id=26788&amp;type=1"
-						width="88" height="31" border="0" alt="SourceForge Logo" />
+                    <a href="http://sourceforge.net/projects/jmri">
+    <img src="https://sourceforge.net/sflogo.php?type=13&amp;group_id=26788" border="0" alt="JMRI Model Railroad Interface at SourceForge.net"/></a>
 				</A>
 
 			</body>

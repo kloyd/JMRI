@@ -1,13 +1,18 @@
-// BeanTableFrame.java
 package jmri.jmrit.roster.swing;
 
+import apps.gui.GuiLafPreferencesManager;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JCheckBoxMenuItem;
@@ -16,34 +21,33 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
+import jmri.InstanceManager;
 import jmri.jmrit.roster.Roster;
 import jmri.jmrit.roster.RosterEntry;
 import jmri.jmrit.roster.RosterEntrySelector;
 import jmri.jmrit.roster.rostergroup.RosterGroupSelector;
-import jmri.util.com.sun.TableSorter;
 import jmri.util.swing.JmriPanel;
 import jmri.util.swing.XTableColumnModel;
 
 /**
- * Provide a table of roster entries as a JmriJPanel
+ * Provide a table of roster entries as a JmriJPanel.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2010
+ * @author Bob Jacobsen Copyright (C) 2003, 2010
  * @author Randall Wood Copyright (C) 2013
- * @version	$Revision$
  */
 public class RosterTable extends JmriPanel implements RosterEntrySelector, RosterGroupSelector {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4642772877556156627L;
     RosterTableModel dataModel;
-    TableSorter sorter;
+    TableRowSorter<RosterTableModel> sorter;
     JTable dataTable;
     JScrollPane dataScroll;
     XTableColumnModel columnModel = new XTableColumnModel();
@@ -64,17 +68,18 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
     public RosterTable(boolean editable, int selectionMode) {
         super();
         dataModel = new RosterTableModel(editable);
-        sorter = new TableSorter(dataModel);
-        dataTable = new JTable(sorter);
-        sorter.setTableHeader(dataTable.getTableHeader());
+        sorter = new TableRowSorter<>(dataModel);
+        dataTable = new JTable(dataModel);
+        dataTable.setRowSorter(sorter);
         dataScroll = new JScrollPane(dataTable);
+        dataTable.setRowHeight(InstanceManager.getDefault(GuiLafPreferencesManager.class).getFontSize() + 4);
+
+        sorter.setComparator(RosterTableModel.IDCOL, new jmri.util.AlphanumComparator());
 
         // set initial sort
-        TableSorter tmodel = ((TableSorter) dataTable.getModel());
-        tmodel.setSortingStatus(RosterTableModel.ADDRESSCOL, TableSorter.ASCENDING);
-
-        // Use a "Numeric, if not, Alphanumeric" comparator
-        tmodel.setColumnComparator(String.class, new jmri.util.PreferNumericComparator());
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        sortKeys.add(new RowSorter.SortKey(RosterTableModel.ADDRESSCOL, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
 
         // allow reordering of the columns
         dataTable.getTableHeader().setReorderingAllowed(true);
@@ -87,17 +92,27 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         dataTable.createDefaultColumnsFromModel();
         dataTable.setAutoCreateColumnsFromModel(false);
 
+        // format the last updated date time
+        columnModel.getColumnByModelIndex(RosterTableModel.DATEUPDATECOL).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            protected void setValue(Object value) {
+                if (value != null && value instanceof Date) {
+                    super.setValue(DateFormat.getDateTimeInstance().format((Date) value));
+                } else {
+                    super.setValue(value);
+                }
+            }
+        });
+
         TableColumn tc = columnModel.getColumnByModelIndex(RosterTableModel.PROTOCOL);
         columnModel.setColumnVisible(tc, false);
 
-        for (String s : Roster.instance().getAllAttributeKeys()) {
+        for (String s : Roster.getDefault().getAllAttributeKeys()) {
             if (!s.contains("RosterGroup") && !s.toLowerCase().startsWith("sys") && !s.toUpperCase().startsWith("VSD")) { // NOI18N
                 String[] r = s.split("(?=\\p{Lu})"); // NOI18N
                 StringBuilder sb = new StringBuilder();
                 sb.append(r[0].trim());
-                //System.out.println("'"+r[0]+",");
                 for (int j = 1; j < r.length; j++) {
-                    //System.out.println("'"+r[j]+",");
                     sb.append(" ");
                     sb.append(r[j].trim());
                 }
@@ -127,36 +142,33 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         dataScroll.getViewport().setPreferredSize(dataTableSize);
 
         dataTable.setSelectionMode(selectionMode);
-        MouseListener mouseHeaderListener = new tableHeaderListener();
+        MouseListener mouseHeaderListener = new TableHeaderListener();
         dataTable.getTableHeader().addMouseListener(mouseHeaderListener);
 
         dataTable.setDefaultEditor(Object.class, new RosterCellEditor());
 
-        dataTable.getSelectionModel().addListSelectionListener(tableSelectionListener = new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    selectedRosterEntries = null; // clear cached list of selections
-                    if (dataTable.getSelectedRowCount() == 1) {
-                        re = Roster.instance().getEntryForId(sorter.getValueAt(dataTable.getSelectedRow(), RosterTableModel.IDCOL).toString());
-                    } else if (dataTable.getSelectedRowCount() > 1) {
-                        re = null;
-                    } // leave last selected item visible if no selection
-                } else if (e.getFirstIndex() == -1) {
-                    //A reorder of the table might of occured therefore we are going to make sure that the selected item is still in view
-                    moveTableViewToSelected();
-                }
+        tableSelectionListener = (ListSelectionEvent e) -> {
+            if (!e.getValueIsAdjusting()) {
+                selectedRosterEntries = null; // clear cached list of selections
+                if (dataTable.getSelectedRowCount() == 1) {
+                    re = Roster.getDefault().getEntryForId(dataModel.getValueAt(sorter.convertRowIndexToModel(dataTable.getSelectedRow()), RosterTableModel.IDCOL).toString());
+                } else if (dataTable.getSelectedRowCount() > 1) {
+                    re = null;
+                } // leave last selected item visible if no selection
+            } else if (e.getFirstIndex() == -1) {
+                //A reorder of the table might of occurred therefore we are going to make sure that the selected item is still in view
+                moveTableViewToSelected();
             }
-        });
-
+        };
+        dataTable.getSelectionModel().addListSelectionListener(tableSelectionListener);
     }
 
     public JTable getTable() {
         return dataTable;
     }
 
-    public TableSorter getModel() {
-        return sorter;
+    public RosterTableModel getModel() {
+        return dataModel;
     }
 
     public final void resetColumnWidths() {
@@ -177,7 +189,6 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         }
         dataModel = null;
         dataTable = null;
-        dataScroll = null;
         super.dispose();
     }
 
@@ -201,14 +212,23 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
      */
     public void setRosterGroupSource(RosterGroupSelector rosterGroupSource) {
         if (this.rosterGroupSource != null) {
-            this.rosterGroupSource.removePropertyChangeListener(RosterGroupSelector.selectedRosterGroupProperty, dataModel);
+            this.rosterGroupSource.removePropertyChangeListener(SELECTED_ROSTER_GROUP, dataModel);
         }
         this.rosterGroupSource = rosterGroupSource;
         if (this.rosterGroupSource != null) {
-            this.rosterGroupSource.addPropertyChangeListener(RosterGroupSelector.selectedRosterGroupProperty, dataModel);
+            this.rosterGroupSource.addPropertyChangeListener(SELECTED_ROSTER_GROUP, dataModel);
         }
     }
 
+    /**
+     * Return the column model used by the table wrapped by this class.
+     *
+     * @return the column model used by this table
+     * @deprecated since 4.5.4 without replacement; there is no longer a special
+     * need to provide the specific subclass of
+     * {@link javax.swing.table.TableColumnModel}.
+     */
+    @Deprecated
     public XTableColumnModel getXTableColumnModel() {
         return columnModel;
     }
@@ -218,7 +238,7 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         for (int i = 0; i < columnModel.getColumnCount(false); i++) {
             TableColumn tc = columnModel.getColumnByModelIndex(i);
             JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(dataTable.getModel().getColumnName(i), columnModel.isColumnVisible(tc));
-            menuItem.addActionListener(new headerActionListener(tc));
+            menuItem.addActionListener(new HeaderActionListener(tc));
             popupMenu.add(menuItem);
 
         }
@@ -234,7 +254,7 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         dataTable.clearSelection();
         int entires = dataTable.getRowCount();
         for (int i = 0; i < entires; i++) {
-            if (dataTable.getValueAt(i, RosterTableModel.IDCOL).equals(re.getId())) {
+            if (dataModel.getValueAt(sorter.convertRowIndexToModel(i), RosterTableModel.IDCOL).equals(re.getId())) {
                 dataTable.addRowSelectionInterval(i, i);
                 dataTable.scrollRectToVisible(new Rectangle(dataTable.getCellRect(i, 0, true)));
             }
@@ -250,17 +270,15 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
     // cache selectedRosterEntries so that multiple calls to this
     // between selection changes will not require the creation of a new array
     @Override
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP",
-            justification = "Want to give access to mutable, original roster objects")
     public RosterEntry[] getSelectedRosterEntries() {
         if (selectedRosterEntries == null) {
             int[] rows = dataTable.getSelectedRows();
             selectedRosterEntries = new RosterEntry[rows.length];
             for (int idx = 0; idx < rows.length; idx++) {
-                selectedRosterEntries[idx] = Roster.instance().getEntryForId(sorter.getValueAt(rows[idx], RosterTableModel.IDCOL).toString());
+                selectedRosterEntries[idx] = Roster.getDefault().getEntryForId(dataModel.getValueAt(sorter.convertRowIndexToModel(rows[idx]), RosterTableModel.IDCOL).toString());
             }
         }
-        return selectedRosterEntries;
+        return Arrays.copyOf(selectedRosterEntries, selectedRosterEntries.length);
     }
 
     public void setEditable(boolean editable) {
@@ -286,9 +304,9 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         if (selection != null) {
             for (RosterEntry entry : selection) {
                 re = entry;
-                int entires = dataTable.getRowCount();
-                for (int i = 0; i < entires; i++) {
-                    if (dataTable.getValueAt(i, RosterTableModel.IDCOL).equals(re.getId())) {
+                int entries = dataTable.getRowCount();
+                for (int i = 0; i < entries; i++) {
+                    if (dataModel.getValueAt(sorter.convertRowIndexToModel(i), RosterTableModel.IDCOL).equals(re.getId())) {
                         dataTable.addRowSelectionInterval(i, i);
                     }
                 }
@@ -304,11 +322,11 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         dataTable.getSelectionModel().addListSelectionListener(tableSelectionListener);
     }
 
-    class headerActionListener implements ActionListener {
+    class HeaderActionListener implements ActionListener {
 
         TableColumn tc;
 
-        headerActionListener(TableColumn tc) {
+        HeaderActionListener(TableColumn tc) {
             this.tc = tc;
         }
 
@@ -323,7 +341,7 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
         }
     }
 
-    class tableHeaderListener extends MouseAdapter {
+    class TableHeaderListener extends MouseAdapter {
 
         @Override
         public void mousePressed(MouseEvent e) {
@@ -349,17 +367,8 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
 
     public class RosterCellEditor extends DefaultCellEditor implements TableCellEditor {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = -6459789129802283684L;
-
         public RosterCellEditor() {
             super(new JTextField() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -3459969794810110857L;
 
                 @Override
                 public void setBorder(Border border) {
@@ -383,11 +392,7 @@ public class RosterTable extends JmriPanel implements RosterEntrySelector, Roste
                     return false;
                 }
             }
-            if (sorter.getValueAt(dataTable.getSelectedRow(), RosterTableModel.IDCOL).equals(re.getId())) {
-                //if the current select roster entry matches the one that we have selected, then we can allow this field to be edited.
-                return true;
-            }
-            return false;
+            return re.getId().equals(dataModel.getValueAt(sorter.convertRowIndexToModel(dataTable.getSelectedRow()), RosterTableModel.IDCOL));
         }
     }
 }

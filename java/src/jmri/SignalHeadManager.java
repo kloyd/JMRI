@@ -1,7 +1,9 @@
-// SignalHeadManager.java
 package jmri;
 
 import java.util.List;
+import javax.annotation.CheckForNull;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
 
 /**
  * Interface for obtaining signal heads.
@@ -22,32 +24,33 @@ import java.util.List;
  * <P>
  *
  * @author Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
  */
-public interface SignalHeadManager extends Manager {
+public interface SignalHeadManager extends Manager<SignalHead> {
 
     // to free resources when no longer used
+    @Override
     public void dispose();
 
     /**
      * Locate via user name, then system name if needed. Does not create a new
      * one if nothing found
      *
-     * @param name
+     * @param name User name or system name to match
      * @return null if no match found
      */
-    public SignalHead getSignalHead(String name);
+    @CheckReturnValue
+    @CheckForNull public SignalHead getSignalHead(@Nonnull String name);
 
-    public SignalHead getByUserName(String s);
+    @CheckReturnValue
+    @CheckForNull public SignalHead getByUserName(@Nonnull String s);
 
-    public SignalHead getBySystemName(String s);
+    @CheckReturnValue
+    @CheckForNull public SignalHead getBySystemName(@Nonnull String s);
 
     /**
      * Get a list of all SignalHead system names.
      */
-    public List<String> getSystemNameList();
+    @Nonnull@Override
+ public List<String> getSystemNameList();
 
 }
-
-
-/* @(#)SignalHeadManager.java */

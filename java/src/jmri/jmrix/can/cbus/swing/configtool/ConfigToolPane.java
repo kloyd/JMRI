@@ -1,11 +1,9 @@
-// ConfigToolPane.java
 package jmri.jmrix.can.cbus.swing.configtool;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ResourceBundle;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -19,25 +17,17 @@ import jmri.jmrix.can.CanListener;
 import jmri.jmrix.can.CanSystemConnectionMemo;
 import jmri.jmrix.can.TrafficController;
 import jmri.jmrix.can.cbus.CbusMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Pane to ease creation of Sensor, Turnouts and Lights that are linked to CBUS
+ * Pane for user creation of Sensor, Turnouts and Lights (?) that are linked to CBUS
  * events.
  *
- * @author	Bob Jacobsen Copyright (C) 2008
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2008
  * @since 2.3.1
  */
 public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements CanListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6189931385951469812L;
-
-    static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.can.cbus.swing.configtool.ConfigToolBundle");
+    //static ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.can.cbus.swing.configtool.ConfigToolBundle");
 
     static final int NRECORDERS = 6;
     CbusEventRecorder[] recorders = new CbusEventRecorder[NRECORDERS];
@@ -53,74 +43,62 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
             recorders[i] = new CbusEventRecorder();
             p1.add(recorders[i]);
         }
-        p1.setBorder(BorderFactory.createTitledBorder(rb.getString("BorderLayoutEvents")));
+        p1.setBorder(BorderFactory.createTitledBorder(Bundle.getMessage("BorderLayoutEvents")));
         add(p1);
 
         // add sensor
         makeSensor = new MakeNamedBean("LabelEventActive", "LabelEventInactive") {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -7423601645608436305L;
 
+            @Override
             void create(String name) {
                 if (memo != null) {
                     ((jmri.SensorManager) memo.get(jmri.SensorManager.class)).provideSensor("MS" + name);
                 } else {
-                    InstanceManager.sensorManagerInstance().provideSensor("MS" + name);
+                    InstanceManager.sensorManagerInstance().provideSensor("MS" + name); // S for Sensor
                 }
             }
         };
-        makeSensor.setBorder(BorderFactory.createTitledBorder(rb.getString("BorderLayoutAddSensor")));
+        makeSensor.setBorder(BorderFactory.createTitledBorder(Bundle.getMessage("TitleAddX", Bundle.getMessage("BeanNameSensor"))));
         add(makeSensor);
 
         // add turnout
         makeTurnout = new MakeNamedBean("LabelEventThrown", "LabelEventClosed") {
-            /**
-             *
-             */
-            private static final long serialVersionUID = 5143711808149483844L;
-
+            @Override
             void create(String name) {
                 if (memo != null) {
                     ((jmri.TurnoutManager) memo.get(jmri.TurnoutManager.class)).provideTurnout("MS" + name);
                 } else {
-                    InstanceManager.turnoutManagerInstance().provideTurnout("MT" + name);
+                    InstanceManager.turnoutManagerInstance().provideTurnout("MT" + name); // T for Turnout
                 }
             }
         };
-        makeTurnout.setBorder(BorderFactory.createTitledBorder(rb.getString("BorderLayoutAddTurnout")));
+        makeTurnout.setBorder(BorderFactory.createTitledBorder(Bundle.getMessage("TitleAddX", Bundle.getMessage("BeanNameTurnout"))));
         add(makeTurnout);
 
     }
 
     TrafficController tc;
 
+    @Override
     public void initComponents(CanSystemConnectionMemo memo) {
         super.initComponents(memo);
         tc = memo.getTrafficController();
         tc.addCanListener(this);
     }
 
-    /*
-     * @deprecated 2.99.2
-     */
-    /*@Deprecated
-     public void initComponents() {
-     tc = TrafficController.instance();
-     tc.addCanListener(this);
-     }*/
+    @Override
     public String getTitle() {
         if (memo != null) {
-            return (memo.getUserName() + " Event Capture Tool");
+            return (memo.getUserName() + " " + Bundle.getMessage("ConfigTitle"));
 
         }
-        return "CBUS Event Capture Tool";
+        return Bundle.getMessage("ConfigTitle");
     }
 
     MakeNamedBean makeSensor;
     MakeNamedBean makeTurnout;
 
+    @Override
     public void reply(jmri.jmrix.can.CanReply m) {
         // forward to anybody waiting to capture
         makeSensor.reply(m);
@@ -133,6 +111,7 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
         }
     }
 
+    @Override
     public void message(jmri.jmrix.can.CanMessage m) {
         // forward to anybody waiting to capture
         makeSensor.message(m);
@@ -145,34 +124,36 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
         }
     }
 
+    @Override
     public void dispose() {
         // disconnect from the CBUS
         tc.removeCanListener(this);
     }
-
-    static Logger log = LoggerFactory.getLogger(ConfigToolPane.class.getName());
 
     /**
      * Class to build one NamedBean
      */
     class MakeNamedBean extends JPanel implements CanListener {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 7057190769757489242L;
         JTextField f1 = new JTextField(20);
         JTextField f2 = new JTextField(20);
 
         JButton bc;
 
-        JToggleButton b1 = new JToggleButton(rb.getString("ButtonNext"));
-        JToggleButton b2 = new JToggleButton(rb.getString("ButtonNext"));
+        JToggleButton b1 = new JToggleButton(Bundle.getMessage("ButtonCaptureNext"));
+        JToggleButton b2 = new JToggleButton(Bundle.getMessage("ButtonCaptureNext"));
 
+        /**
+         * Create CBUS NamedBean using a JPanel for user interaction.
+         *
+         * @param name1 string for Label 1 in configuration pane
+         * @param name2 string for Label 2 in configuration pane
+         */
         MakeNamedBean(String name1, String name2) {
             // actions
-            bc = new JButton(rb.getString("ButtonCreate"));
+            bc = new JButton(Bundle.getMessage("ButtonCreate"));
             bc.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (f2.getText().equals("")) {
                         create(f1.getText());
@@ -191,7 +172,7 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
             c.gridx = 0;
             c.gridy = 0;
             c.anchor = GridBagConstraints.EAST;
-            add(new JLabel(rb.getString(name1)), c);
+            add(new JLabel(Bundle.getMessage(name1)), c);
 
             c.gridx = 1;
             c.gridy = 0;
@@ -202,11 +183,12 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
             c.gridy = 0;
             c.anchor = GridBagConstraints.WEST;
             add(b1, c);
+            b1.setToolTipText(Bundle.getMessage("CaptureNextTooltip"));
 
             c.gridx = 0;
             c.gridy = 1;
             c.anchor = GridBagConstraints.EAST;
-            add(new JLabel(rb.getString(name2)), c);
+            add(new JLabel(Bundle.getMessage(name2)), c);
 
             c.gridx = 1;
             c.gridy = 1;
@@ -217,16 +199,19 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
             c.gridy = 1;
             c.anchor = GridBagConstraints.WEST;
             add(b2, c);
+            b2.setToolTipText(Bundle.getMessage("CaptureNextTooltip"));
 
             c.gridx = 1;
             c.gridy = 2;
             c.anchor = GridBagConstraints.WEST;
             add(bc, c);
+            bc.setToolTipText(Bundle.getMessage("CreateTooltip"));
         }
 
         void create(String name) {
         }
 
+        @Override
         public void reply(jmri.jmrix.can.CanReply m) {
             if (b1.isSelected()) {
                 f1.setText(CbusMessage.toAddress(m));
@@ -238,6 +223,7 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
             }
         }
 
+        @Override
         public void message(jmri.jmrix.can.CanMessage m) {
             if (b1.isSelected()) {
                 f1.setText(CbusMessage.toAddress(m));
@@ -255,11 +241,6 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
      */
     static class CbusEventRecorder extends JPanel implements CanListener {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 7826599461789753830L;
-
         CbusEventRecorder() {
             super();
             this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
@@ -271,13 +252,14 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
             capture.setSelected(true);
         }
 
-        JCheckBox capture = new JCheckBox(rb.getString("MsgCaptureNext"));
+        JCheckBox capture = new JCheckBox(Bundle.getMessage("MsgCaptureNext"));
         JTextField event = new JTextField(20);
 
         boolean waiting() {
             return capture.isSelected();
         }
 
+        @Override
         public void reply(jmri.jmrix.can.CanReply m) {
             if (capture.isSelected()) {
                 event.setText(CbusMessage.toAddress(m));
@@ -285,6 +267,7 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
             }
         }
 
+        @Override
         public void message(jmri.jmrix.can.CanMessage m) {
             if (capture.isSelected()) {
                 event.setText(CbusMessage.toAddress(m));
@@ -298,16 +281,12 @@ public class ConfigToolPane extends jmri.jmrix.can.swing.CanPanel implements Can
      */
     static public class Default extends jmri.jmrix.can.swing.CanNamedPaneAction {
 
-        /**
-         *
-         */
-        private static final long serialVersionUID = 8264581016480363352L;
-
         public Default() {
-            super("CBUS Event Capture Tool",
+            super(Bundle.getMessage("ConfigTitle"),
                     new jmri.util.swing.sdi.JmriJFrameInterface(),
                     ConfigToolPane.class.getName(),
                     jmri.InstanceManager.getDefault(CanSystemConnectionMemo.class));
         }
     }
+
 }

@@ -1,22 +1,13 @@
-// NceSensor.java
 package jmri.jmrix.nce;
 
 import jmri.implementation.AbstractSensor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Extend jmri.AbstractSensor for NCE systems
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  */
 public class NceSensor extends AbstractSensor {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4481645243243035759L;
 
     public NceSensor(String systemName) {
         super(systemName);
@@ -33,11 +24,8 @@ public class NceSensor extends AbstractSensor {
      * Eventually, we may want to have this move the related AIU to the top of
      * the polling queue.
      */
+    @Override
     public void requestUpdateFromLayout() {
     }
 
-    static Logger log = LoggerFactory.getLogger(NceSensor.class.getName());
-
 }
-
-/* @(#)NceSensor.java */

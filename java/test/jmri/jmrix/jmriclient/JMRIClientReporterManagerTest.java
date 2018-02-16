@@ -1,11 +1,8 @@
 package jmri.jmrix.jmriclient;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * JMRIClientReporterManagerTest.java
@@ -14,41 +11,31 @@ import org.slf4j.LoggerFactory;
  * class
  *
  * @author	Bob Jacobsen
- * @version $Revision: 17977 $
  */
-public class JMRIClientReporterManagerTest extends TestCase {
+public class JMRIClientReporterManagerTest extends jmri.managers.AbstractReporterMgrTestBase {
 
-    public void testCtor() {
-        JMRIClientReporterManager m = new JMRIClientReporterManager(new JMRIClientSystemConnectionMemo());
-        Assert.assertNotNull(m);
+    @Override
+    public String getSystemName(String i) {
+        return "JR" + i;
     }
 
-    // from here down is testing infrastructure
-    public JMRIClientReporterManagerTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", JMRIClientReporterManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(JMRIClientReporterManagerTest.class);
-        return suite;
-    }
 
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Before
+    @Override
+    public void setUp() {
+        JUnitUtil.setUp();
+        JMRIClientTrafficController tc = new JMRIClientTrafficController(){
+           @Override
+           public void sendJMRIClientMessage(JMRIClientMessage m,JMRIClientListener reply) {
+           }
+        };
+        l = new JMRIClientReporterManager(new JMRIClientSystemConnectionMemo(tc));
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(JMRIClientReporterManagerTest.class.getName());
 
 }

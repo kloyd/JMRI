@@ -1,4 +1,3 @@
-// JmriAbstractAction.java
 package jmri.util.swing;
 
 import java.awt.event.ActionEvent;
@@ -11,30 +10,28 @@ import org.slf4j.LoggerFactory;
  *
  * An opaque Object can be passed as a context, but null is also possible.
  *
- * <b>NOTE</b> Either {@link jmri.util.swing.JmriAbstractAction#actionPerformed(java.awt.event.ActionEvent)
- * }
- * or {@link jmri.util.swing.JmriAbstractAction#makePanel() } must be overridden
+ * <b>NOTE</b> Either
+ * {@link jmri.util.swing.JmriAbstractAction#actionPerformed(java.awt.event.ActionEvent)}
+ * or {@link jmri.util.swing.JmriAbstractAction#makePanel()} must be overridden
  * by extending classes.
  *
  * @author	Bob Jacobsen Copyright (C) 2010
- * @version	$Revision$
  */
 abstract public class JmriAbstractAction extends javax.swing.AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 373576744806206486L;
     protected WindowInterface.Hint hint = WindowInterface.Hint.DEFAULT;
     protected WindowInterface wi;
     protected Object context = null;
-    static Logger log = LoggerFactory.getLogger(JmriAbstractAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(JmriAbstractAction.class);
 
     /**
-     * Enhanced constructor for placing the pane in various GUIs
+     * Enhanced constructor for placing the pane in various GUIs.
+     *
+     * @param name the name for the action; a value of null is ignored
+     * @param wi   the window interface controlling how this action is displayed
      */
-    public JmriAbstractAction(String s, WindowInterface wi) {
-        super(s);
+    public JmriAbstractAction(String name, WindowInterface wi) {
+        super(name);
         this.wi = wi;
         if (wi == null) {
             log.error("Cannot create action with null WindowInterface", new Exception());
@@ -47,6 +44,11 @@ abstract public class JmriAbstractAction extends javax.swing.AbstractAction {
     }
 
     /**
+     * Set the context for this action. The context can be any object that an
+     * overriding class may need to complete an action. It is defined here to
+     * provide a common API for passing these objects in.
+     *
+     * @param context the context object
      * @since 2.9.4
      */
     public void setContext(Object context) {
@@ -55,9 +57,11 @@ abstract public class JmriAbstractAction extends javax.swing.AbstractAction {
 
     /**
      * Original constructor for compatibility with older menus. Assumes SDI GUI.
+     *
+     * @param name the name for the action; a value of null is ignored
      */
-    public JmriAbstractAction(String s) {
-        super(s);
+    public JmriAbstractAction(String name) {
+        super(name);
         this.wi = new jmri.util.swing.sdi.JmriJFrameInterface();
     }
 
@@ -84,7 +88,7 @@ abstract public class JmriAbstractAction extends javax.swing.AbstractAction {
         // we have to make a new panel if we don't have one yet
         // we don't make a new panel if the window interface is
         //      single instance (not multiple instance), 
-        // of if the existing panel is single instance (not multiple instance)
+        // or if the existing panel is single instance (not multiple instance)
         if (cache == null
                 || (wi.multipleInstances() && cache.isMultipleInstances())) {
             try {
@@ -110,7 +114,7 @@ abstract public class JmriAbstractAction extends javax.swing.AbstractAction {
     }
     JmriPanel cache = null;
 
-    //A crude method to set a parameter in a given window when loading from the xml file
+    // A crude method to set a parameter in a given window when loading from the xml file
     public void setParameter(String parameter, String value) {
     }
 
@@ -121,12 +125,9 @@ abstract public class JmriAbstractAction extends javax.swing.AbstractAction {
     public void setParameter(String parameter, Object value) {
     }
 
-    public JmriPanel makePanel() {
+    abstract public JmriPanel makePanel();
+    /* {
         log.error("makePanel must be overridden", new Exception());
         return null;
-    }
+    } */
 }
-
-/*
- * @(#)JmriAbstractAction.java
- */

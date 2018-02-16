@@ -1,4 +1,3 @@
-// SectionManagerXML.java
 package jmri.configurexml;
 
 import java.util.List;
@@ -16,7 +15,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Dave Duchamp Copyright (c) 2008
- * @version $Revision$
  */
 public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedBeanManagerConfigXML {
 
@@ -29,6 +27,7 @@ public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedB
      * @param o Object to store, of type SectionManager
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         Element sections = new Element("sections");
         setStoreElementClass(sections);
@@ -51,9 +50,15 @@ public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedB
                     log.debug("Section system name is " + sname);
                     Section x = tm.getBySystemName(sname);
                     if (x.getSectionType() != Section.DYNAMICADHOC) {
-                        Element elem = new Element("section")
-                                .setAttribute("systemName", sname);
+                        Element elem = new Element("section");
+                        elem.addContent(new Element("systemName").addContent(sname));
 
+                        // As a work-around for backward compatibility, store systemName and username as attribute.
+                        // Remove this in e.g. JMRI 4.11.1 and then update all the loadref comparison files
+                        elem.setAttribute("systemName", sname);
+                        String uname = x.getUserName();
+                        if (uname !=null && !uname.equals("")) elem.setAttribute("userName", uname);
+                            
                         // store common part
                         storeCommon(x, elem);
                         String txt = "userdefined";
@@ -103,17 +108,9 @@ public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedB
                                         log.error("Unexpected null getFromBlock while storing ep " + i + " in Section " + sname + ", skipped");
                                         break;
                                     }
-                                    if (ep.getFromBlock().getSystemName() == null) {
-                                        log.error("Unexpected null in FromBlock systemName while storing ep " + i + " in Section " + sname + ", skipped");
-                                        break;
-                                    }
                                     epElem.setAttribute("fromblock", ep.getFromBlock().getSystemName());
                                     if (ep.getBlock() == null) {
                                         log.error("Unexpected null getBlock while storing ep " + i + " in Section " + sname + ", skipped");
-                                        break;
-                                    }
-                                    if (ep.getBlock().getSystemName() == null) {
-                                        log.error("Unexpected null in Block systemName while storing ep " + i + " in Section " + sname + ", skipped");
                                         break;
                                     }
                                     epElem.setAttribute("toblock", ep.getBlock().getSystemName());
@@ -143,6 +140,7 @@ public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedB
         sections.setAttribute("class", "jmri.configurexml.SectionManagerXml");
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
@@ -151,8 +149,8 @@ public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedB
      * Create a SectionManager object of the correct class, then register and
      * fill it.
      *
-     * @param sharedSections Top level Element to unpack.
-     * @param perNodeSections
+     * @param sharedSections  Top level Element to unpack.
+     * @param perNodeSections Per-node Element to unpack.
      * @return true if successful
      */
     @Override
@@ -167,27 +165,20 @@ public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedB
      * additional info needed for a specific Section type, invoke this with the
      * parent of the set of Section elements.
      *
-     * @param sharedSections Element containing the Section elements to load.
-     * @param perNodeSections
+     * @param sharedSections  Element containing the Section elements to load.
+     * @param perNodeSections Per-node Element containing the Section elements
+     *                        to load.
      */
     public void loadSections(Element sharedSections, Element perNodeSections) {
         List<Element> sectionList = sharedSections.getChildren("section");
         if (log.isDebugEnabled()) {
             log.debug("Found " + sectionList.size() + " sections");
         }
-        SectionManager tm = InstanceManager.sectionManagerInstance();
+        SectionManager tm = InstanceManager.getDefault(jmri.SectionManager.class);
 
         for (int i = 0; i < sectionList.size(); i++) {
-            if (sectionList.get(i).getAttribute("systemName") == null) {
-                log.warn("unexpected null in systemName " + sectionList.get(i) + " "
-                        + (sectionList.get(i)).getAttributes());
-                break;
-            }
-            String sysName = (sectionList.get(i)).getAttribute("systemName").getValue();
-            String userName = null;
-            if (sectionList.get(i).getAttribute("userName") != null) {
-                userName = (sectionList.get(i)).getAttribute("userName").getValue();
-            }
+            String sysName = getSystemName(sectionList.get(i));
+            String userName = getUserName(sectionList.get(i));
             Section x = tm.createNewSection(sysName, userName);
             if (x != null) {
                 // load common part
@@ -260,9 +251,10 @@ public class SectionManagerXml extends jmri.managers.configurexml.AbstractNamedB
         }
     }
 
+    @Override
     public int loadOrder() {
-        return InstanceManager.sectionManagerInstance().getXMLOrder();
+        return InstanceManager.getDefault(jmri.SectionManager.class).getXMLOrder();
     }
 
-    static Logger log = LoggerFactory.getLogger(SectionManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SectionManagerXml.class);
 }

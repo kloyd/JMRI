@@ -1,4 +1,3 @@
-// SerialTurnout.java
 package jmri.jmrix.tmcc;
 
 import jmri.Turnout;
@@ -7,39 +6,45 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * SerialTurnout.java
+ * Extend jmri.AbstractTurnout for TMCC serial layouts.
  *
  * This object doesn't listen to the TMCC communications. This is because it
  * should be the only object that is sending messages for this turnout; more
  * than one Turnout object pointing to a single device is not allowed.
  *
- * Description:	extend jmri.AbstractTurnout for TMCC serial layouts
- *
  * @author	Bob Jacobsen Copyright (C) 2003, 2006
- * @version	$Revision$
- */
+  */
 public class SerialTurnout extends AbstractTurnout {
 
+    // data members
+    int _number; // turnout number
+    private SerialTrafficController tc = null;
+    protected String _prefix = "T"; // default to "T"
+
     /**
+     * Create a turnout. TMCC turnouts use the NMRA number (0-511) as their
+     * numerical identification.
      *
+     * @param number the NMRA turnout number from 0 to 511
      */
-    private static final long serialVersionUID = 5339532021030123183L;
-
-    public SerialTurnout(int number) {
-        super("TT" + number);
+    public SerialTurnout(String prefix, int number, TmccSystemConnectionMemo memo) {
+        super(prefix + "T" + number);
+        tc = memo.getTrafficController();
         _number = number;
+        _prefix = prefix;
+        // At construction, don't register for messages (see package doc)
     }
-    int _number;
 
     /**
-     * Handle a request to change state by sending a turnout command
+     * Handle a request to change state by sending a turnout command.
      */
+    @Override
     protected void forwardCommandChangeToLayout(int s) {
 
         // sort out states
-        if ((s & Turnout.CLOSED) > 0) {
+        if ((s & Turnout.CLOSED) != 0) {
             // first look for the double case, which we can't handle
-            if ((s & Turnout.THROWN) > 0) {
+            if ((s & Turnout.THROWN) != 0) {
                 // this is the disaster case!
                 log.error("Cannot command both CLOSED and THROWN " + s);
                 return;
@@ -53,9 +58,10 @@ public class SerialTurnout extends AbstractTurnout {
         }
     }
 
+    @Override
     protected void turnoutPushbuttonLockout(boolean _pushButtonLockout) {
         if (log.isDebugEnabled()) {
-            log.debug("Send command to " + (_pushButtonLockout ? "Lock" : "Unlock") + " Pushbutton TT" + _number);
+            log.debug("Send command to {} Pushbutton {}T{}", (_pushButtonLockout ? "Lock" : "Unlock"), _prefix, _number);
         }
     }
 
@@ -67,13 +73,12 @@ public class SerialTurnout extends AbstractTurnout {
         } else {
             m.putAsWord(0x401F + _number * 128);
         }
-        SerialTrafficController.instance().sendSerialMessage(m, null);
-        SerialTrafficController.instance().sendSerialMessage(m, null);
-        SerialTrafficController.instance().sendSerialMessage(m, null);
-        SerialTrafficController.instance().sendSerialMessage(m, null);
+        tc.sendSerialMessage(m, null);
+        tc.sendSerialMessage(m, null);
+        tc.sendSerialMessage(m, null);
+        tc.sendSerialMessage(m, null);
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialTurnout.class.getName());
-}
+    private final static Logger log = LoggerFactory.getLogger(SerialTurnout.class);
 
-/* @(#)SerialTurnout.java */
+}

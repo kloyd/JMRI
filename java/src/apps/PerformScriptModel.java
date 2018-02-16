@@ -1,43 +1,34 @@
-// PerformScriptModel.java
 package apps;
 
-import java.util.ArrayList;
-import java.util.List;
+import apps.startup.AbstractStartupModel;
+import java.io.File;
+import jmri.JmriException;
+import jmri.script.JmriScriptEngineManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A PerformScriptModel object runs a script when the program is started.
  * <P>
- * @author	Bob Jacobsen Copyright 2003
- * @version $Revision$
- * @see PerformScriptPanel
+ * @author Bob Jacobsen Copyright 2003
+ * @author Randall Wood (c) 2016
+ * @see apps.startup.PerformScriptModelFactory
  */
-public class PerformScriptModel implements StartupModel {
+public class PerformScriptModel extends AbstractStartupModel {
 
-    public PerformScriptModel() {
-        fileName = null;
-    }
-
-    String fileName;
-
-    @Override
-    public String getName() {
-        return this.getFileName();
-    }
+    private final static Logger log = LoggerFactory.getLogger(PerformScriptModel.class);
 
     public String getFileName() {
-        return fileName;
+        return this.getName();
     }
 
     public void setFileName(String n) {
-        fileName = n;
+        this.setName(n);
     }
 
-    static public void rememberObject(PerformScriptModel m) {
-        l.add(m);
+    @Override
+    public void performAction() throws JmriException {
+        log.info("Running script {}", this.getFileName());
+        JmriScriptEngineManager.getDefault().runScript(new File(this.getFileName()));
     }
-
-    static public List<PerformScriptModel> rememberedObjects() {
-        return l;
-    }
-    static List<PerformScriptModel> l = new ArrayList<PerformScriptModel>();
 }

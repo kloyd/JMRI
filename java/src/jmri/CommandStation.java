@@ -1,7 +1,6 @@
-// CommandStation.java
 package jmri;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Provide a DCC command station's basic ability: Sending DCC packets to the
@@ -13,23 +12,11 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * {@link jmri.Turnout} objects, programming via service mode
  * ({@link jmri.Programmer}) or on-main programmers
  * ({@link jmri.AddressedProgrammer}) etc.
- * <P>
+ * <p>
  * System-specific implementations can be obtained via the
  * {@link jmri.InstanceManager} class.
  *
- * <hr>
- * This file is part of JMRI.
- * <P>
- * JMRI is free software; you can redistribute it and/or modify it under the
- * terms of version 2 of the GNU General Public License as published by the Free
- * Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
- * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
  * @author Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
  */
 public interface CommandStation {
 
@@ -40,12 +27,10 @@ public interface CommandStation {
      *                error-correction byte.
      * @param repeats Number of times to repeat the transmission.
      */
-    public void sendPacket(@NonNull byte[] packet, int repeats);
+    public void sendPacket(@Nonnull byte[] packet, int repeats);
 
     public String getUserName();
 
     public String getSystemPrefix();
 
 }
-
-/* @(#)CommandStation.java */

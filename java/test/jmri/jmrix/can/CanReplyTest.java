@@ -1,17 +1,16 @@
-// CanReplyTest.java
 package jmri.jmrix.can;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Tests for the jmri.jmrix.can.CanReply class
  *
  * @author Bob Jacobsen Copyright 2008, 2009
- * @version $Revision$
  */
-public class CanReplyTest extends CanMRCommonTest {
+public class CanReplyTest extends CanMRCommonTestBase {
 
     public void testCopyCtor() {
         CanReply m1 = new CanReply();
@@ -139,7 +138,7 @@ public class CanReplyTest extends CanMRCommonTest {
     static public void main(String[] args) {
         apps.tests.AllTest.initLogging();
         String[] testCaseName = {"-noloading", CanReplyTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -150,11 +149,13 @@ public class CanReplyTest extends CanMRCommonTest {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 }

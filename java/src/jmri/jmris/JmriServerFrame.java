@@ -1,27 +1,17 @@
-// JmriServerFrame.java
 package jmri.jmris;
 
-//import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Frame displaying start/stop buttons for the JMRI server.
  *
- * @author	Paul Bender Copyright (C) 2010
- * @version	$Revision$
- */
+ * @author Paul Bender Copyright (C) 2010
+  */
 public class JmriServerFrame extends jmri.util.JmriJFrame {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -412445239269856582L;
 
     public JmriServerFrame() {
         this("Jmri Server Starter");
@@ -43,6 +33,7 @@ public class JmriServerFrame extends jmri.util.JmriJFrame {
 
         // install start button handler
         startButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 startServer();
             }
@@ -51,6 +42,7 @@ public class JmriServerFrame extends jmri.util.JmriJFrame {
 
         // install stop button handler
         stopButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 stopServer();
             }
@@ -59,6 +51,7 @@ public class JmriServerFrame extends jmri.util.JmriJFrame {
 
         // install close button handler
         closeButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 setVisible(false);
                 dispose();
@@ -78,6 +71,7 @@ public class JmriServerFrame extends jmri.util.JmriJFrame {
         dispose();
     }
 
+    @Override
     public void dispose() {
         // take apart the JFrame
         super.dispose();
@@ -90,7 +84,5 @@ public class JmriServerFrame extends jmri.util.JmriJFrame {
     public void stopServer() {
         JmriServer.instance().stop();
     }
-
-    static Logger log = LoggerFactory.getLogger(JmriServerFrame.class.getName());
 
 }

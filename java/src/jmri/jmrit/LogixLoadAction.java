@@ -1,4 +1,3 @@
-// LogixLoadAction.java
 package jmri.jmrit;
 
 import java.awt.event.ActionEvent;
@@ -13,15 +12,9 @@ import org.slf4j.LoggerFactory;
  * Provide an action to allow Logixs to be loaded disabled when panel file is
  * loaded
  *
- * @author	Dave Duchamp Copyright (C) 2007
- * @version	$Revision$
+ * @author Dave Duchamp Copyright (C) 2007
  */
 public class LogixLoadAction extends AbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4280773749053470400L;
 
     public LogixLoadAction(String s, JPanel who) {
         super(s);
@@ -30,6 +23,7 @@ public class LogixLoadAction extends AbstractAction {
 
     JPanel _who;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         // Set option to force Logixs to be loaded disabled
 
@@ -40,15 +34,15 @@ public class LogixLoadAction extends AbstractAction {
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
         if (retval != 0) {
-            InstanceManager.logixManagerInstance().setLoadDisabled(false);
+            InstanceManager.getDefault(jmri.LogixManager.class).setLoadDisabled(false);
             log.info("Requested load Logixs enabled via Debug menu.");
         } else {
-            InstanceManager.logixManagerInstance().setLoadDisabled(true);
+            InstanceManager.getDefault(jmri.LogixManager.class).setLoadDisabled(true);
             log.info("Requested load Logixs diabled via Debug menu.");
         }
 
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(LogixLoadAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LogixLoadAction.class);
 }

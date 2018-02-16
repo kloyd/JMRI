@@ -1,11 +1,13 @@
 package jmri.jmrix;
 
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Date;
 import java.util.Vector;
 import jmri.BasicRosterEntry;
 import jmri.CommandStation;
+import jmri.LocoAddress;
 import jmri.DccLocoAddress;
 import jmri.DccThrottle;
 import jmri.InstanceManager;
@@ -22,7 +24,6 @@ import org.slf4j.LoggerFactory;
  * DCC-specific content.
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2005
- * @version $Revision$
  */
 abstract public class AbstractThrottle implements DccThrottle {
 
@@ -30,7 +31,7 @@ abstract public class AbstractThrottle implements DccThrottle {
     public final static float SPEED_STEP_27_INCREMENT = 1.0f / 27.0f;
     public final static float SPEED_STEP_28_INCREMENT = 1.0f / 28.0f;
     public final static float SPEED_STEP_128_INCREMENT = 1.0f / 126.0f; // remember there are only 126 
-    // non-stop values in 128 speed 
+                                                                        // non-stop values in 128 speed 
 
     protected float speedSetting;
     protected float speedIncrement;
@@ -64,8 +65,8 @@ abstract public class AbstractThrottle implements DccThrottle {
     protected SystemConnectionMemo adapterMemo;
 
     /**
-     * speed - expressed as a value 0.0 -> 1.0. Negative means emergency stop.
-     * This is an bound parameter.
+     * speed - expressed as a value {@literal 0.0 -> 1.0.} Negative means
+     * emergency stop. This is an bound parameter.
      *
      * @return speed
      */
@@ -77,16 +78,40 @@ abstract public class AbstractThrottle implements DccThrottle {
     /**
      * setSpeedSetting - Implementing functions should override this function,
      * but should either make a call to super.setSpeedSetting() to notify the
-     * listeners, or should notify the listeners themselves.
+     * listeners at the end of their work, or should notify the listeners themselves.
      *
-     * @param speed
      */
     @Override
     public void setSpeedSetting(float speed) {
+        setSpeedSetting(speed, false, false);
+    }
+
+    /**
+     * setSpeedSetting - Implementations should override this method only if they normally suppress
+     * messages to the system if, as far as JMRI can tell, the new message would make no difference
+     * to the system state (eg. the speed is the same, or effectivly the same, as the existing speed).
+     * Then, the boolean options can affect this behaviour.
+     *
+     * @param speed - the new speed
+     * @param allowDuplicates - don't suppress messages
+     * @param allowDuplicatesOnStop - don't suppress messages if the new speed is 'stop'
+     */
+    @Override
+    public void setSpeedSetting(float speed, boolean allowDuplicates, boolean allowDuplicatesOnStop) {
         if (Math.abs(this.speedSetting - speed) > 0.0001) {
             notifyPropertyChangeListener("SpeedSetting", this.speedSetting, this.speedSetting = speed);
         }
         record(speed);
+    }
+
+    /**
+     * setSpeedSettingAgain - set the speed and don't ever supress the sending of messages to the system
+     *
+     * @param speed - the new speed
+     */
+    @Override
+    public void setSpeedSettingAgain(float speed) {
+        setSpeedSetting(speed, true, true);
     }
 
     /**
@@ -104,7 +129,6 @@ abstract public class AbstractThrottle implements DccThrottle {
      * should either make a call to super.setIsForward() to notify the
      * listeners, or should notify the listeners themselves.
      *
-     * @param forward
      */
     @Override
     public void setIsForward(boolean forward) {
@@ -420,11 +444,17 @@ abstract public class AbstractThrottle implements DccThrottle {
             log.debug("No listeners so will call the dispose in the InstanceManger with an empty throttleListenr null value");
             InstanceManager.throttleManagerInstance().disposeThrottle(this, new ThrottleListener() {
                 @Override
-                public void notifyFailedThrottleRequest(DccLocoAddress address, String reason) {
+                public void notifyFailedThrottleRequest(LocoAddress address, String reason) {
                 }
 
                 @Override
                 public void notifyThrottleFound(DccThrottle t) {
+                }
+    
+                @Override
+                public void notifyStealThrottleRequired(LocoAddress address){
+                    // this is an automatically stealing impelementation.
+                    InstanceManager.throttleManagerInstance().stealThrottleRequest(address, this, true);
                 }
             });
         }
@@ -443,9 +473,6 @@ abstract public class AbstractThrottle implements DccThrottle {
     /**
      * Trigger the notification of all PropertyChangeListeners
      *
-     * @param property
-     * @param oldValue
-     * @param newValue
      */
     @SuppressWarnings("unchecked")
     protected void notifyPropertyChangeListener(String property, Object oldValue, Object newValue) {
@@ -893,7 +920,7 @@ abstract public class AbstractThrottle implements DccThrottle {
         if ((adapterMemo != null) && (adapterMemo.get(jmri.CommandStation.class) != null)) {
             c = adapterMemo.get(jmri.CommandStation.class);
         } else {
-            c = InstanceManager.commandStationInstance();
+            c = InstanceManager.getNullableDefault(CommandStation.class);
         }
 
         // send it 3 times
@@ -925,7 +952,7 @@ abstract public class AbstractThrottle implements DccThrottle {
         if ((adapterMemo != null) && (adapterMemo.get(jmri.CommandStation.class) != null)) {
             c = adapterMemo.get(jmri.CommandStation.class);
         } else {
-            c = InstanceManager.commandStationInstance();
+            c = InstanceManager.getNullableDefault(CommandStation.class);
         }
 
         // send it 3 times
@@ -1321,6 +1348,10 @@ abstract public class AbstractThrottle implements DccThrottle {
     long durationRunning = 0;
     long start;
 
+    /**
+     * Processes updated speed from subclasses.
+     * Used to keep track of total operating time.
+     */
     protected void record(float speed) {
         if (re == null) {
             return;
@@ -1362,8 +1393,7 @@ abstract public class AbstractThrottle implements DccThrottle {
         }
         currentDuration = currentDuration + durationRunning;
         re.putAttribute("OperatingDuration", "" + currentDuration);
-        Date date = new Date();
-        re.putAttribute("LastOperated", "" + date);
+        re.putAttribute("LastOperated", new ISO8601DateFormat().format(new Date()));
         //Only store if the roster entry isn't open.
         if (!re.isOpen()) {
             re.store();
@@ -1389,7 +1419,6 @@ abstract public class AbstractThrottle implements DccThrottle {
      * Get an integer speed for the given raw speed value. This is a convenience
      * method that calls {@link #intSpeed(float, int) } with a maxStep of 127.
      *
-     * @param speed
      * @return an integer in the range 0-127
      */
     protected int intSpeed(float speed) {
@@ -1430,6 +1459,6 @@ abstract public class AbstractThrottle implements DccThrottle {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(AbstractThrottle.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractThrottle.class);
 
 }

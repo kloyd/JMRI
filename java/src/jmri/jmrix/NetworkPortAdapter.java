@@ -1,4 +1,3 @@
-// NetworkPortAdapter.java
 package jmri.jmrix;
 
 /**
@@ -6,8 +5,7 @@ package jmri.jmrix;
  * upon work by Bob Jacobsen from SerialPortAdapter
  *
  * @author Kevin Dickerson Copyright (C) 2010
- * @author	Bob Jacobsen Copyright (C) 2010
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2010
  * @see jmri.jmrix.NetworkConfigException
  */
 public interface NetworkPortAdapter extends PortAdapter {
@@ -15,23 +13,25 @@ public interface NetworkPortAdapter extends PortAdapter {
     /**
      * Connects to the end device using a hostname/ip address and port
      */
-    public void connect(String host, int port) throws Exception;
+    public void connect(String host, int port) throws java.io.IOException;
 
     /**
      * Configure all of the other jmrix widgets needed to work with this adapter
      */
+    @Override
     public void configure();
 
     /**
-     * Query the status of this connection. If all OK, at least as far as is
-     * known, return true
+     * Query the status of this connection.
+     *
+     * @return true if all is OK, at least as far as known
      */
+    @Override
     public boolean status();
 
     /**
      * Remember the associated port name
      *
-     * @param s
      */
     public void setPort(String s);
 
@@ -39,6 +39,7 @@ public interface NetworkPortAdapter extends PortAdapter {
 
     public int getPort();
 
+    @Override
     public String getCurrentPortName();
 
     public void setHostName(String hostname);
@@ -58,7 +59,7 @@ public interface NetworkPortAdapter extends PortAdapter {
     public boolean getMdnsConfigure();
 
     /*
-     * perform the automatic configuration
+     * Perform the automatic configuration.
      */
     public void autoConfigure();
 

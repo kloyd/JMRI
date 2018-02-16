@@ -2,26 +2,30 @@
 #
 # Default objects for interaction with JMRI from a python script.
 # This file may be needed only if jython.exec=true in python.properties
+#
+# These should be kept consistent with those in jmri.script.JmriScriptEngineManager
+# 
 
 # Default imports
 import java
 import jmri
 
 # JMRI default managers
-turnouts     = jmri.InstanceManager.turnoutManagerInstance()
-sensors      = jmri.InstanceManager.sensorManagerInstance()
-signals      = jmri.InstanceManager.signalHeadManagerInstance()
-masts        = jmri.InstanceManager.signalMastManagerInstance()
-lights       = jmri.InstanceManager.lightManagerInstance()
-dcc          = jmri.InstanceManager.commandStationInstance()
-reporters    = jmri.InstanceManager.reporterManagerInstance()
-memories     = jmri.InstanceManager.memoryManagerInstance()
-routes       = jmri.InstanceManager.routeManagerInstance()
-blocks       = jmri.InstanceManager.blockManagerInstance()
-powermanager = jmri.InstanceManager.powerManagerInstance()
-programmers  = jmri.InstanceManager.programmerManagerInstance()
-shutdown     = jmri.InstanceManager.shutDownManagerInstance()
-audio        = jmri.InstanceManager.audioManagerInstance()
+turnouts     = jmri.InstanceManager.getDefault(jmri.TurnoutManager)
+sensors      = jmri.InstanceManager.getDefault(jmri.SensorManager)
+signals      = jmri.InstanceManager.getDefault(jmri.SignalHeadManager)
+masts        = jmri.InstanceManager.getDefault(jmri.SignalMastManager)
+lights       = jmri.InstanceManager.getDefault(jmri.LightManager)
+dcc          = jmri.InstanceManager.getDefault(jmri.CommandStation)
+reporters    = jmri.InstanceManager.getDefault(jmri.ReporterManager)
+memories     = jmri.InstanceManager.getDefault(jmri.MemoryManager)
+routes       = jmri.InstanceManager.getDefault(jmri.RouteManager)
+blocks       = jmri.InstanceManager.getDefault(jmri.BlockManager)
+powermanager = jmri.InstanceManager.getDefault(jmri.PowerManager)
+addressedProgrammers = jmri.InstanceManager.getDefault(jmri.AddressedProgrammerManager)
+globalProgrammers = jmri.InstanceManager.getDefault(jmri.GlobalProgrammerManager)
+shutdown     = jmri.InstanceManager.getDefault(jmri.ShutDownManager)
+audio        = jmri.InstanceManager.getDefault(jmri.AudioManager)
 layoutblocks = jmri.InstanceManager.getDefault(jmri.jmrit.display.layoutEditor.LayoutBlockManager)
 warrants     = jmri.InstanceManager.getDefault(jmri.jmrit.logix.WarrantManager)
 
@@ -35,6 +39,9 @@ import jmri.Turnout.LOCKED         as LOCKED
 
 import jmri.Sensor.ACTIVE          as ACTIVE
 import jmri.Sensor.INACTIVE        as INACTIVE
+
+import jmri.Light.ON               as ON
+import jmri.Light.OFF              as OFF
 
 import jmri.NamedBean.UNKNOWN      as UNKNOWN
 import jmri.NamedBean.INCONSISTENT as INCONSISTENT

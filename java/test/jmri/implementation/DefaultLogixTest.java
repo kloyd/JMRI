@@ -1,11 +1,9 @@
-// DefaultLogixTest.java
 package jmri.implementation;
 
 import jmri.*;
-
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Test the DefaultLogixTest implementation class
@@ -17,6 +15,7 @@ public class DefaultLogixTest extends NamedBeanTest {
     /**
      * Operate parent NamedBeanTest tests.
      */
+    @Override
     protected NamedBean createInstance() {
         return new DefaultLogix("IX 0");
     }
@@ -58,15 +57,13 @@ public class DefaultLogixTest extends NamedBeanTest {
 
     @Override
     protected void tearDown() throws Exception {
-        jmri.util.JUnitUtil.resetInstanceManager();
-        super.tearDown();
-        apps.tests.Log4JFixture.tearDown();
+        jmri.util.JUnitUtil.tearDown();
     }
 
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {DefaultLogixTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

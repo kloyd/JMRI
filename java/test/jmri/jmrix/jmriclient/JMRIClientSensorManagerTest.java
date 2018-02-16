@@ -1,54 +1,50 @@
 package jmri.jmrix.jmriclient;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * JMRIClientSensorManagerTest.java
- *
+ * <p>
  * Description:	tests for the jmri.jmrix.jmriclient.JMRIClientSensorManager
  * class
  *
  * @author	Bob Jacobsen
- * @version $Revision: 17977 $
+ * @author Paul Bender Copyright (C) 2016
  */
-public class JMRIClientSensorManagerTest extends TestCase {
+public class JMRIClientSensorManagerTest extends jmri.managers.AbstractSensorMgrTestBase {
 
+    @Override
+    public String getSystemName(int i) {
+        return "JS" + i;
+    }
+
+    @Test
     public void testCtor() {
-        JMRIClientSensorManager m = new JMRIClientSensorManager(new JMRIClientSystemConnectionMemo());
-        Assert.assertNotNull(m);
-    }
-
-    // from here down is testing infrastructure
-    public JMRIClientSensorManagerTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", JMRIClientSensorManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(JMRIClientSensorManagerTest.class);
-        return suite;
+        Assert.assertNotNull(l);
     }
 
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Override
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
+        JMRIClientTrafficController tc = new JMRIClientTrafficController() {
+            @Override
+            public void sendJMRIClientMessage(JMRIClientMessage m, JMRIClientListener reply) {
+            }
+        };
+        JMRIClientSystemConnectionMemo m = new JMRIClientSystemConnectionMemo(tc);
+        l = new JMRIClientSensorManager(m);
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        l.dispose();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(JMRIClientSensorManagerTest.class.getName());
 
 }

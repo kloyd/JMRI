@@ -1,4 +1,3 @@
-// BoosterProgPanel.java
 package jmri.jmrix.nce.boosterprog;
 
 import java.util.ResourceBundle;
@@ -11,22 +10,15 @@ import jmri.AddressedProgrammer;
 import jmri.ProgListener;
 import jmri.ProgrammerException;
 import jmri.jmrix.nce.NceSystemConnectionMemo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Panel for configuring a NCE booster
  *
- * @author	ken cameron Copyright (C) 2010 Derived from BoosterProgFrame by
- * @author	Bob Jacobsen Copyright (C) 2004
- * @version $Revision$
+ * @author ken cameron Copyright (C) 2010 Derived from BoosterProgFrame by
+ * @author Bob Jacobsen Copyright (C) 2004
  */
 public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 418634505989298386L;
     JTextField start = new JTextField(6);
     JTextField length = new JTextField(12);
 
@@ -38,7 +30,11 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         super();
     }
 
-    public void initContext(Object context) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initContext(Object context) {
         if (context instanceof NceSystemConnectionMemo) {
             try {
                 initComponents((NceSystemConnectionMemo) context);
@@ -48,10 +44,18 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getHelpTarget() {
         return "package.jmri.jmrix.nce.boosterprog.BoosterProgPanel";
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getTitle() {
         StringBuilder x = new StringBuilder();
         if (memo != null) {
@@ -64,7 +68,11 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         return x.toString();
     }
 
-    public void initComponents(NceSystemConnectionMemo m) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents(NceSystemConnectionMemo m) {
         this.memo = m;
 
         // general GUI config
@@ -86,6 +94,7 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         p.add(start);
         p.add(b);
         b.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 setStartPushed();
             }
@@ -100,6 +109,7 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         p.add(length);
         p.add(b);
         b.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 setDurationPushed();
             }
@@ -131,7 +141,8 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         int val = Integer.parseInt(start.getText());
 
         try {
-            p.writeCV(255, val, new ProgListener() {
+            p.writeCV("255", val, new ProgListener() {
+                @Override
                 public void programmingOpReply(int value, int retval) {
                     status.setText(rb.getString("StatusOK"));
                 }
@@ -147,7 +158,8 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         getProgrammer();
 
         try {
-            p.writeCV(255, val, new ProgListener() {
+            p.writeCV("255", val, new ProgListener() {
+                @Override
                 public void programmingOpReply(int value, int retval) {
                 }
             });
@@ -161,7 +173,8 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         getProgrammer();
 
         try {
-            p.writeCV(253, val / 256, new ProgListener() {
+            p.writeCV("253", val / 256, new ProgListener() {
+                @Override
                 public void programmingOpReply(int value, int retval) {
                     synchronized (this) {
                         try {
@@ -171,7 +184,8 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
                         }
                     }
                     try {
-                        p.writeCV(254, val % 256, new ProgListener() {
+                        p.writeCV("254", val % 256, new ProgListener() {
+                            @Override
                             public void programmingOpReply(int value, int retval) {
                             }
                         });
@@ -192,7 +206,8 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         int val = Integer.parseInt(length.getText()) / 256;
 
         try {
-            p.writeCV(253, val, new ProgListener() {
+            p.writeCV("253", val, new ProgListener() {
+                @Override
                 public void programmingOpReply(int value, int retval) {
                     synchronized (this) {
                         try {
@@ -214,7 +229,8 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
         int val = Integer.parseInt(length.getText()) % 256;
 
         try {
-            p.writeCV(254, val, new ProgListener() {
+            p.writeCV("254", val, new ProgListener() {
+                @Override
                 public void programmingOpReply(int value, int retval) {
                     status.setText(rb.getString("StatusOK"));
                 }
@@ -225,7 +241,4 @@ public class BoosterProgPanel extends jmri.jmrix.nce.swing.NcePanel {
             releaseProgrammer();
         }
     }
-
-    static Logger log = LoggerFactory
-            .getLogger(BoosterProgPanel.class.getName());
 }

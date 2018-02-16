@@ -1,4 +1,3 @@
-// PositionableJPanel.java
 package jmri.jmrit.display;
 
 import java.awt.Container;
@@ -15,20 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <p>
- * </p>
- *
  * @author Bob Jacobsen copyright (C) 2009
- * @version $Revision$
  */
 public class PositionableJPanel extends JPanel implements Positionable, MouseListener, MouseMotionListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3059313202546618168L;
     protected Editor _editor = null;
-    protected boolean debug = false;
 
     private ToolTip _tooltip;
     protected boolean _showTooltip = true;
@@ -45,23 +35,22 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
 
     public PositionableJPanel(Editor editor) {
         _editor = editor;
-        debug = log.isDebugEnabled();
     }
 
+    @Override
     public Positionable deepClone() {
         PositionableJPanel pos = new PositionableJPanel(_editor);
         return finishClone(pos);
     }
 
-    public Positionable finishClone(Positionable p) {
-        PositionableJPanel pos = (PositionableJPanel) p;
+    protected Positionable finishClone(PositionableJPanel pos) {
         pos.setLocation(getX(), getY());
         pos._displayLevel = _displayLevel;
         pos._controlling = _controlling;
         pos._hidden = _hidden;
         pos._positionable = _positionable;
         pos._showTooltip = _showTooltip;
-        pos.setTooltip(getTooltip());
+        pos.setToolTip(getToolTip());
         pos._editable = _editable;
         if (getPopupUtility() == null) {
             pos.setPopupUtility(null);
@@ -72,46 +61,57 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
         return pos;
     }
 
+    @Override
     public void setPositionable(boolean enabled) {
         _positionable = enabled;
     }
 
+    @Override
     public boolean isPositionable() {
         return _positionable;
     }
 
+    @Override
     public void setEditable(boolean enabled) {
         _editable = enabled;
     }
 
+    @Override
     public boolean isEditable() {
         return _editable;
     }
 
+    @Override
     public void setViewCoordinates(boolean enabled) {
         _viewCoordinates = enabled;
     }
 
+    @Override
     public boolean getViewCoordinates() {
         return _viewCoordinates;
     }
 
+    @Override
     public void setControlling(boolean enabled) {
         _controlling = enabled;
     }
 
+    @Override
     public boolean isControlling() {
         return _controlling;
     }
 
+    @Override
     public void setHidden(boolean hide) {
         _hidden = hide;
     }
 
+    @Override
     public boolean isHidden() {
         return _hidden;
     }
 
+    @Override
     public void showHidden() {
         if (!_hidden || _editor.isEditable()) {
             setVisible(true);
@@ -120,13 +120,11 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
         }
     }
 
-    /**
-     * Delayed setDisplayLevel for DnD
-     */
     public void setLevel(int l) {
         _displayLevel = l;
     }
 
+    @Override
     public void setDisplayLevel(int l) {
         int oldDisplayLevel = _displayLevel;
         _displayLevel = l;
@@ -136,84 +134,106 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
         }
     }
 
+    @Override
     public int getDisplayLevel() {
         return _displayLevel;
     }
 
-    public void setShowTooltip(boolean set) {
+    @Override
+    public void setShowToolTip(boolean set) {
         _showTooltip = set;
     }
 
-    public boolean showTooltip() {
+    @Override
+    public boolean showToolTip() {
         return _showTooltip;
     }
 
-    public void setTooltip(ToolTip tip) {
+    @Override
+    public void setToolTip(ToolTip tip) {
         _tooltip = tip;
     }
 
-    public ToolTip getTooltip() {
+    @Override
+    public ToolTip getToolTip() {
         return _tooltip;
     }
 
+    @Override
     public void setScale(double s) {
         _scale = s;
     }
 
+    @Override
     public double getScale() {
         return _scale;
     }
 
     // no subclasses support rotations (yet)
+    @Override
     public void rotate(int deg) {
     }
 
+    @Override
     public int getDegrees() {
         return 0;
     }
 
+    @Override
     public JComponent getTextComponent() {
         return this;
     }
 
+    @Override
     public String getNameString() {
         return getName();
     }
 
+    @Override
     public Editor getEditor() {
         return _editor;
     }
 
+    @Override
     public void setEditor(Editor ed) {
         _editor = ed;
     }
 
     // overide where used - e.g. momentary
+    @Override
     public void doMousePressed(MouseEvent event) {
     }
 
+    @Override
     public void doMouseReleased(MouseEvent event) {
     }
 
+    @Override
     public void doMouseClicked(MouseEvent event) {
     }
 
+    @Override
     public void doMouseDragged(MouseEvent event) {
     }
 
+    @Override
     public void doMouseMoved(MouseEvent event) {
     }
 
+    @Override
     public void doMouseEntered(MouseEvent event) {
     }
 
+    @Override
     public void doMouseExited(MouseEvent event) {
     }
 
+    @Override
     public boolean storeItem() {
         return true;
     }
 
+    @Override
     public boolean doViemMenu() {
         return true;
     }
@@ -221,26 +241,32 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
     /**
      * For over-riding in the using classes: add item specific menu choices
      */
+    @Override
     public boolean setRotateOrthogonalMenu(JPopupMenu popup) {
         return false;
     }
 
+    @Override
     public boolean setRotateMenu(JPopupMenu popup) {
         return false;
     }
 
+    @Override
     public boolean setScaleMenu(JPopupMenu popup) {
         return false;
     }
 
+    @Override
     public boolean setDisableControlMenu(JPopupMenu popup) {
         return false;
     }
 
+    @Override
     public boolean setTextEditMenu(JPopupMenu popup) {
         return false;
     }
 
+    @Override
     public boolean showPopUp(JPopupMenu popup) {
         return false;
     }
@@ -248,17 +274,16 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
     JFrame _iconEditorFrame;
     IconAdder _iconEditor;
 
+    @Override
     public boolean setEditIconMenu(JPopupMenu popup) {
         return false;
     }
 
+    @Override
     public boolean setEditItemMenu(JPopupMenu popup) {
         return setEditIconMenu(popup);
     }
 
-    /**
-     * Utility
-     */
     protected void makeIconEditorFrame(Container pos, String name, boolean table, IconAdder editor) {
         if (editor != null) {
             _iconEditor = editor;
@@ -267,6 +292,7 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
         }
         _iconEditorFrame = _editor.makeAddIconFrame(name, false, table, _iconEditor);
         _iconEditorFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
                 _iconEditorFrame.dispose();
                 _iconEditorFrame = null;
@@ -286,6 +312,7 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
     /**
      * Removes this object from display and persistance
      */
+    @Override
     public void remove() {
         _editor.removeFromContents(this);
         cleanup();
@@ -302,49 +329,57 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
     boolean active = true;
 
     /**
-     * "active" means that the object is still displayed, and should be stored.
+     * @return true if this object is still displayed, and should be stored;
+     *         false otherwise
      */
     public boolean isActive() {
         return active;
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         _editor.mousePressed(new MouseEvent(this, e.getID(), e.getWhen(), e.getModifiersEx(),
                 e.getX() + this.getX(), e.getY() + this.getY(),
                 e.getClickCount(), e.isPopupTrigger()));
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         _editor.mouseReleased(new MouseEvent(this, e.getID(), e.getWhen(), e.getModifiersEx(),
                 e.getX() + this.getX(), e.getY() + this.getY(),
                 e.getClickCount(), e.isPopupTrigger()));
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
         _editor.mouseClicked(new MouseEvent(this, e.getID(), e.getWhen(), e.getModifiersEx(),
                 e.getX() + this.getX(), e.getY() + this.getY(),
                 e.getClickCount(), e.isPopupTrigger()));
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
-//    	transferFocus();
+//     transferFocus();
         _editor.mouseExited(new MouseEvent(this, e.getID(), e.getWhen(), e.getModifiersEx(),
                 e.getX() + this.getX(), e.getY() + this.getY(),
                 e.getClickCount(), e.isPopupTrigger()));
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
         _editor.mouseEntered(new MouseEvent(this, e.getID(), e.getWhen(), e.getModifiersEx(),
                 e.getX() + this.getX(), e.getY() + this.getY(),
                 e.getClickCount(), e.isPopupTrigger()));
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
         _editor.mouseMoved(new MouseEvent(this, e.getID(), e.getWhen(), e.getModifiersEx(),
                 e.getX() + this.getX(), e.getY() + this.getY(),
                 e.getClickCount(), e.isPopupTrigger()));
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         _editor.mouseDragged(new MouseEvent(this, e.getID(), e.getWhen(), e.getModifiersEx(),
                 e.getX() + this.getX(), e.getY() + this.getY(),
@@ -356,10 +391,12 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
      */
     PositionablePopupUtil _popupUtil;
 
+    @Override
     public void setPopupUtility(PositionablePopupUtil tu) {
         _popupUtil = tu;
     }
 
+    @Override
     public PositionablePopupUtil getPopupUtility() {
         return _popupUtil;
     }
@@ -369,19 +406,22 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
      * state, e.g. if one or more of the icons that might be displayed is
      * changed
      */
+    @Override
     public void updateSize() {
         invalidate();
         setSize(maxWidth(), maxHeight());
-        if (debug) {
+        if (log.isDebugEnabled()) {
 //            javax.swing.JTextField text = (javax.swing.JTextField)_popupUtil._textComponent;
-            log.debug("updateSize: " + _popupUtil.toString()
-                    + ", text: w=" + getFontMetrics(_popupUtil.getFont()).stringWidth(_popupUtil.getText())
-                    + "h=" + getFontMetrics(_popupUtil.getFont()).getHeight());
+            log.debug("updateSize: {}, text: w={} h={}",
+                    _popupUtil.toString(),
+                    getFontMetrics(_popupUtil.getFont()).stringWidth(_popupUtil.getText()),
+                    getFontMetrics(_popupUtil.getFont()).getHeight());
         }
         validate();
         repaint();
     }
 
+    @Override
     public int maxWidth() {
         int max = 0;
         if (_popupUtil != null) {
@@ -405,12 +445,11 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
                 }
             }
         }
-        if (debug) {
-            log.debug("maxWidth= " + max + " preferred width= " + getPreferredSize().width);
-        }
+        log.debug("maxWidth= {} preferred width= {}", max, getPreferredSize().width);
         return max;
     }
 
+    @Override
     public int maxHeight() {
         int max = 0;
         if (_popupUtil != null) {
@@ -435,15 +474,14 @@ public class PositionableJPanel extends JPanel implements Positionable, MouseLis
                 }
             }
         }
-        if (debug) {
-            log.debug("maxHeight= " + max + " preferred height= " + getPreferredSize().height);
-        }
+        log.debug("maxHeight= {} preferred width= {}", max, getPreferredSize().height);
         return max;
     }
 
+    @Override
     public jmri.NamedBean getNamedBean() {
         return null;
     }
 
-    static Logger log = LoggerFactory.getLogger(PositionableJPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PositionableJPanel.class);
 }

@@ -1,59 +1,46 @@
 package jmri.jmrix.srcp;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 /**
  * SRCPSensorManagerTest.java
- *
+ * <p>
  * Description:	tests for the jmri.jmrix.srcp.SRCPSensorManager class
  *
  * @author	Bob Jacobsen
- * @version $Revision$
+ * @author Paul Bender Copyright (C) 2016
  */
-public class SRCPSensorManagerTest extends TestCase {
+public class SRCPSensorManagerTest extends jmri.managers.AbstractSensorMgrTestBase {
+
+    @Override
+    public String getSystemName(int i) {
+        return "A1S" + i;
+    }
 
     public void testCtor() {
+        Assert.assertNotNull(l);
+    }
+
+    // The minimal setup for log4J
+    @Override
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
         SRCPBusConnectionMemo sm = new SRCPBusConnectionMemo(new SRCPTrafficController() {
             @Override
             public void sendSRCPMessage(SRCPMessage m, SRCPListener reply) {
             }
         }, "A", 1);
 
-        SRCPSensorManager m = new SRCPSensorManager(sm, 1);
-        Assert.assertNotNull(m);
+        l = new SRCPSensorManager(sm, 1);
     }
 
-    // from here down is testing infrastructure
-    public SRCPSensorManagerTest(String s) {
-        super(s);
+    @After
+    public void tearDown() {
+        l.dispose();
+        JUnitUtil.tearDown();
     }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", SRCPSensorManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(SRCPSensorManagerTest.class);
-        return suite;
-    }
-
-    // The minimal setup for log4J
-    @Override
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
-    }
-
-    @Override
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
-    }
-    static Logger log = LoggerFactory.getLogger(SRCPSensorManagerTest.class.getName());
 }

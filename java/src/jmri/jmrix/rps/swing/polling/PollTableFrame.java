@@ -1,40 +1,32 @@
-// PollTableFrame.java
 package jmri.jmrix.rps.swing.polling;
 
-import java.util.ResourceBundle;
 import javax.swing.JDialog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JmriJFrame;
+import jmri.jmrix.rps.RpsSystemConnectionMemo;
 
 /**
  * Frame for control of RPS polling
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
  */
-public class PollTableFrame extends jmri.util.JmriJFrame {
+public class PollTableFrame extends JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5780499097528063540L;
-    static final ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.rps.swing.polling.PollingBundle");
+    RpsSystemConnectionMemo memo = null;
+
     PollTablePane pane;
 
-    public PollTableFrame() {
-        super();
-        setTitle(title());
+    public PollTableFrame(RpsSystemConnectionMemo _memo) {
+        super(Bundle.getMessage("TitlePolling"));
+        memo = _memo;
     }
 
-    protected String title() {
-        return rb.getString("TitlePolling");
-    }  // product name, not translated
-
+    @Override
     public void dispose() {
         pane.dispose(); // drop table
         super.dispose();
     }
 
+    @Override
     public void initComponents() {
         // only one, so keep around on close
         setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
@@ -53,10 +45,9 @@ public class PollTableFrame extends jmri.util.JmriJFrame {
         pack();
     }
 
+    @Override
     protected void storeValues() {
         pane.setDefaults();
         setModifiedFlag(false);
     }
-
-    static Logger log = LoggerFactory.getLogger(PollTableFrame.class.getName());
 }

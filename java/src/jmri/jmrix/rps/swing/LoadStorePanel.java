@@ -1,4 +1,3 @@
-// LoadStorePanel.java
 package jmri.jmrix.rps.swing;
 
 import java.awt.event.ActionEvent;
@@ -15,14 +14,8 @@ import org.slf4j.LoggerFactory;
  * Panel for load/store of RPS setup
  *
  * @author	Bob Jacobsen Copyright (C) 2008
- * @version $Revision$
  */
 public class LoadStorePanel extends javax.swing.JPanel {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2101684476801445613L;
 
     public LoadStorePanel() {
         super();
@@ -32,6 +25,7 @@ public class LoadStorePanel extends javax.swing.JPanel {
         b1 = new JButton("Set Defaults");
         b1.setToolTipText("Store new default values");
         b1.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 storeDefault();
             }
@@ -40,6 +34,7 @@ public class LoadStorePanel extends javax.swing.JPanel {
         b1 = new JButton("Store...");
         b1.setToolTipText("Store in a user-selected file");
         b1.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 store();
             }
@@ -48,6 +43,7 @@ public class LoadStorePanel extends javax.swing.JPanel {
         b1 = new JButton("Load...");
         b1.setToolTipText("Load from a user-selected file");
         b1.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 load();
             }
@@ -112,5 +108,5 @@ public class LoadStorePanel extends javax.swing.JPanel {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(LoadStorePanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LoadStorePanel.class);
 }

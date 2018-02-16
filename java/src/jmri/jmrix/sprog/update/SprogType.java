@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
  * Class to hold SPROG type
  *
  * @author	Andrew crosland Copyright (C) 2012
- * @version	$Revision: $
  */
 public class SprogType {
 
@@ -23,15 +22,18 @@ public class SprogType {
     public static final int SPROGII = 20;
     public static final int SPROGIIUSB = 21;
     public static final int SPROGIIv3 = 23;
+    public static final int SPROGIIv4 = 24;
     public static final int SPROG3 = 30;
     public static final int SPROGIV = 40;
     public static final int SPROG5 = 50;
+    public static final int PISPROGONE = 60;
     public static final int NANO = 1000;
+    public static final int PISPROGNANO = 1001;
     public static final int SNIFFER = 2000;
     public int sprogType = UNKNOWN;
 
     /**
-     * Construct a new SPROG type of a given type
+     * Construct a new SPROG type of a given type.
      *
      * @param type int, one of SprogType.xxx constants
      */
@@ -60,14 +62,34 @@ public class SprogType {
      * @return true if this object holds a SPROG II type
      */
     public boolean isSprogII() {
-        if ((sprogType >= SPROGII) && (sprogType <= SPROGIIv3)) {
+        if ((sprogType >= SPROGII) && (sprogType <= SPROGIIv4)) {
             return true;
         }
         return false;
     }
 
     /**
-     * Get the Flash memory block Length for bootloader
+     * Return the multiplier for scaling the current limit from hardware units
+     * to physical units (mA).
+     *
+     * @return the multiplier for the current limit
+     */
+    public double getCurrentMultiplier() {
+        switch (sprogType) {
+            case PISPROGONE:
+                // Value returned is number of ADC steps 0f 3.22mV across 0.47
+                // ohms, or equivalent
+                return 3220.0/470;
+                
+            default:
+                // Value returned is number of ADC steps 0f 4.88mV across 0.47
+                // ohms, or equivalent
+                return 4880.0/470;
+        }
+    }
+    
+    /**
+     * Get the Flash memory block Length for bootloader.
      *
      * @return blocklen
      */
@@ -86,17 +108,20 @@ public class SprogType {
                 return 8;
 
             case SPROGIIv3:
+            case SPROGIIv4:
             case SPROG3:
             case SPROGIV:
             case SPROG5:
+            case PISPROGONE:
             case NANO:
+            case PISPROGNANO:
             case SNIFFER:
                 return 16;
         }
     }
 
     /**
-     * Get the Flash memory block Length for bootloader
+     * Get the Flash memory block Length for bootloader.
      *
      * @param bootVer the bootloader version
      * @return length in bytes
@@ -133,12 +158,25 @@ public class SprogType {
                 break;
 
             case SPROGIIv3:
+            case SPROGIIv4:
             case SPROG3:
             case SPROGIV:
             case SPROG5:
             case NANO:
             case SNIFFER:
                 if ((addr >= 0x2200) && (addr < 0x3F00)) {
+                    return true;
+                }
+                break;
+
+            case PISPROGNANO:
+                if ((addr >= 0x0C00) && (addr < 0x1FF0)) {
+                    return true;
+                }
+                break;
+                
+            case PISPROGONE:
+                if ((addr >= 0x1000) && (addr < 0x3F00)) {
                     return true;
                 }
                 break;
@@ -156,12 +194,19 @@ public class SprogType {
                 return 0x200;
 
             case SPROGIIv3:
+            case SPROGIIv4:
             case SPROG3:
             case SPROGIV:
             case SPROG5:
             case NANO:
             case SNIFFER:
                 return 0x2200;
+
+            case PISPROGNANO:
+                return 0x0C00;
+
+            case PISPROGONE:
+                return 0x1000;
 
             default:
                 break;
@@ -174,6 +219,7 @@ public class SprogType {
      *
      * @return String representation of a SPROG type
      */
+    @Override
     public String toString() {
         return this.toString(sprogType);
     }
@@ -183,16 +229,16 @@ public class SprogType {
      * @return String representation of a SPROG type
      */
     public String toString(int t) {
-        //if (log.isDebugEnabled()) { log.debug("Integer " + t); }
+        //if (log.isDebugEnabled()) { log.debug("Integer {}", t); }
         switch (t) {
             case NO_PROMPT_FOUND:
-                return "No SPROG prompt found";
+                return Bundle.getMessage("TypeNoSprogPromptFound");
             case NOT_A_SPROG:
-                return "Not connected to a SPROG";
+                return Bundle.getMessage("TypeNotConnectedToSPROG");
             case NOT_RECOGNISED:
-                return "Unrecognised SPROG";
+                return Bundle.getMessage("TypeUnrecognisedSPROG");
             case TIMEOUT:
-                return "Timeout talking to SPROG";
+                return Bundle.getMessage("TypeTimeoutTalkingToSPROG");
             case SPROGV4:
                 return "SPROG ";
             case SPROGIIUSB:
@@ -201,22 +247,27 @@ public class SprogType {
                 return "SPROG II ";
             case SPROGIIv3:
                 return "SPROG IIv3 ";
+            case SPROGIIv4:
+                return "SPROG IIv4 ";
             case SPROG3:
                 return "SPROG 3 ";
             case SPROGIV:
                 return "SPROG IV ";
             case SPROG5:
                 return "SPROG 5 ";
+            case PISPROGONE:
+                return "Pi-SPROG One ";
             case NANO:
                 return "SPROG Nano ";
+            case PISPROGNANO:
+                return "Pi-SPROG Nano ";
             case SNIFFER:
                 return "SPROG Sniffer ";
             default:
-                return "Unknown Hardware";
+                return Bundle.getMessage("TypeUnknownHardware");
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(SprogType.class.getName());
-}
+    private final static Logger log = LoggerFactory.getLogger(SprogType.class);
 
-/* @(#)SprogType.java */
+}

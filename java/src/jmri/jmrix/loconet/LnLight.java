@@ -1,4 +1,3 @@
-// LnLight.java
 package jmri.jmrix.loconet;
 
 import jmri.implementation.AbstractLight;
@@ -13,14 +12,8 @@ import org.slf4j.LoggerFactory;
  * Based in part on SerialLight.java
  *
  * @author Dave Duchamp Copyright (C) 2006
- * @version $Revision$
  */
 public class LnLight extends AbstractLight {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2993413165048057836L;
 
     /**
      * Create a Light object, with only system name.
@@ -63,6 +56,7 @@ public class LnLight extends AbstractLight {
      * Set the current state of this Light This routine requests the hardware to
      * change.
      */
+    @Override
     protected void doNewState(int oldState, int newState) {
         LocoNetMessage l = new LocoNetMessage(4);
         l.setOpCode(LnConstants.OPC_SW_REQ);
@@ -84,7 +78,5 @@ public class LnLight extends AbstractLight {
         tc.sendLocoNetMessage(l);
     }
 
-    static Logger log = LoggerFactory.getLogger(LnLight.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LnLight.class);
 }
-
-/* @(#)LnLight.java */

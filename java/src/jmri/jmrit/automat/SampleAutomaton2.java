@@ -1,4 +1,3 @@
-// SampleAutomaton2.java
 package jmri.jmrit.automat;
 
 import jmri.InstanceManager;
@@ -24,8 +23,7 @@ import org.slf4j.LoggerFactory;
  * <a href="http://jmri.org/help/en/html/tools/automation/viaJava.shtml">JMRI
  * Layout Automation in Java page</a>.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
  * @see jmri.jmrit.automat.SampleAutomaton2Action
  */
 public class SampleAutomaton2 extends AbstractAutomaton {
@@ -54,22 +52,19 @@ public class SampleAutomaton2 extends AbstractAutomaton {
      * By default, monitors sensor "32" and controls locomotive 1234(long).
      *
      */
+    @Override
     protected void init() {
         // get references to sample layout objects
 
         sensor = InstanceManager.sensorManagerInstance().
                 provideSensor(sensorName);
 
-        programmer = InstanceManager.programmerManagerInstance()
+        programmer = InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
                 .getAddressedProgrammer(locoLong, locoNumber);
 
-        if (sensor != null) {
-            // set up the initial correlation
-            now = sensor.getKnownState();
-            setMomentum(now);
-        } else {
-            log.error("Failure to provide sensor " + sensorName + " on initialization");
-        }
+        // set up the initial correlation
+        now = sensor.getKnownState();
+        setMomentum(now);
     }
 
     int now;
@@ -79,6 +74,7 @@ public class SampleAutomaton2 extends AbstractAutomaton {
      *
      * @return Always returns true to continue operation
      */
+    @Override
     protected boolean handle() {
         log.debug("Waiting for state change");
 
@@ -115,7 +111,5 @@ public class SampleAutomaton2 extends AbstractAutomaton {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(SampleAutomaton2.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SampleAutomaton2.class);
 }
-
-/* @(#)SampleAutomaton2.java */

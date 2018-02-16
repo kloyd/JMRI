@@ -25,11 +25,6 @@ import jmri.util.swing.EditableResizableImagePanel;
  */
 public class FunctionButtonPropertyEditor extends JDialog {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7969405753683639511L;
-
     private FunctionButton button;
 
     private JTextField textField;
@@ -142,8 +137,9 @@ public class FunctionButtonPropertyEditor extends JDialog {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 2, 4, 4));
 
-        JButton saveButton = new JButton(Bundle.getMessage("ButtonOk"));
+        JButton saveButton = new JButton(Bundle.getMessage("ButtonOK"));
         saveButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 saveProperties();
             }
@@ -151,6 +147,7 @@ public class FunctionButtonPropertyEditor extends JDialog {
 
         JButton cancelButton = new JButton(Bundle.getMessage("ButtonCancel"));
         cancelButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 finishEdit();
             }

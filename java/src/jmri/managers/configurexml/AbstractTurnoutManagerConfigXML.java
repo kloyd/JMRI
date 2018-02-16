@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
  * time.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2002
- * @version $Revision$
  */
 public abstract class AbstractTurnoutManagerConfigXML extends AbstractNamedBeanManagerConfigXML {
 
@@ -40,6 +39,7 @@ public abstract class AbstractTurnoutManagerConfigXML extends AbstractNamedBeanM
      * @param o Object to store, of type TurnoutManager
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         Element turnouts = new Element("turnouts");
         setStoreElementClass(turnouts);
@@ -64,13 +64,9 @@ public abstract class AbstractTurnoutManagerConfigXML extends AbstractNamedBeanM
             // store the turnouts
             while (iter.hasNext()) {
                 String sname = iter.next();
-                if (sname == null) {
-                    log.error("System name null during store");
-                }
                 log.debug("system name is " + sname);
                 Turnout t = tm.getBySystemName(sname);
-                Element elem = new Element("turnout")
-                        .setAttribute("systemName", sname); // deprecated for 2.9.* series
+                Element elem = new Element("turnout");
                 elem.addContent(new Element("systemName").addContent(sname));
                 log.debug("store turnout " + sname);
 
@@ -133,9 +129,7 @@ public abstract class AbstractTurnoutManagerConfigXML extends AbstractNamedBeanM
                     TurnoutOperationXml adapter = TurnoutOperationXml.getAdapter(op);
                     if (adapter != null) {
                         Element nonceOpElem = adapter.store(op);
-                        if (opElem != null) {
-                            elem.addContent(nonceOpElem);
-                        }
+                        elem.addContent(nonceOpElem);
                     }
                 } else {
                     opstr = op.getName();
@@ -228,6 +222,9 @@ public abstract class AbstractTurnoutManagerConfigXML extends AbstractNamedBeanM
                 break;
             }
             String userName = getUserName(elem);
+
+            checkNameNormalization(sysName, userName, tm);
+
             if (log.isDebugEnabled()) {
                 log.debug("create turnout: (" + sysName + ")(" + (userName == null ? "<null>" : userName) + ")");
             }
@@ -235,13 +232,6 @@ public abstract class AbstractTurnoutManagerConfigXML extends AbstractNamedBeanM
             if (t == null) {
                 t = tm.newTurnout(sysName, userName);
                 //Nothing is logged in the console window as the newTurnoutFunction already does this.
-                //log.error("Could not create turnout: '"+sysName+"' user name: '"+(userName==null?"":userName)+"'");
-                if (t == null) {
-                    result = false;
-                    continue;
-                }
-                //result = false;
-                //continue;
             } else if (userName != null) {
                 t.setUserName(userName);
             }
@@ -393,9 +383,10 @@ public abstract class AbstractTurnoutManagerConfigXML extends AbstractNamedBeanM
         return result;
     }
 
+    @Override
     public int loadOrder() {
         return InstanceManager.turnoutManagerInstance().getXMLOrder();
     }
 
-    static Logger log = LoggerFactory.getLogger(AbstractTurnoutManagerConfigXML.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractTurnoutManagerConfigXML.class);
 }

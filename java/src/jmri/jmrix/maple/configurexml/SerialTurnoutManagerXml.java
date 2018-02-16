@@ -1,6 +1,5 @@
 package jmri.jmrix.maple.configurexml;
 
-import jmri.jmrix.maple.SerialTurnoutManager;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * method here.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2003, 2008
- * @version $Revision$
  */
 public class SerialTurnoutManagerXml extends jmri.managers.configurexml.AbstractTurnoutManagerConfigXML {
 
@@ -20,21 +18,21 @@ public class SerialTurnoutManagerXml extends jmri.managers.configurexml.Abstract
         super();
     }
 
+    @Override
     public void setStoreElementClass(Element turnouts) {
         turnouts.setAttribute("class", "jmri.jmrix.maple.configurexml.SerialTurnoutManagerXml");
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
 
     @Override
     public boolean load(Element shared, Element perNode) {
-        // create the master object
-        SerialTurnoutManager.instance();
         // load individual turnouts
         return loadTurnouts(shared, perNode);
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialTurnoutManagerXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialTurnoutManagerXml.class);
 }

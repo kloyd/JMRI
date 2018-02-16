@@ -1,4 +1,3 @@
-// SamplePane.java
 package jmri.util.swing;
 
 import java.util.ArrayList;
@@ -11,19 +10,14 @@ import javax.swing.JMenu;
  * Sample Pane class for tests
  *
  * @author	Bob Jacobsen Copyright 2010
- * @version $Revision$
  */
 // sample class
 public class SamplePane extends jmri.util.swing.JmriPanel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4679989667138496781L;
-
     public SamplePane() {
     }
 
+    @Override
     public void initComponents() {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
@@ -46,14 +40,17 @@ public class SamplePane extends jmri.util.swing.JmriPanel {
         add(b);
     }
 
+    @Override
     public String getHelpTarget() {
         return null;
     }
 
+    @Override
     public String getTitle() {
         return "SamplePane " + num;
     }
 
+    @Override
     public List<JMenu> getMenus() {
         java.util.ArrayList<JMenu> list = new java.util.ArrayList<JMenu>();
         JMenu m = new JMenu("test 1");
@@ -67,8 +64,9 @@ public class SamplePane extends jmri.util.swing.JmriPanel {
         return list;
     }
 
+    @Override
     public void dispose() {
-        disposed.add(Integer.valueOf(num));
+        disposed.add(num);
         super.dispose();
     }
 

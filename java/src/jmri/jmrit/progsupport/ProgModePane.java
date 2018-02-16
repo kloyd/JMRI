@@ -1,4 +1,3 @@
-// ProgModePane.java
 package jmri.jmrit.progsupport;
 
 import javax.swing.BoxLayout;
@@ -8,33 +7,27 @@ import jmri.AddressedProgrammerManager;
 import jmri.GlobalProgrammerManager;
 import jmri.InstanceManager;
 import jmri.Programmer;
-import jmri.ProgrammerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Provide a JPanel to configure the programming mode.
- * <P>
+ * <p>
  * The using code should get a configured programmer with getProgrammer.
- * <P>
+ * <p>
  * This pane will only display ops mode options if ops mode is available, as
  * evidenced by an attempt to get an ops mode programmer at startup time.
- * <P>
+ * <p>
  * For service mode, you can get the programmer either from the JPanel or direct
  * from the instance manager. For ops mode, you have to get it from here.
- * <P>
+ * <p>
  * Note that you should call the dispose() method when you're really done, so
  * that a ProgModePane object can disconnect its listeners.
  *
- * @author	Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001
  */
 public class ProgModePane extends ProgModeSelector {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -557999704137510315L;
     // GUI member declarations
     ProgOpsModePane mOpsPane;
     ProgServiceModePane mServicePane;
@@ -47,18 +40,14 @@ public class ProgModePane extends ProgModeSelector {
     public ProgModePane(int direction) {
 
         if (log.isDebugEnabled()) {
-            log.debug("ProgrammerManager:");
-            for (Object p : InstanceManager.getList(ProgrammerManager.class)) {
-                log.debug("   " + ((ProgrammerManager) p).toString());
-            }
-            log.debug("Addressed:");
-            for (Object p : InstanceManager.getList(AddressedProgrammerManager.class)) {
-                log.debug("   " + ((AddressedProgrammerManager) p).toString());
-            }
-            log.debug("Global:");
-            for (Object p : InstanceManager.getList(GlobalProgrammerManager.class)) {
-                log.debug("   " + ((GlobalProgrammerManager) p).toString());
-            }
+            log.debug("AddressedProgrammerManager:");
+            InstanceManager.getList(AddressedProgrammerManager.class).forEach((p) -> {
+                log.debug("   " + p.toString());
+            });
+            log.debug("GlobalProgrammerManager:");
+            InstanceManager.getList(GlobalProgrammerManager.class).forEach((p) -> {
+                log.debug("   " + p.toString());
+            });
         }
 
         // general GUI config
@@ -69,14 +58,14 @@ public class ProgModePane extends ProgModeSelector {
         // create the ops mode 1st, so the service is 2nd,
         // so it's the one that's selected
         mOpsPane = null;
-        if (InstanceManager.getDefault(AddressedProgrammerManager.class) != null
+        if (InstanceManager.getNullableDefault(AddressedProgrammerManager.class) != null
                 && InstanceManager.getDefault(AddressedProgrammerManager.class).isAddressedModePossible()) {
 
             mOpsPane = new ProgOpsModePane(direction, group);
         }
 
         // service mode support, if present
-        if (InstanceManager.getDefault(GlobalProgrammerManager.class) != null) {
+        if (InstanceManager.getNullableDefault(GlobalProgrammerManager.class) != null) {
 
             mServicePane = new ProgServiceModePane(direction, group);
             add(mServicePane);
@@ -98,6 +87,7 @@ public class ProgModePane extends ProgModeSelector {
      *
      * @return Always true in this implementation
      */
+    @Override
     public boolean isSelected() {
         return true;
     }
@@ -105,6 +95,7 @@ public class ProgModePane extends ProgModeSelector {
     /**
      * Get the configured programmer
      */
+    @Override
     public Programmer getProgrammer() {
         if (mServicePane!=null && mServicePane.isSelected()) {
             return mServicePane.getProgrammer();
@@ -115,6 +106,7 @@ public class ProgModePane extends ProgModeSelector {
         }
     }
 
+    @Override
     public void dispose() {
         if (mServicePane != null) {
             mServicePane.dispose();
@@ -126,6 +118,6 @@ public class ProgModePane extends ProgModeSelector {
         mOpsPane = null;
     }
 
-    static Logger log = LoggerFactory.getLogger(ProgModePane.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ProgModePane.class);
 
 }

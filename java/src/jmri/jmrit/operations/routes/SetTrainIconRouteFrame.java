@@ -1,4 +1,3 @@
-// SetTrainIconPositionFrame.java
 package jmri.jmrit.operations.routes;
 
 import java.awt.Color;
@@ -17,6 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import jmri.InstanceManager;
 import jmri.jmrit.display.Editor;
 import jmri.jmrit.display.PanelMenu;
 import jmri.jmrit.operations.OperationsFrame;
@@ -31,16 +31,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright (C) 2001
  * @author Daniel Boudreau Copyright (C) 2010
- * @version $Revision$
  */
 public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3933825267912834479L;
-
-    RouteManager routeManager = RouteManager.instance();
+    RouteManager routeManager = InstanceManager.getDefault(RouteManager.class);
 
     // labels
     JLabel textX = new JLabel("   X  ");
@@ -54,8 +48,8 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
     JButton previousButton = new JButton(Bundle.getMessage("Previous"));
     JButton nextButton = new JButton(Bundle.getMessage("Next"));
     JButton placeButton = new JButton(Bundle.getMessage("PlaceTestIcon"));
-    JButton applyButton = new JButton(Bundle.getMessage("Apply"));
-    JButton saveButton = new JButton(Bundle.getMessage("Save"));
+    JButton applyButton = new JButton(Bundle.getMessage("ButtonApply"));
+    JButton saveButton = new JButton(Bundle.getMessage("ButtonSave"));
 
     // combo boxes
     // Spinners
@@ -77,7 +71,7 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
         if (routeName == null) {
             return;
         }
-        _route = RouteManager.instance().getRouteByName(routeName);
+        _route = InstanceManager.getDefault(RouteManager.class).getRouteByName(routeName);
         _route.addPropertyChangeListener(this);
 
         // general GUI config
@@ -141,6 +135,7 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
 
     int value = JOptionPane.NO_OPTION;
 
+    @Override
     public void buttonActionPerformed(java.awt.event.ActionEvent ae) {
         if (ae.getSource() == previousButton) {
             updateRouteLocation(BACK);
@@ -155,7 +150,8 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
             if (value != JOptionPane.YES_OPTION) {
                 value = JOptionPane.showConfirmDialog(null, MessageFormat.format(Bundle
                         .getMessage("UpdateTrainIconRoute"), new Object[]{_route.getName()}), Bundle
-                        .getMessage("DoYouWantThisRoute"), JOptionPane.YES_NO_OPTION);
+                                .getMessage("DoYouWantThisRoute"),
+                        JOptionPane.YES_NO_OPTION);
             }
             if (value == JOptionPane.YES_OPTION) {
                 saveButton.setEnabled(true);
@@ -163,13 +159,14 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
             updateTrainIconCoordinates();
         }
         if (ae.getSource() == saveButton) {
-            RouteManagerXml.instance().writeOperationsFile();
+            InstanceManager.getDefault(RouteManagerXml.class).writeOperationsFile();
             if (Setup.isCloseWindowOnSaveEnabled()) {
                 dispose();
             }
         }
     }
 
+    @Override
     public void spinnerChangeEvent(javax.swing.event.ChangeEvent ae) {
         if (ae.getSource() == spinTrainIconX && _tIon != null) {
             _tIon.setLocation((Integer) spinTrainIconX.getValue(), _tIon.getLocation().y);
@@ -187,7 +184,7 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
 
     // place test markers on panel
     private void placeTestIcons() {
-        Editor editor = PanelMenu.instance().getEditorByName(Setup.getPanelName());
+        Editor editor = InstanceManager.getDefault(PanelMenu.class).getEditorByName(Setup.getPanelName());
         if (editor == null) {
             JOptionPane.showMessageDialog(this, MessageFormat.format(Bundle.getMessage("LoadPanel"),
                     new Object[]{Setup.getPanelName()}), Bundle.getMessage("PanelNotFound"),
@@ -198,8 +195,8 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
             }
             // icon
             _tIon = editor.addTrainIcon(_rl.getName());
-            _tIon.getTooltip().setText(_route.getName());
-            _tIon.getTooltip().setBackgroundColor(Color.white);
+            _tIon.getToolTip().setText(_route.getName());
+            _tIon.getToolTip().setBackgroundColor(Color.white);
             _tIon.setLocation(_rl.getTrainIconX(), _rl.getTrainIconY());
             setTrainIconNameAndColor();
             addIconListener(_tIon);
@@ -276,16 +273,20 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
 
     private void addIconListener(TrainIcon tI) {
         tI.addComponentListener(new ComponentListener() {
+            @Override
             public void componentHidden(java.awt.event.ComponentEvent e) {
             }
 
+            @Override
             public void componentShown(java.awt.event.ComponentEvent e) {
             }
 
+            @Override
             public void componentMoved(java.awt.event.ComponentEvent e) {
                 trainIconMoved(e);
             }
 
+            @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
             }
         });
@@ -305,19 +306,22 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
         }
     }
 
+    @Override
     public void dispose() {
         removeIcons();
-        _route.removePropertyChangeListener(this);
+        if (_route != null) {
+            _route.removePropertyChangeListener(this);
+        }
         if (_rl != null) {
             _rl.removePropertyChangeListener(this);
         }
         super.dispose();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
-        if (log.isDebugEnabled()) {
-            log.debug("Property change ({}) old: ({}) new: ({})", e.getPropertyName(), e.getOldValue(), e.getNewValue());
-        }
+        log.debug("Property change ({}) old: ({}) new: ({})", e.getPropertyName(), e.getOldValue(),
+                e.getNewValue());
         if (e.getSource().equals(_route)) {
             updateRoute();
         }
@@ -326,5 +330,5 @@ public class SetTrainIconRouteFrame extends OperationsFrame implements PropertyC
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(SetTrainIconRouteFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SetTrainIconRouteFrame.class);
 }

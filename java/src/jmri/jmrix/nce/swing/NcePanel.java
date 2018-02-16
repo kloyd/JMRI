@@ -1,7 +1,8 @@
-// LnPanel.java
 package jmri.jmrix.nce.swing;
 
 import jmri.jmrix.nce.NceSystemConnectionMemo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * JPanel extension to handle automatic creation of window title and help
@@ -12,33 +13,35 @@ import jmri.jmrix.nce.NceSystemConnectionMemo;
  * @author Bob Jacobsen Copyright 2010
  * @since 2.9.4 Copied from LocoNet.swing
  * @author kcameron 2010
- * @version $Revision$
  */
 abstract public class NcePanel extends jmri.util.swing.JmriPanel implements NcePanelInterface {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8704964386237089071L;
 
     /**
      * make "memo" object available as convenience
      */
     protected NceSystemConnectionMemo memo;
 
-    public void initComponents(NceSystemConnectionMemo memo) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initComponents(NceSystemConnectionMemo memo) {
         this.memo = memo;
     }
 
-    public void initContext(Object context) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initContext(Object context) {
         if (context instanceof NceSystemConnectionMemo) {
             try {
                 initComponents((NceSystemConnectionMemo) context);
             } catch (Exception e) {
-                //log.error("NcePanel initContext failed");
-                e.printStackTrace();
+                log.error("NcePanel initContext failed", e);
             }
         }
     }
 
+    private final static Logger log = LoggerFactory.getLogger(NcePanel.class);
 }

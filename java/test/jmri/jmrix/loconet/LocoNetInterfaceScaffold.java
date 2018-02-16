@@ -1,4 +1,3 @@
-// LocoNetInterfaceScaffold.java
 package jmri.jmrix.loconet;
 
 import java.util.Vector;
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
  * Description:	Test scaffold implementation of LocoNetInterface
  *
  * @author	Bob Jacobsen Copyright (C) 2001, 2006
- * @version
  *
  * Use an object of this type as a LnTrafficController in tests
  */
@@ -21,6 +19,7 @@ public class LocoNetInterfaceScaffold extends LnTrafficController {
     }
 
     // override some LnTrafficController methods for test purposes
+    @Override
     public boolean status() {
         return true;
     }
@@ -30,6 +29,7 @@ public class LocoNetInterfaceScaffold extends LnTrafficController {
      */
     public Vector<LocoNetMessage> outbound = new Vector<LocoNetMessage>();  // public OK here, so long as this is a test class
 
+    @Override
     public void sendLocoNetMessage(LocoNetMessage m) {
         if (log.isDebugEnabled()) {
             log.debug("sendLocoNetMessage [" + m + "]");
@@ -40,6 +40,7 @@ public class LocoNetInterfaceScaffold extends LnTrafficController {
         // separately tested
     }
 
+    @Override
     public boolean isXmtBusy() {
         return false;
     }
@@ -71,9 +72,9 @@ public class LocoNetInterfaceScaffold extends LnTrafficController {
         return listeners.size();
     }
 
-    static Logger log = LoggerFactory.getLogger(LocoNetInterfaceScaffold.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LocoNetInterfaceScaffold.class);
 
 }
 
 
-/* @(#)LocoNetInterfaceScaffold.java */
+

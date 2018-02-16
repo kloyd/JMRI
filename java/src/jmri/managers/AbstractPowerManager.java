@@ -1,4 +1,3 @@
-// AbstractPowerManager.java
 package jmri.managers;
 
 import jmri.PowerManager;
@@ -9,7 +8,6 @@ import jmri.PowerManager;
  * These are registered when they are added to the InstanceManager
  * <P>
  * @author	Bob Jacobsen Copyright (C) 2001, 2003, 2010
- * @version $Revision$
  */
 abstract public class AbstractPowerManager implements PowerManager {
 
@@ -17,6 +15,7 @@ abstract public class AbstractPowerManager implements PowerManager {
         this.userName = memo.getUserName();
     }
 
+    @Override
     public String getUserName() {
         return userName;
     }
@@ -26,6 +25,7 @@ abstract public class AbstractPowerManager implements PowerManager {
     // to hear of changes
     java.beans.PropertyChangeSupport pcs = new java.beans.PropertyChangeSupport(this);
 
+    @Override
     public synchronized void addPropertyChangeListener(java.beans.PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
     }
@@ -34,11 +34,9 @@ abstract public class AbstractPowerManager implements PowerManager {
         pcs.firePropertyChange(p, old, n);
     }
 
+    @Override
     public synchronized void removePropertyChangeListener(java.beans.PropertyChangeListener l) {
         pcs.removePropertyChangeListener(l);
     }
 
 }
-
-
-/* @(#)AbstractPowerManager.java */

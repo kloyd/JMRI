@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
  * Handle XML configuration for LocoAddress objects.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2005
- * @version $Revision$
  */
 public class LocoAddressXml extends jmri.configurexml.AbstractXmlAdapter {
 
@@ -22,6 +21,7 @@ public class LocoAddressXml extends jmri.configurexml.AbstractXmlAdapter {
      * @param o Object to store, of type LocoAddress
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         LocoAddress p = (LocoAddress) o;
 
@@ -65,9 +65,10 @@ public class LocoAddressXml extends jmri.configurexml.AbstractXmlAdapter {
         return new jmri.DccLocoAddress(addr, prot);
     }
 
+    @Override
     public void load(Element element, Object o) {
         log.error("Invalid method called");
     }
 
-    static Logger log = LoggerFactory.getLogger(DccLocoAddressXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DccLocoAddressXml.class);
 }

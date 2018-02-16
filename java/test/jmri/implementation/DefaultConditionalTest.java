@@ -1,11 +1,9 @@
-// DefaultConditionalTest.java
 package jmri.implementation;
 
 import jmri.*;
-
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * Test the DefaultConditional implementation class
@@ -17,12 +15,13 @@ public class DefaultConditionalTest extends NamedBeanTest {
     /**
      * Operate parent NamedBeanTest tests.
      */
+    @Override
     protected NamedBean createInstance() {
         return new DefaultConditional("IXIC 0");
     }
 
     public void testCtor() {
-        new DefaultConditional("IXIC 1");
+        Assert.assertNotNull("exists",new DefaultConditional("IXIC 1"));
     }
 
     public void testBasicBeanOperations() {
@@ -56,15 +55,13 @@ public class DefaultConditionalTest extends NamedBeanTest {
 
     @Override
     protected void tearDown() throws Exception {
-        jmri.util.JUnitUtil.resetInstanceManager();
-        super.tearDown();
-        apps.tests.Log4JFixture.tearDown();
+        jmri.util.JUnitUtil.tearDown();
     }
 
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {DefaultConditionalTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

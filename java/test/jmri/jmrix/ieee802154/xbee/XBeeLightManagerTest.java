@@ -1,57 +1,98 @@
 package jmri.jmrix.ieee802154.xbee;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.digi.xbee.api.RemoteXBeeDevice;
+import com.digi.xbee.api.models.XBee16BitAddress;
+import com.digi.xbee.api.models.XBee64BitAddress;
+import jmri.Light;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * XBeeLightManagerTest.java
  *
  * Description:	tests for the jmri.jmrix.ieee802154.xbee.XBeeLightManager class
  *
- * @author	Paul Bender
- * @version $Revision$
+ * @author	Paul Bender Copyright (C) 2012,2016
  */
-public class XBeeLightManagerTest extends TestCase {
+public class XBeeLightManagerTest extends jmri.managers.AbstractLightMgrTestBase {
+        
+    private XBeeTrafficController tc = null;
 
+    @Override
+    public String getSystemName(int i) {
+        return "ABCL2:" + i;
+    }
+
+
+    @Test
     public void testCtor() {
-        XBeeTrafficController tc = new XBeeTrafficController() {
-            public void setInstance() {
-            }
-        };
-        XBeeLightManager m = new XBeeLightManager(tc, "ABC");
-        Assert.assertNotNull("exists", m);
+        Assert.assertNotNull("exists", l);
+    }
+
+    @Override
+    @Test
+    public void testDefaultSystemName() {
+        // create
+        Light t = l.provideLight("ABCL2:" + getNumToTest1());
+        // check
+        Assert.assertTrue("real object returned ", t != null);
+        Assert.assertTrue("system name correct ", t == l.getBySystemName(getSystemName(getNumToTest1())));
+    }
+
+    @Override
+    @Test
+    public void testUpperLower() {
+        Light t = l.provideLight("ABCL2:" + getNumToTest2());
+        String name = t.getSystemName();
+        Assert.assertNull(l.getLight(name.toLowerCase()));
     }
 
     // from here down is testing infrastructure
-    public XBeeLightManagerTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", XBeeLightManagerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(XBeeLightManagerTest.class);
-        return suite;
-    }
-
     // The minimal setup for log4J
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Before
+    @Override
+    public void setUp() {
+        jmri.util.JUnitUtil.setUp();
+        tc = new XBeeInterfaceScaffold();
+        XBeeConnectionMemo m = new XBeeConnectionMemo();
+        m.setSystemPrefix("ABC");
+        tc.setAdapterMemo(m);
+        l = new XBeeLightManager(tc, "ABC");
+        m.setLightManager(l);
+        byte pan[] = {(byte) 0x00, (byte) 0x42};
+        byte uad[] = {(byte) 0x00, (byte) 0x02};
+        byte gad[] = {(byte) 0x00, (byte) 0x13, (byte) 0xA2, (byte) 0x00, (byte) 0x40, (byte) 0xA0, (byte) 0x4D, (byte) 0x2D};
+        XBeeNode node = new XBeeNode(pan,uad,gad);
+        RemoteXBeeDevice rd = new RemoteXBeeDevice(tc.getXBee(),
+             new XBee64BitAddress("0013A20040A04D2D"),
+             new XBee16BitAddress("0002"),
+             "Node 1");
+        node.setXBee(rd);
+        tc.registerNode(node);
     }
 
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        tc.terminate();
+        jmri.util.JUnitUtil.tearDown();
     }
 
-    static Logger log = LoggerFactory.getLogger(XBeeLightManagerTest.class.getName());
+    /**
+     * Number of light to test. Made a separate method so it can be overridden
+     * in subclasses that do or don't support various numbers
+     */
+    @Override
+    protected int getNumToTest1() {
+        return 2;
+    }
+
+    @Override
+    protected int getNumToTest2() {
+        return 7;
+    }
+
+
 
 }

@@ -1,4 +1,3 @@
-// PacketDataModel.java
 package jmri.jmrix.pricom.pockettester;
 
 import java.util.Vector;
@@ -17,14 +16,9 @@ import org.slf4j.LoggerFactory;
  * Table data model for display of DCC packet contents
  *
  * @author	Bob Jacobsen Copyright (C) 2005
- * @version	$Revision$
- */
+  */
 public class PacketDataModel extends javax.swing.table.AbstractTableModel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 8398725528235582417L;
     static java.util.ResourceBundle rb
             = java.util.ResourceBundle.getBundle("jmri.jmrix.pricom.pockettester.TesterBundle");
     static public final int ADDRESSCOLUMN = 0;
@@ -38,14 +32,17 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
      * Returns the number of rows to be displayed. This can vary depending on
      * what has been seen
      */
+    @Override
     public int getRowCount() {
         return keys.size();
     }
 
+    @Override
     public int getColumnCount() {
         return NUMCOLUMN;
     }
 
+    @Override
     public String getColumnName(int col) {
         switch (col) {
             case ADDRESSCOLUMN:
@@ -61,6 +58,7 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @Override
     public Class<?> getColumnClass(int col) {
         switch (col) {
             case ADDRESSCOLUMN:
@@ -74,6 +72,7 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
         switch (col) {
             case MONITORBUTTONCOLUMN:
@@ -86,6 +85,7 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
     static final Boolean True = Boolean.valueOf(true);
     static final Boolean False = Boolean.valueOf(false);
 
+    @Override
     public Object getValueAt(int row, int col) {
 
         switch (col) {
@@ -103,6 +103,8 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "DB_DUPLICATE_SWITCH_CLAUSES",
+                        justification="better to keep cases in column order rather than to combine")
     public int getPreferredWidth(int col) {
         switch (col) {
             case ADDRESSCOLUMN:
@@ -118,6 +120,7 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
         }
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         switch (col) {
             case MONITORBUTTONCOLUMN:
@@ -142,7 +145,6 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
      * optional, in that other table formats can use this table model. But we
      * put it here to help keep it consistent.
      *
-     * @param slotTable
      */
     public void configureTable(JTable slotTable) {
         // allow reordering of the columns
@@ -274,6 +276,6 @@ public class PacketDataModel extends javax.swing.table.AbstractTableModel {
         return s.substring(23, s.length() - 1);
     }
 
-    static Logger log = LoggerFactory.getLogger(PacketDataModel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PacketDataModel.class);
 
 }

@@ -27,13 +27,8 @@ import org.slf4j.LoggerFactory;
 
 public class BackupDialog extends JDialog {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5510681557160040319L;
-
-    static Logger log = LoggerFactory
-            .getLogger(BackupDialog.class.getName());
+    private final static Logger log = LoggerFactory
+            .getLogger(BackupDialog.class);
 
     private final JPanel contentPanel = new JPanel();
     private JLabel captionLabel;
@@ -41,7 +36,7 @@ public class BackupDialog extends JDialog {
     private JLabel infoLabel1;
     private JLabel infoLabel2;
     private JButton backupButton;
-//	private JButton helpButton;
+    // private JButton helpButton;
 
     private DefaultBackup backup;
 
@@ -100,11 +95,11 @@ public class BackupDialog extends JDialog {
                                 enableBackupButton();
                             }
 
-                            @Override
-                            public void changedUpdate(DocumentEvent arg0) {
-                                enableBackupButton();
-                            }
-                        });
+                    @Override
+                    public void changedUpdate(DocumentEvent arg0) {
+                        enableBackupButton();
+                    }
+                });
 
                 GridBagConstraints gbc_setNameTextField = new GridBagConstraints();
                 gbc_setNameTextField.insets = new Insets(0, 0, 5, 0);
@@ -140,6 +135,7 @@ public class BackupDialog extends JDialog {
             {
                 backupButton = new JButton(Bundle.getMessage("BackupDialog.backupButton.text"));
                 backupButton.addActionListener(new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         do_backupButton_actionPerformed(e);
                     }
@@ -148,26 +144,27 @@ public class BackupDialog extends JDialog {
                 getRootPane().setDefaultButton(backupButton);
             }
             {
-                JButton cancelButton = new JButton(Bundle.getMessage("BackupDialog.cancelButton.text"));
+                JButton cancelButton = new JButton(Bundle.getMessage("ButtonCancel"));
                 cancelButton.addActionListener(new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent arg0) {
                         do_cancelButton_actionPerformed(arg0);
                     }
                 });
-                cancelButton.setActionCommand("Cancel");	// NOI18N
+                cancelButton.setActionCommand("Cancel"); // NOI18N
                 buttonPane.add(cancelButton);
             }
-// Help button isn't used yet
-//			{
-//				helpButton = new JButton(Bundle.getMessage("BackupDialog.helpButton.text"));
-//				helpButton.addActionListener(new ActionListener() {
-//					public void actionPerformed(ActionEvent e) {
-//						do_helpButton_actionPerformed(e);
-//					}
-//				});
-//				helpButton.setEnabled(false);
-//				buttonPane.add(helpButton);
-//			}
+            // Help button isn't used yet
+            //   {
+            //    helpButton = new JButton(Bundle.getMessage("BackupDialog.helpButton.text"));
+            //    helpButton.addActionListener(new ActionListener() {
+            //     public void actionPerformed(ActionEvent e) {
+            //      do_helpButton_actionPerformed(e);
+            //     }
+            //    });
+            //    helpButton.setEnabled(false);
+            //    buttonPane.add(helpButton);
+            //   }
         }
     }
 
@@ -179,6 +176,14 @@ public class BackupDialog extends JDialog {
             log.debug("backup button activated");
 
             setName = setNameTextField.getText();
+
+            if (!OperationsXml.checkFileName(setName)) { // NOI18N
+                log.error("Back up set name must not contain reserved characters");
+                JOptionPane.showMessageDialog(this, Bundle.getMessage("NameResChar") + "\n" // NOI18N
+                        + Bundle.getMessage("ReservedChar"), Bundle.getMessage("CanNotUseName"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             // check to see if files are dirty
             if (OperationsXml.areFilesDirty()) {
@@ -212,24 +217,22 @@ public class BackupDialog extends JDialog {
                     ex,
                     Bundle.getMessage("BackupDialog.BackingUp") + " " + setName,
                     Bundle.getMessage("BackupDialog.Ensure"));
-            new ExceptionDisplayFrame(context);
+            new ExceptionDisplayFrame(context, this).setVisible(true);
 
         } catch (RuntimeException ex) {
-            // ex.printStackTrace();
             log.error("Doing backup...", ex);
 
             UnexpectedExceptionContext context = new UnexpectedExceptionContext(
                     ex, Bundle.getMessage("BackupDialog.BackingUp") + " " + setName);
 
-            new ExceptionDisplayFrame(context);
+            new ExceptionDisplayFrame(context, this).setVisible(true);
         } catch (Exception ex) {
-            // ex.printStackTrace();
             log.error("Doing backup...", ex);
 
             UnexpectedExceptionContext context = new UnexpectedExceptionContext(
                     ex, Bundle.getMessage("BackupDialog.BackingUp") + " " + setName);
 
-            new ExceptionDisplayFrame(context);
+            new ExceptionDisplayFrame(context, this).setVisible(true);
         }
     }
 

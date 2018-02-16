@@ -1,5 +1,6 @@
 package apps.configurexml;
 
+import jmri.ConfigureManager;
 import jmri.InstanceManager;
 import jmri.managers.ManagerDefaultSelector;
 import org.jdom2.Element;
@@ -10,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * Handle XML persistence of ManagerDefaultsConfigPane objects.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2010
- * @version $Revision$
  */
 public class ManagerDefaultsConfigPaneXml extends jmri.configurexml.AbstractXmlAdapter {
 
@@ -23,8 +23,12 @@ public class ManagerDefaultsConfigPaneXml extends jmri.configurexml.AbstractXmlA
      * @param o Object to store, ignored
      * @return null after others arranged
      */
+    @Override
     public Element store(Object o) {
-        InstanceManager.configureManagerInstance().registerPref(InstanceManager.getDefault(ManagerDefaultSelector.class));
+        ConfigureManager cm = InstanceManager.getNullableDefault(jmri.ConfigureManager.class);
+        if (cm != null) {
+            cm.registerPref(InstanceManager.getDefault(ManagerDefaultSelector.class));
+        }
         return null;
     }
 
@@ -40,10 +44,11 @@ public class ManagerDefaultsConfigPaneXml extends jmri.configurexml.AbstractXmlA
      * @param element Top level Element to unpack.
      * @param o       ignored
      */
+    @Override
     public void load(Element element, Object o) {
         log.error("Unexpected call of load(Element, Object)");
     }
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(ManagerDefaultsConfigPaneXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ManagerDefaultsConfigPaneXml.class);
 
 }

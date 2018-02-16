@@ -1,6 +1,6 @@
-// SerialTrafficController.java
 package jmri.jmrix.oaktree;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.DataInputStream;
 import jmri.jmrix.AbstractMRListener;
 import jmri.jmrix.AbstractMRMessage;
@@ -18,14 +18,13 @@ import org.slf4j.LoggerFactory;
  * then carry sequences of characters for transmission. Note that this
  * processing is handled in an independent thread.
  * <P>
- * This handles the state transistions, based on the necessary state in each
+ * This handles the state transitions, based on the necessary state in each
  * message.
  * <P>
  * Handles initialization, polling, output, and input for multiple Serial Nodes.
  *
- * @author	Bob Jacobsen Copyright (C) 2003, 2006
+ * @author Bob Jacobsen Copyright (C) 2003, 2006
  * @author Bob Jacobsen, Dave Duchamp, multiNode extensions, 2004
- * @version	$Revision$
  */
 public class SerialTrafficController extends AbstractMRNodeTrafficController implements SerialInterface {
 
@@ -42,38 +41,15 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
     }
 
     // The methods to implement the SerialInterface
+    @Override
     public synchronized void addSerialListener(SerialListener l) {
         this.addListener(l);
     }
 
+    @Override
     public synchronized void removeSerialListener(SerialListener l) {
         this.removeListener(l);
     }
-
-// remove this code when SerialLight is operational - obsoleted and doesn't belong here anyway
-    /**
-     * Public method to set a Oak Tree Serial Output bit Note: systemName is of
-     * format CNnnnBxxxx where "nnn" is the serial node number (0 - 127) "xxxx'
-     * is the bit number within that node (1 thru number of defined bits) state
-     * is 'true' for 0, 'false' for 1 The bit is transmitted to the Oak Tree
-     * hardware immediately before the next poll packet is sent.
-     */
-    public void setSerialOutput(String systemName, boolean state) {
-        // get the node and bit numbers
-        SerialNode node = SerialAddress.getNodeFromSystemName(systemName);
-        if (node == null) {
-            log.error("bad SerialNode specification in SerialOutput system name:" + systemName);
-            return;
-        }
-        int bit = SerialAddress.getBitFromSystemName(systemName);
-        if (bit == 0) {
-            log.error("bad output bit specification in SerialOutput system name:" + systemName);
-            return;
-        }
-        // set the bit
-        node.setOutputBit(bit, state);
-    }
-// end of code to be removed
 
     /**
      * Public method to set up for initialization of a Serial node
@@ -91,11 +67,13 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
         }
     }
 
+    @Override
     protected AbstractMRMessage enterProgMode() {
-        log.warn("enterProgMode doesnt make sense for Oak Tree serial");
+        log.warn("enterProgMode doesn't make sense for Oak Tree serial");
         return null;
     }
 
+    @Override
     protected AbstractMRMessage enterNormalMode() {
         return null;
     }
@@ -103,6 +81,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
     /**
      * Forward a SerialMessage to all registered SerialInterface listeners.
      */
+    @Override
     protected void forwardMessage(AbstractMRListener client, AbstractMRMessage m) {
         ((SerialListener) client).message((SerialMessage) m);
     }
@@ -110,6 +89,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
     /**
      * Forward a SerialReply to all registered SerialInterface listeners.
      */
+    @Override
     protected void forwardReply(AbstractMRListener client, AbstractMRReply m) {
         ((SerialListener) client).reply((SerialReply) m);
     }
@@ -120,12 +100,11 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
         mSensorManager = m;
     }
 
-    int curSerialNodeIndex = 0;   // cycles over defined nodes when pollMessage is called
-
     /**
      * Handles initialization, output and polling for Oak Tree from within the
      * running thread
      */
+    @Override
     protected synchronized AbstractMRMessage pollMessage() {
         // ensure validity of call
         if (getNumNodes() <= 0) {
@@ -170,6 +149,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
         }
     }
 
+    @Override
     protected synchronized void handleTimeout(AbstractMRMessage m, AbstractMRListener l) {
         // inform node, and if it resets then reinitialize 
         if (getNode(curSerialNodeIndex) != null) {
@@ -181,12 +161,14 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
         }
     }
 
+    @Override
     protected synchronized void resetTimeout(AbstractMRMessage m) {
         // inform node
         getNode(curSerialNodeIndex).resetTimeout(m);
 
     }
 
+    @Override
     protected AbstractMRListener pollReplyHandler() {
         return mSensorManager;
     }
@@ -194,6 +176,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
     /**
      * Forward a preformatted message to the actual interface.
      */
+    @Override
     public void sendSerialMessage(SerialMessage m, SerialListener reply) {
         sendMessage(m, reply);
     }
@@ -203,29 +186,29 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
      *
      * @return The registered SerialTrafficController instance for general use,
      *         if need be creating one.
+     * @deprecated since 4.9.7
      */
+    @Deprecated
     static public SerialTrafficController instance() {
-        if (self == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("creating a new SerialTrafficController object");
-            }
-            self = new SerialTrafficController();
-        }
         return self;
     }
 
     static volatile protected SerialTrafficController self = null;
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
             justification = "temporary until mult-system; only set at startup")
+    @Override
+    @Deprecated
     protected void setInstance() {
         self = this;
     }
 
+    @Override
     protected AbstractMRReply newReply() {
         return new SerialReply();
     }
 
+    @Override
     protected boolean endOfMessage(AbstractMRReply msg) {
         // our version of loadChars doesn't invoke this, so it shouldn't be called
         log.error("Not using endOfMessage, should not be called");
@@ -235,6 +218,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
     protected int currentAddr = -1; // at startup, can't match
     protected int incomingLength = 0;
 
+    @Override
     protected void loadChars(AbstractMRReply msg, DataInputStream istream) throws java.io.IOException {
         // get 1st byte, see if ending too soon
         byte char1 = readByteProtected(istream);
@@ -252,6 +236,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
         }
     }
 
+    @Override
     protected void waitForStartOfReply(DataInputStream istream) throws java.io.IOException {
         // does nothing
     }
@@ -262,6 +247,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
      * @param msg The output byte stream
      * @return next location in the stream to fill
      */
+    @Override
     protected int addHeaderToOutput(byte[] msg, AbstractMRMessage m) {
         return 0;  // Do nothing
     }
@@ -274,6 +260,7 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
      * @param offset the first byte not yet used
      * @param m      the original message
      */
+    @Override
     protected void addTrailerToOutput(byte[] msg, int offset, AbstractMRMessage m) {
         incomingLength = ((SerialMessage) m).getResponseLength();
         currentAddr = ((SerialMessage) m).getAddr();
@@ -287,11 +274,11 @@ public class SerialTrafficController extends AbstractMRNodeTrafficController imp
      * @param m The message to be sent
      * @return Number of bytes
      */
+    @Override
     protected int lengthOfByteStream(AbstractMRMessage m) {
         return 5; // All are 5 bytes long
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialTrafficController.class.getName());
-}
+    private final static Logger log = LoggerFactory.getLogger(SerialTrafficController.class);
 
-/* @(#)SerialTrafficController.java */
+}

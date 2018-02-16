@@ -1,12 +1,11 @@
-// DebugProgrammerTest.java
 package jmri.progdebugger;
 
 import jmri.ProgListener;
 import jmri.Programmer;
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +13,6 @@ import org.slf4j.LoggerFactory;
  * Test the DebugProgrammer class.
  *
  * @author	Bob Jacobsen Copyright 2013
- * @version $Revision$
  */
 public class DebugProgrammerTest extends TestCase {
 
@@ -24,6 +22,7 @@ public class DebugProgrammerTest extends TestCase {
     public void testWriteRead() throws jmri.ProgrammerException, InterruptedException {
         Programmer p = new ProgDebugger();
         ProgListener l = new ProgListener() {
+            @Override
             public void programmingOpReply(int value, int status) {
                 log.debug("callback value=" + value + " status=" + status);
                 replied = true;
@@ -46,6 +45,7 @@ public class DebugProgrammerTest extends TestCase {
     public void testWriteReadString() throws jmri.ProgrammerException, InterruptedException {
         Programmer p = new ProgDebugger();
         ProgListener l = new ProgListener() {
+            @Override
             public void programmingOpReply(int value, int status) {
                 log.debug("callback value=" + value + " status=" + status);
                 replied = true;
@@ -72,6 +72,7 @@ public class DebugProgrammerTest extends TestCase {
     public void testKnowsWrite() throws jmri.ProgrammerException {
         ProgDebugger p = new ProgDebugger();
         ProgListener l = new ProgListener() {
+            @Override
             public void programmingOpReply(int value, int status) {
                 log.debug("callback value=" + value + " status=" + status);
                 replied = true;
@@ -92,6 +93,7 @@ public class DebugProgrammerTest extends TestCase {
     public void testKnowsWriteString() throws jmri.ProgrammerException {
         ProgDebugger p = new ProgDebugger();
         ProgListener l = new ProgListener() {
+            @Override
             public void programmingOpReply(int value, int status) {
                 log.debug("callback value=" + value + " status=" + status);
                 replied = true;
@@ -111,9 +113,7 @@ public class DebugProgrammerTest extends TestCase {
 
     // from here down is testing infrastructure
     synchronized void waitReply() throws InterruptedException {
-        while (!replied) {
-            wait(200);
-        }
+        jmri.util.JUnitUtil.waitFor(()->{return replied;}, "reply received");
         replied = false;
     }
 
@@ -125,7 +125,7 @@ public class DebugProgrammerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {DebugProgrammerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -135,6 +135,6 @@ public class DebugProgrammerTest extends TestCase {
         return suite;
     }
 
-    static Logger log = LoggerFactory.getLogger(DebugProgrammerTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(DebugProgrammerTest.class);
 
 }

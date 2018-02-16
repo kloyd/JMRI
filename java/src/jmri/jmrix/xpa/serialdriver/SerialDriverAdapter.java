@@ -1,41 +1,47 @@
-// SerialDriverAdapter.java
 package jmri.jmrix.xpa.serialdriver;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import jmri.jmrix.xpa.XpaPortController;
 import jmri.jmrix.xpa.XpaSystemConnectionMemo;
 import jmri.jmrix.xpa.XpaTrafficController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import purejavacomm.CommPortIdentifier;
+import purejavacomm.NoSuchPortException;
+import purejavacomm.PortInUseException;
+import purejavacomm.SerialPort;
+import purejavacomm.UnsupportedCommOperationException;
 
 /**
  * Implements SerialPortAdapter for a modem connected to an XPA.
- * <P>
- * This connects an XPA+Modem connected to an XPressNet based command station
+ * <p>
+ * This connects an XPA+Modem connected to an XpressNet based command station
  * via a serial com port. Normally controlled by the SerialDriverFrame class.
- * <P>
+ * <p>
  * The current implementation only handles the 9,600 baud rate. It uses the
  * first configuraiont variable for the modem initilization string.
  *
  * @author	Paul Bender Copyright (C) 2004
- * @version	$Revision$
  */
 public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix.SerialPortAdapter {
 
     public SerialDriverAdapter() {
+
         super(new XpaSystemConnectionMemo());
-        option1Name = "ModemInitString";
-        options.put(option1Name, new Option("Modem Initilization String : ", new String[]{"ATX0E0"}));
-        this.manufacturerName = jmri.jmrix.DCCManufacturerList.LENZ;
+        ((XpaSystemConnectionMemo)getSystemConnectionMemo()).setXpaTrafficController(new XpaTrafficController());
+
+
+        option1Name = "ModemInitString"; // NOI18N
+        options.put(option1Name, new Option(Bundle.getMessage("ModemInitStringLabel"), new String[]{"ATX0E0"}));
+        this.manufacturerName = jmri.jmrix.lenz.LenzConnectionTypeList.LENZ;
     }
 
     SerialPort activeSerialPort = null;
 
+    @Override
     public String openPort(String portName, String appName) {
         // open the port, check ability to set moderators
         try {
@@ -50,17 +56,13 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
             // try to set it for comunication via SerialDriver
             try {
                 activeSerialPort.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-            } catch (gnu.io.UnsupportedCommOperationException e) {
+            } catch (UnsupportedCommOperationException e) {
                 log.error("Cannot set serial parameters on port " + portName + ": " + e.getMessage());
                 return "Cannot set serial parameters on port " + portName + ": " + e.getMessage();
             }
 
-            // set RTS high, DTR high
-            activeSerialPort.setRTS(true);		// not connected in some serial ports and adapters
-            activeSerialPort.setDTR(true);		// pin 1 in DIN8; on main connector, this is DTR
-
             // disable flow control; hardware lines used for signaling, XON/XOFF might appear in data
-            activeSerialPort.setFlowControlMode(0);
+            configureLeadsAndFlowControl(activeSerialPort, 0);
 
             // set timeout
             // activeSerialPort.enableReceiveTimeout(1000);
@@ -71,12 +73,7 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
             serialStream = activeSerialPort.getInputStream();
 
             // purge contents, if any
-            int count = serialStream.available();
-            log.debug("input stream shows " + count + " bytes available");
-            while (count > 0) {
-                serialStream.skip(count);
-                count = serialStream.available();
-            }
+            purgeStream(serialStream);
 
             // report status?
             if (log.isInfoEnabled()) {
@@ -92,12 +89,11 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
 
             opened = true;
 
-        } catch (gnu.io.NoSuchPortException p) {
+        } catch (NoSuchPortException p) {
             return handlePortNotFound(p, portName, log);
-        } catch (Exception ex) {
-            log.error("Unexpected exception while opening port " + portName + " trace follows: " + ex);
-            ex.printStackTrace();
-            return "Unexpected error while opening port " + portName + ": " + ex;
+        } catch (IOException ex) {
+            log.error("Unexpected exception while opening port {}", portName, ex);
+            return "IO Exception while opening port " + portName + ": " + ex;
         }
 
         return null; // indicates OK return
@@ -106,32 +102,31 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
 
     /**
      * set up all of the other objects to operate with an XPA+Modem Connected to
-     * an XPressNet based command station connected to this port
+     * an XpressNet based command station connected to this port
      */
+    @Override
     public void configure() {
 
         // connect to the traffic controller
-        XpaTrafficController.instance().connectPort(this);
+        XpaSystemConnectionMemo memo = ((XpaSystemConnectionMemo)getSystemConnectionMemo());
+        XpaTrafficController tc = memo.getXpaTrafficController();
+        tc.connectPort(this);
+        
+        jmri.InstanceManager.store(memo.getPowerManager(), jmri.PowerManager.class);
 
-        jmri.InstanceManager.setPowerManager(new jmri.jmrix.xpa.XpaPowerManager());
-
-        jmri.InstanceManager.setTurnoutManager(jmri.jmrix.xpa.XpaTurnoutManager.instance());
+        jmri.InstanceManager.store(memo.getTurnoutManager(),jmri.TurnoutManager.class);
+        jmri.InstanceManager.store(memo.getThrottleManager(),jmri.ThrottleManager.class);
 
         // start operation
-        // sourceThread = new Thread(p);
-        // sourceThread.start();
-        sinkThread = new Thread(XpaTrafficController.instance());
+        tc.startTransmitThread();
+        sinkThread = new Thread(tc);
         sinkThread.start();
-
-        jmri.InstanceManager.setThrottleManager(new jmri.jmrix.xpa.XpaThrottleManager());
-
-        jmri.jmrix.xpa.ActiveFlag.setActive();
-
     }
 
     private Thread sinkThread;
 
     // base class methods for the XpaPortController interface
+    @Override
     public DataInputStream getInputStream() {
         if (!opened) {
             log.error("getInputStream called before load(), stream not available");
@@ -140,6 +135,7 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
         return new DataInputStream(serialStream);
     }
 
+    @Override
     public DataOutputStream getOutputStream() {
         if (!opened) {
             log.error("getOutputStream called before load(), stream not available");
@@ -152,6 +148,7 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
         return null;
     }
 
+    @Override
     public boolean status() {
         return opened;
     }
@@ -159,6 +156,7 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
     /**
      * Get an array of valid baud rates. This is currently only 19,200 bps
      */
+    @Override
     public String[] validBaudRates() {
         return new String[]{"9,600 bps"};
     }
@@ -166,14 +164,6 @@ public class SerialDriverAdapter extends XpaPortController implements jmri.jmrix
     private boolean opened = false;
     InputStream serialStream = null;
 
-    static public SerialDriverAdapter instance() {
-        if (mInstance == null) {
-            mInstance = new SerialDriverAdapter();
-        }
-        return mInstance;
-    }
-    static SerialDriverAdapter mInstance = null;
-
-    static Logger log = LoggerFactory.getLogger(SerialDriverAdapter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialDriverAdapter.class);
 
 }

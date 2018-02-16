@@ -1,27 +1,25 @@
-// EasyDccTurnoutManager.java
 package jmri.jmrix.dcc;
 
 import jmri.Turnout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implement turnout manager for DCC-only systems
  * <P>
  * System names are "BTnnn", where nnn is the turnout number without padding.
  *
- * @author	Bob Jacobsen Copyright (C) 2014
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2014
  */
 public class DccTurnoutManager extends jmri.managers.AbstractTurnoutManager {
 
     public DccTurnoutManager() {
     }
 
+    @Override
     public String getSystemPrefix() {
         return "B";
     }
 
+    @Override
     public Turnout createNewTurnout(String systemName, String userName) {
         Turnout t;
         int addr = Integer.valueOf(systemName.substring(2)).intValue();
@@ -31,16 +29,17 @@ public class DccTurnoutManager extends jmri.managers.AbstractTurnoutManager {
         return t;
     }
 
+    /**
+     * @deprecated JMRI Since 4.4 instance() shouldn't be used, convert to JMRI multi-system support structure
+     */
+    @Deprecated
     static public DccTurnoutManager instance() {
         if (_instance == null) {
             _instance = new DccTurnoutManager();
         }
         return _instance;
     }
-    static DccTurnoutManager _instance = null;
-
-    static Logger log = LoggerFactory.getLogger(DccTurnoutManager.class.getName());
+    static volatile DccTurnoutManager _instance = null;
 
 }
 
-/* @(#)DccTurnoutManager.java */

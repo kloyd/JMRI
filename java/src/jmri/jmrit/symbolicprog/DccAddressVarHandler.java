@@ -1,4 +1,3 @@
-// DccAddressVarHandler.java
 package jmri.jmrit.symbolicprog;
 
 /**
@@ -19,8 +18,7 @@ package jmri.jmrit.symbolicprog;
  * </ul>
  * At least one of Short Address and Long Address must be present!
  *
- * @author	Bob Jacobsen Copyright (C) 2013
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2013
  */
 public class DccAddressVarHandler {
 

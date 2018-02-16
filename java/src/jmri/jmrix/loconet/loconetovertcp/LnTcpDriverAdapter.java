@@ -1,4 +1,3 @@
-// LnTcpDriverAdapter.java
 package jmri.jmrix.loconet.loconetovertcp;
 
 import jmri.jmrix.loconet.LnNetworkPortController;
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2002, 2003
  * @author Alex Shepherd Copyright (C) 2003, 2006
- * @version $Revision$
  */
 public class LnTcpDriverAdapter extends LnNetworkPortController {
 
@@ -23,14 +21,15 @@ public class LnTcpDriverAdapter extends LnNetworkPortController {
         super(new LocoNetSystemConnectionMemo());
         option2Name = "CommandStation";
         option3Name = "TurnoutHandle";
-        options.put(option2Name, new Option("Command station type:", commandStationNames, false));
-        options.put(option3Name, new Option("Turnout command handling:", new String[]{"Normal", "Spread", "One Only", "Both"}));
+        options.put(option2Name, new Option(Bundle.getMessage("CommandStationTypeLabel"), commandStationNames, false));
+        options.put(option3Name, new Option("Turnout command handling:", new String[]{"Normal", "Spread", "One Only", "Both"})); // TODO I18N
     }
 
     /**
-     * set up all of the other objects to operate with a LocoNet connected via
+     * Set up all of the other objects to operate with a LocoNet connected via
      * this class.
      */
+    @Override
     public void configure() {
 
         setCommandStationType(getOptionState(option2Name));
@@ -48,10 +47,9 @@ public class LnTcpDriverAdapter extends LnNetworkPortController {
 
         // start operation
         packets.startThreads();
-        jmri.jmrix.loconet.ActiveFlag.setActive();
-
     }
 
+    @Override
     public boolean status() {
         return opened;
     }
@@ -59,12 +57,13 @@ public class LnTcpDriverAdapter extends LnNetworkPortController {
     // private control members
     private boolean opened = false;
 
+    @Override
     public void configureOption1(String value) {
         super.configureOption1(value);
-        log.debug("configureOption1: " + value);
+        log.debug("configureOption1: {}", value);
         setCommandStationType(value);
     }
 
-    static Logger log = LoggerFactory.getLogger(LnTcpDriverAdapter.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LnTcpDriverAdapter.class);
 
 }

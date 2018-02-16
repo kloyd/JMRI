@@ -1,4 +1,3 @@
-// JoalAudioBuffer.java
 package jmri.jmrit.audio;
 
 import com.jogamp.openal.AL;
@@ -68,14 +67,8 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Matthew Harris copyright (c) 2009, 2011
- * @version $Revision$
  */
 public class JoalAudioBuffer extends AbstractAudioBuffer {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8278324841496444614L;
 
     private static AL al = JoalAudioFactory.getAL();
 
@@ -140,7 +133,7 @@ public class JoalAudioBuffer extends AbstractAudioBuffer {
      * Applies only to sub-types:
      * <ul>
      * <li>Buffer
-     * </u>
+     * </ul>
      *
      * @return buffer[] reference to DataStorageBuffer
      */
@@ -172,6 +165,8 @@ public class JoalAudioBuffer extends AbstractAudioBuffer {
                 return "8-bit stereo";
             case AL.AL_FORMAT_STEREO16:
                 return "16-bit stereo";
+            default:
+                log.error("Unhandled audio format type: {}", this.format[0]);
         }
         if (this.format[0] == JoalAudioFactory.AL_FORMAT_QUAD8
                 && JoalAudioFactory.AL_FORMAT_QUAD8 != FORMAT_UNKNOWN) {
@@ -217,7 +212,7 @@ public class JoalAudioBuffer extends AbstractAudioBuffer {
         try {
             ALut.alutLoadWAVFile(stream, format, data, size, freq, loop);
         } catch (ALException e) {
-            log.warn("Error loading JoalAudioBuffer: " + e.getMessage());
+            log.warn("Exception loading JoalAudioBuffer from stream: {}", e.toString());
             return false;
         }
 
@@ -239,7 +234,7 @@ public class JoalAudioBuffer extends AbstractAudioBuffer {
         try {
             ALut.alutLoadWAVFile(FileUtil.getExternalFilename(this.getURL()), format, data, size, freq, loop);
         } catch (ALException e) {
-            log.warn("Error loading JoalAudioBuffer: " + e.getMessage());
+            log.warn("Exception loading JoalAudioBuffer from file: {}", e.toString());
             return false;
         }
 
@@ -334,6 +329,9 @@ public class JoalAudioBuffer extends AbstractAudioBuffer {
                 return FORMAT_8BIT_STEREO;
             case AL.AL_FORMAT_STEREO16:
                 return FORMAT_16BIT_STEREO;
+            default:
+                log.error("Unhandled audio format type {}", this.format[0]);
+                break;
         }
         if (this.format[0] == JoalAudioFactory.AL_FORMAT_QUAD8
                 && JoalAudioFactory.AL_FORMAT_QUAD8 != FORMAT_UNKNOWN) {
@@ -379,7 +377,7 @@ public class JoalAudioBuffer extends AbstractAudioBuffer {
     }
 
     @Override
-    protected void cleanUp() {
+    protected void cleanup() {
         if (initialised) {
             al.alDeleteBuffers(1, dataStorageBuffer, 0);
         }
@@ -389,8 +387,6 @@ public class JoalAudioBuffer extends AbstractAudioBuffer {
         this.dispose();
     }
 
-    private static final Logger log = LoggerFactory.getLogger(JoalAudioBuffer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(JoalAudioBuffer.class);
 
 }
-
-/* $(#)JoalAudioBuffer.java */

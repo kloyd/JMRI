@@ -1,19 +1,15 @@
-// Pr1ImportAction.java
 package jmri.jmrit.symbolicprog;
 
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Action to import the CV values from a PR1WIN/PR1DOS data file.
  *
- * @author	Bob Jacobsen Copyright (C) 2003
- * @author	Dave Heap Copyright (C) 2015
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2003
+ * @author Dave Heap Copyright (C) 2015
  */
 public class Pr1ImportAction extends GenericImportAction {
 
@@ -32,6 +28,4 @@ public class Pr1ImportAction extends GenericImportAction {
                 return false;
         }
     }
-
-    static Logger log = LoggerFactory.getLogger(Pr1ImportAction.class.getName());
 }

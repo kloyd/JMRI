@@ -1,16 +1,13 @@
-// AppsLaunchPane.java
 package apps;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.text.MessageFormat;
-import java.util.Enumeration;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -37,18 +34,13 @@ import org.slf4j.LoggerFactory;
  * This is for launching after the system is initialized, so it does none of
  * that.
  *
- * @author	Bob Jacobsen Copyright 2003, 2007, 2008, 2010, 2014
+ * @author Bob Jacobsen Copyright 2003, 2007, 2008, 2010, 2014
  * @author Dennis Miller Copyright 2005
  * @author Giorgio Terdina Copyright 2008
  * @author Matthew Harris Copyright (C) 2011
- * @version $Revision$
  */
 public abstract class AppsLaunchPane extends JPanel implements PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 4491168291678104991L;
     static String profileFilename;
 
     public AppsLaunchPane() {
@@ -61,11 +53,6 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
         jmri.Application.setLogo(logo());
         jmri.Application.setURL(line2());
 
-        // Add actions to abstractActionModel
-        // Done here as initial non-GUI initialisation is completed
-        // and UI L&F has been set
-        addToActionModel();
-
         // populate GUI
         log.debug("Start UI");
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -77,18 +64,12 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
 
     }
 
+    /**
+     * @deprecated since 4.5.1
+     */
+    @Deprecated
     protected final void addToActionModel() {
-        apps.CreateButtonModel bm = InstanceManager.getDefault(apps.CreateButtonModel.class);
-        ResourceBundle actionList = ResourceBundle.getBundle("apps.ActionListBundle");
-        Enumeration<String> e = actionList.getKeys();
-        while (e.hasMoreElements()) {
-            String key = e.nextElement();
-            try {
-                bm.addAction(key, actionList.getString(key));
-            } catch (ClassNotFoundException ex) {
-                log.error("Did not find class {}", key);
-            }
-        }
+        // StartupActionModelUtil populates itself, so do nothing
     }
 
     /**
@@ -97,7 +78,7 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
      * additional buttons appended to it later. The default implementation here
      * just creates an empty space for these to be added to.
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
             justification = "only one application at a time")
     protected void setButtonSpace() {
         _buttonSpace = new JPanel();
@@ -105,7 +86,7 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
     }
     static JComponent _jynstrumentSpace = null;
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
             justification = "only one application at a time")
     protected void setJynstrumentSpace() {
         _jynstrumentSpace = new JPanel();
@@ -285,57 +266,13 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
      * Provide access to a place where applications can expect the configuration
      * code to build run-time buttons.
      *
-     * @see apps.CreateButtonPanel
+     * @see apps.startup.CreateButtonModelFactory
      * @return null if no such space exists
      */
     static public JComponent buttonSpace() {
         return _buttonSpace;
     }
     static JComponent _buttonSpace = null;
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    static public String getConnection1() {
-        return MessageFormat.format(Bundle.getMessage("ConnectionCredit"),
-                new Object[]{AppConfigBase.getConnection(0), AppConfigBase.getPort(0), AppConfigBase.getManufacturerName(0)});
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    static public String getConnection2() {
-        return MessageFormat.format(Bundle.getMessage("ConnectionCredit"),
-                new Object[]{AppConfigBase.getConnection(1), AppConfigBase.getPort(1), AppConfigBase.getManufacturerName(1)});
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    static public String getConnection3() {
-        return MessageFormat.format(Bundle.getMessage("ConnectionCredit"),
-                new Object[]{AppConfigBase.getConnection(2), AppConfigBase.getPort(2), AppConfigBase.getManufacturerName(2)});
-    }
-
-    /**
-     * @deprecated as of 2.13.3, directly access the connection configuration
-     * from the instance list
-     * jmri.InstanceManager.configureManagerInstance().getInstanceList(jmri.jmrix.ConnectionConfig.class)
-     */
-    @Deprecated
-    static public String getConnection4() {
-        return MessageFormat.format(Bundle.getMessage("ConnectionCredit"),
-                new Object[]{AppConfigBase.getConnection(3), AppConfigBase.getPort(3), AppConfigBase.getManufacturerName(3)});
-    }
 
     /**
      * Set up the configuration file name at startup.
@@ -358,6 +295,10 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
      * @param args Argument array from the main routine
      */
     static protected void setConfigFilename(String def, String[] args) {
+        // if the property org.jmri.Apps.configFilename was set, skip
+        if (System.getProperty("org.jmri.Apps.configFilename") != null) {
+            return;
+        }
         // save the configuration filename if present on the command line
         if (args.length >= 1 && args[0] != null && !args[0].contains("=")) {
             def = args[0];
@@ -382,9 +323,7 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
 
     @Override
     public void propertyChange(PropertyChangeEvent ev) {
-        if (log.isDebugEnabled()) {
-            log.debug("property change: comm port status update");
-        }
+        log.debug("property change: comm port status update");
         if (connection[0] != null) {
             updateLine(connection[0], cs4);
         }
@@ -405,8 +344,10 @@ public abstract class AppsLaunchPane extends JPanel implements PropertyChangeLis
 
     /**
      * Returns the ID for the window's help, which is application specific
+     *
+     * @return the Java Help reference or null if no help is available
      */
     protected abstract String windowHelpID();
 
-    static Logger log = LoggerFactory.getLogger(AppsLaunchPane.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AppsLaunchPane.class);
 }

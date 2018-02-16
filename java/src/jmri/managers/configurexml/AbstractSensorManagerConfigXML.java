@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
  * time.
  *
  * @author Bob Jacobsen Copyright: Copyright (c) 2002, 2008
- * @version $Revision$
  */
 public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanManagerConfigXML {
 
@@ -33,6 +32,7 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
      * @param o Object to store, of type SensorManager
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         Element sensors = new Element("sensors");
         return store(o, sensors);
@@ -47,8 +47,13 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
             elem.addContent(new Element("goingInActive").addContent(String.valueOf(tm.getDefaultSensorDebounceGoingInActive())));
             sensors.addContent(elem);
         }
-        java.util.Iterator<String> iter
-                = tm.getSystemNameList().iterator();
+
+        java.util.Iterator<String> iter = tm.getSystemNameList().iterator();
+        //TODO: dead code strip this
+        //List<String> snl = tm.getSystemNameList();
+        //AlphanumComparator ac = new AlphanumComparator();
+        //Collections.sort(snl, (String s1, String s2) -> ac.compare(s1, s2));
+        //java.util.Iterator<String> iter = snl.iterator();
 
         // don't return an element if there are not sensors to include
         if (!iter.hasNext()) {
@@ -57,20 +62,20 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
         // store the sensors
         while (iter.hasNext()) {
             String sname = iter.next();
-            if (sname == null) {
-                log.error("System name null during store");
-            }
             log.debug("system name is " + sname);
             Sensor s = tm.getBySystemName(sname);
 
             String inverted = s.getInverted() ? "true" : "false";
 
             Element elem = new Element("sensor")
-                    .setAttribute("systemName", sname) // deprecated for 2.9.* series
                     .setAttribute("inverted", inverted);
             elem.addContent(new Element("systemName").addContent(sname));
+
+            // store common part
+            storeCommon(s, elem);
+
             log.debug("store sensor " + sname);
-            if (s.useDefaultTimerSettings()) {
+            if (s.getUseDefaultTimerSettings()) {
                 elem.addContent(new Element("useGlobalDebounceTimer").addContent("yes"));
             } else {
                 if (s.getSensorDebounceGoingActiveTimer() > 0 || s.getSensorDebounceGoingInActiveTimer() > 0) {
@@ -80,8 +85,10 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
                     elem.addContent(timer);
                 }
             }
-            // store common part
-            storeCommon(s, elem);
+            if (tm.isPullResistanceConfigurable()) {
+                // store the sensor's value for pull resistance.
+                elem.addContent(new Element("pullResistance").addContent(s.getPullResistance().getShortName()));
+            }
 
             sensors.addContent(elem);
 
@@ -102,10 +109,10 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
      * Create a SensorManager object of the correct class, then register and
      * fill it.
      *
-     * @param sharedSensors
-     * @param perNodeSensors
+     * @param sharedSensors  Shared top level Element to unpack.
+     * @param perNodeSensors Per-node top level Element to unpack.
      * @return true if successful
-     * @throws jmri.configurexml.JmriConfigureXmlException
+     * @throws jmri.configurexml.JmriConfigureXmlException if error during load
      */
     @Override
     abstract public boolean load(Element sharedSensors, Element perNodeSensors) throws JmriConfigureXmlException;
@@ -155,14 +162,16 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
         for (int i = 0; i < sensorList.size(); i++) {
             String sysName = getSystemName(sensorList.get(i));
             if (sysName == null) {
-                creationErrorEncountered("Unexpected missing system name while loading sensors",
-                        null, null, null);
+                handleException("Unexpected missing system name while loading sensors",
+                        null, null, null, null);
                 result = false;
                 break;
             }
             boolean inverted = false;
 
             String userName = getUserName(sensorList.get(i));
+
+            checkNameNormalization(sysName, userName, tm);
 
             if (sensorList.get(i).getAttribute("inverted") != null) {
                 if (sensorList.get(i).getAttribute("inverted").getValue().equals("true")) {
@@ -173,11 +182,13 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
             if (log.isDebugEnabled()) {
                 log.debug("create sensor: (" + sysName + ")");
             }
-            Sensor s = tm.newSensor(sysName, userName);
 
-            if (s == null) {
-                creationErrorEncountered("Could not create sensor",
-                        sysName, userName, null);
+            Sensor s;
+
+            try {
+                s = tm.newSensor(sysName, userName);
+            } catch (IllegalArgumentException e) {
+                handleException("Could not create sensor", null, sysName, userName, null);
                 result = false;
                 continue;
             }
@@ -208,17 +219,25 @@ public abstract class AbstractSensorManagerConfigXML extends AbstractNamedBeanMa
 
             if (sensorList.get(i).getChild("useGlobalDebounceTimer") != null) {
                 if (sensorList.get(i).getChild("useGlobalDebounceTimer").getText().equals("yes")) {
-                    s.useDefaultTimerSettings(true);
+                    s.setUseDefaultTimerSettings(true);
                 }
             }
             s.setInverted(inverted);
+
+            if (sensorList.get(i).getChild("pullResistance") != null) {
+                String pull = sensorList.get(i).getChild("pullResistance")
+                        .getText();
+                log.debug("setting pull to {} for sensor {}", pull, s);
+                s.setPullResistance(jmri.Sensor.PullResistance.getByShortName(pull));
+            }
         }
         return result;
     }
 
+    @Override
     public int loadOrder() {
         return InstanceManager.sensorManagerInstance().getXMLOrder();
     }
 
-    static Logger log = LoggerFactory.getLogger(AbstractSensorManagerConfigXML.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AbstractSensorManagerConfigXML.class);
 }

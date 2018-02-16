@@ -4,20 +4,18 @@
  * Description:	JUnit tests for the EliteXNetProgrammer class
  *
  * @author	Bob Jacobsen
- * @version $Revision$
  */
 package jmri.jmrix.lenz.hornbyelite;
 
 import jmri.JmriException;
+import jmri.ProgrammingMode;
 import jmri.jmrix.lenz.XNetInterfaceScaffold;
 import jmri.jmrix.lenz.XNetReply;
-import jmri.managers.DefaultProgrammerManager;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 
 public class EliteXNetProgrammerTest extends TestCase {
 
@@ -45,9 +43,9 @@ public class EliteXNetProgrammerTest extends TestCase {
 
     }
 
-    // Test names ending with "String" are for the new writeCV(String, ...) 
-    // etc methods.  If you remove the older writeCV(int, ...) tests, 
-    // you can rename these. Note that not all (int,...) tests may have a 
+    // Test names ending with "String" are for the new writeCV(String, ...)
+    // etc methods.  If you remove the older writeCV(int, ...) tests,
+    // you can rename these. Note that not all (int,...) tests may have a
     // String(String, ...) test defined, in which case you should create those.
     public void testWriteCvSequenceString() throws JmriException {
         // infrastructure objects
@@ -81,7 +79,7 @@ public class EliteXNetProgrammerTest extends TestCase {
         EliteXNetProgrammer p = new EliteXNetProgrammer(t);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the write
         p.writeCV(29, 12, l);
@@ -109,7 +107,7 @@ public class EliteXNetProgrammerTest extends TestCase {
         EliteXNetProgrammer p = new EliteXNetProgrammer(t);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the write
         p.writeCV("29", 12, l);
@@ -187,7 +185,7 @@ public class EliteXNetProgrammerTest extends TestCase {
         EliteXNetProgrammer p = new EliteXNetProgrammer(t);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the read
         p.readCV(29, l);
@@ -213,7 +211,7 @@ public class EliteXNetProgrammerTest extends TestCase {
         EliteXNetProgrammer p = new EliteXNetProgrammer(t);
 
         // set register mode
-        p.setMode(DefaultProgrammerManager.REGISTERMODE);
+        p.setMode(ProgrammingMode.REGISTERMODE);
 
         // and do the read
         p.readCV("29", l);
@@ -240,6 +238,7 @@ public class EliteXNetProgrammerTest extends TestCase {
             rcvdStatus = 0;
         }
 
+        @Override
         public void programmingOpReply(int value, int status) {
             rcvdValue = value;
             rcvdStatus = status;
@@ -258,7 +257,7 @@ public class EliteXNetProgrammerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", EliteXNetProgrammerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -268,14 +267,14 @@ public class EliteXNetProgrammerTest extends TestCase {
     }
 
     // The minimal setup is for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
-
-    static Logger log = LoggerFactory.getLogger(EliteXNetProgrammerTest.class.getName());
 
 }

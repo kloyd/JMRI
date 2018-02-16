@@ -1,9 +1,6 @@
-// TrackNode.java
 package jmri.jmrit.display.layoutEditor;
 
 import jmri.Block;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * TrackNode is a temporary object specifying and returning track node
@@ -31,12 +28,11 @@ import org.slf4j.LoggerFactory;
  * search, Track Segment is returned, Reached End Bumper is set true, and Node
  * Object and Node Type, are not returned.
  *
- * @author	Dave Duchamp Copyright (C) 2009
- * @version	$Revision$
+ * @author Dave Duchamp Copyright (C) 2009
  */
 public class TrackNode {
 
-    public TrackNode(Object node, int nodeType, TrackSegment segment, boolean endBumper,
+    public TrackNode(LayoutTrack node, int nodeType, TrackSegment segment, boolean endBumper,
             int nodeState) {
         _Node = node;
         _NodeType = nodeType;
@@ -46,8 +42,8 @@ public class TrackNode {
     }
 
     // instance variables
-    Object _Node = null;
-    int _NodeType = LayoutEditor.NONE;
+    LayoutTrack _Node = null;
+    int _NodeType = LayoutTrack.NONE;
     TrackSegment _TrackSegment = null;
     boolean _ReachedEndBumper = false;
     int _NodeState = 0;
@@ -56,11 +52,11 @@ public class TrackNode {
     /**
      * Access methods
      */
-    public void setNode(Object node) {
+    public void setNode(LayoutTrack node) {
         _Node = node;
     }
 
-    public Object getNode() {
+    public LayoutTrack getNode() {
         return _Node;
     }
 
@@ -99,27 +95,25 @@ public class TrackNode {
      * Returns the Block of the node Object at the nodeType position
      */
     public Block getNodeBlock() {
-        if (LayoutEditor.POS_POINT == _NodeType) {
+        if (LayoutTrack.POS_POINT == _NodeType) {
             return _TrackSegment.getLayoutBlock().getBlock();
-        } else if (LayoutEditor.TURNOUT_A == _NodeType) {
+        } else if (LayoutTrack.TURNOUT_A == _NodeType) {
             return ((LayoutTurnout) _Node).getLayoutBlock().getBlock();
-        } else if (LayoutEditor.TURNOUT_B == _NodeType) {
+        } else if (LayoutTrack.TURNOUT_B == _NodeType) {
             return ((LayoutTurnout) _Node).getLayoutBlockB().getBlock();
-        } else if (LayoutEditor.TURNOUT_C == _NodeType) {
+        } else if (LayoutTrack.TURNOUT_C == _NodeType) {
             return ((LayoutTurnout) _Node).getLayoutBlockC().getBlock();
-        } else if (LayoutEditor.TURNOUT_D == _NodeType) {
+        } else if (LayoutTrack.TURNOUT_D == _NodeType) {
             return ((LayoutTurnout) _Node).getLayoutBlockD().getBlock();
-        } else if ((LayoutEditor.LEVEL_XING_A == _NodeType)
-                || (LayoutEditor.LEVEL_XING_C == _NodeType)) {
+        } else if ((LayoutTrack.LEVEL_XING_A == _NodeType)
+                || (LayoutTrack.LEVEL_XING_C == _NodeType)) {
             return ((LevelXing) _Node).getLayoutBlockAC().getBlock();
-        } else if ((LayoutEditor.LEVEL_XING_B == _NodeType)
-                || (LayoutEditor.LEVEL_XING_D == _NodeType)) {
+        } else if ((LayoutTrack.LEVEL_XING_B == _NodeType)
+                || (LayoutTrack.LEVEL_XING_D == _NodeType)) {
             return ((LevelXing) _Node).getLayoutBlockBD().getBlock();
         }
         return null;
     }
-
-    static Logger log = LoggerFactory.getLogger(TrackNode.class.getName());
 }
 
-/* @(#)TrackNode.java */
+

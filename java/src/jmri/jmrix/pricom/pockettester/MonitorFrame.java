@@ -1,8 +1,5 @@
-// pricom.pockettester.MonitorFrame.java
 package jmri.jmrix.pricom.pockettester;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Simple GUI for access to PRICOM Pocket Monitor.
@@ -10,14 +7,9 @@ import org.slf4j.LoggerFactory;
  * For more info on the product, see http://www.pricom.com
  *
  * @author	Bob Jacobsen Copyright (C) 2005
- * @version	$Revision$
- */
+  */
 public class MonitorFrame extends jmri.jmrix.AbstractMonFrame implements DataListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 7060223518481154741L;
     static java.util.ResourceBundle rb
             = java.util.ResourceBundle.getBundle("jmri.jmrix.pricom.pockettester.TesterBundle");
 
@@ -25,9 +17,11 @@ public class MonitorFrame extends jmri.jmrix.AbstractMonFrame implements DataLis
         super();
     }
 
+    @Override
     public void init() {
     }
 
+    @Override
     protected String title() {
         String title = filter;
         if (filter == null) {
@@ -37,11 +31,13 @@ public class MonitorFrame extends jmri.jmrix.AbstractMonFrame implements DataLis
                 (Object[]) new String[]{title});
     }
 
+    @Override
     public void dispose() {
         // and clean up parent
         super.dispose();
     }
 
+    @Override
     public void asciiFormattedMessage(String m) {
         if ((filter == null) || m.startsWith(filter)) {
             nextLine(m, "");
@@ -57,7 +53,5 @@ public class MonitorFrame extends jmri.jmrix.AbstractMonFrame implements DataLis
         filter = s;
         setTitle(title());
     }
-
-    static Logger log = LoggerFactory.getLogger(MonitorFrame.class.getName());
 
 }

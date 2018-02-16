@@ -1,10 +1,14 @@
-// ActiveTrain.java
 package jmri.jmrit.dispatcher;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.ResourceBundle;
+import java.util.List;
+import jmri.Block;
+import jmri.InstanceManager;
 import jmri.NamedBeanHandle;
+import jmri.Path;
+import jmri.Section;
+import jmri.Transit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * This class holds information and options for an ActiveTrain, that is a train
  * that has been linked to a Transit and activated for transit around the
  * layout.
- * <P>
+ * <p>
  * An ActiveTrain may be assigned one of the following modes, which specify how
  * the active train will be run through its transit: AUTOMATIC - indicates the
  * ActiveTrain will be run under automatic control of the computer. (Automatic
@@ -25,49 +29,58 @@ import org.slf4j.LoggerFactory;
  * will allocate Sections to the ActiveTrain as needed, control optional signals
  * using a CTC panel or computer logic, and arbitrate any conflicts between
  * ActiveTrains. (Human Dispatcher).
- * <P>
+ * <p>
  * An ActiveTrain will have one of the following statuses:
- *       RUNNING - Actively running on the layout, according to its mode of operation.
- *       PAUSED - Paused waiting for a user-specified number of fast clock minutes.  The
- *                  Active Train is expected to move to either RUNNING or WAITING once the
- *                  specified number of minutes has elapsed. This is intended for automatic
- *                  station stops. (automatic trains only)
- *       WAITING - Stopped waiting for a Section allocation. This is the state the Active
- *                  Train is in when it is created in Dispatcher.
- *       WORKING - Performing work under control of a human engineer. This is the state an
- *                  Active Train assumes when an engineer is picking up or setting out cars
- *                  at industries. (automatic trains only)
- *       READY - Train has completed WORKING, and is awaiting a restart - dispatcher clearance
- *                  to resume running. (automatic trains only)
- *       STOPPED - Train was stopped by the dispatcher. Dispatcher must resume. (automatic trains only)
- *       DONE -  Train has completed its transit of the layout and is ready to be terminated 
- *                  by the dispatcher. 
+ * <dl>
+ * <dt>RUNNING</dt><dd>Actively running on the layout, according to its mode of
+ * operation.</dd>
+ * <dt>PAUSED</dt><dd>Paused waiting for a user-specified number of fast clock
+ * minutes. The Active Train is expected to move to either RUNNING or WAITING
+ * once the specified number of minutes has elapsed. This is intended for
+ * automatic station stops. (automatic trains only)</dd>
+ * <dt>WAITING</dt><dd>Stopped waiting for a Section allocation. This is the
+ * state the Active Train is in when it is created in Dispatcher.</dd>
+ * <dt>WORKING</dt><dd>Performing work under control of a human engineer. This is
+ * the state an Active Train assumes when an engineer is picking up or setting
+ * out cars at industries. (automatic trains only)</dd>
+ * <dt>READY</dt><dd>Train has completed WORKING, and is awaiting a restart -
+ * dispatcher clearance to resume running. (automatic trains only)</dd>
+ * <dt>STOPPED</dt><dd>Train was stopped by the dispatcher. Dispatcher must
+ * resume. (automatic trains only)</dd>
+ * <dt>DONE</dt><dd>Train has completed its transit of the layout and is ready to
+ * be terminated by the dispatcher, or Restart pressed to repeat the automated
+ * run.</dd>
+ * </dl>
  * Status is a bound property.
- * <P>
- * The ActiveTrain status should maintained (setStatus) by the running class, or if running 
- *       in DISPATCHED mode, by Dispatcher.
- * When an ActiveTrain is WAITING, and the dispatcher allocates a section to it, the status 
- *       of the ActiveTrain is automatically set to RUNNING. So an autoRun class can listen 
- *       to the status of the ActiveTrain to trigger start up if the train has been waiting
- *       for the dispatcher.
- * Note: There is still more to be programmed here.
- * <P>
+ * <p>
+ * The ActiveTrain status should maintained (setStatus) by the running class, or
+ * if running in DISPATCHED mode, by Dispatcher. When an ActiveTrain is WAITING,
+ * and the dispatcher allocates a section to it, the status of the ActiveTrain
+ * is automatically set to RUNNING. So an autoRun class can listen to the status
+ * of the ActiveTrain to trigger start up if the train has been waiting for the
+ * dispatcher. Note: There is still more to be programmed here.
+ * <p>
  * Train information supplied when the ActiveTrain is created can come from any
- * of the following: ROSTER - The train was selected from the JMRI roster menu
- * OPERATIONS - The train was selected from trains available from JMRI
- * operations USER - Neither menu was used--the user entered a name and DCC
- * address. Train source information is recorded when an ActiveTrain is created,
+ * of the following:
+ * <dl>
+ * <dt>ROSTER</dt><dd>The train was selected from the JMRI roster menu</dd>
+ * <dt>OPERATIONS</dt><dd>The train was selected from trains available from JMRI
+ * operations</dd>
+ * <dt>USER</dt><dd>Neither menu was used--the user entered a name and DCC
+ * address.</dd>
+ * </dl>
+ * Train source information is recorded when an ActiveTrain is created,
  * and may be referenced by getTrainSource if it is needed by other objects. The
  * train source should be specified in the Dispatcher Options window prior to
  * creating an ActiveTrain.
- * <P>
+ * <p>
  * ActiveTrains are referenced via a list in DispatcherFrame, which serves as a
  * manager for ActiveTrain objects.
- * <P>
+ * <p>
  * ActiveTrains are transient, and are not saved to disk. Active Train
  * information can be saved to disk, making set up with the same options, etc
  * very easy.
- * <P>
+ * <p>
  * An ActiveTrain runs through its Transit in the FORWARD direction, until a
  * Transit Action reverses the direction of travel in the Transit. When running
  * with its Transit reversed, the Active Train returns to its starting Section.
@@ -75,34 +88,34 @@ import org.slf4j.LoggerFactory;
  * automatically set back to the forward direction. If AutoRestart is set, the
  * run is repeated. The direction of travel in the Transit is maintained here.
  *
- * <P>
+ * <p>
  * This file is part of JMRI.
- * <P>
+ * <p>
  * JMRI is open source software; you can redistribute it and/or modify it under
  * the terms of version 2 of the GNU General Public License as published by the
  * Free Software Foundation. See the "COPYING" file for a copy of this license.
- * <P>
+ * <p>
  * JMRI is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * <P>
+ * <p>
  *
- * @author	Dave Duchamp Copyright (C) 2008-2011
- * @version	$Revision$
+ * @author Dave Duchamp Copyright (C) 2008-2011
  */
 public class ActiveTrain {
 
     /**
-     * Main constructor method
+     * Create an ActiveTrain.
+     *
+     * @param t           the transit linked to this ActiveTrain
+     * @param name        the train name
+     * @param trainSource the source for this ActiveTrain
      */
-    public ActiveTrain(jmri.Transit t, String name, int trainSource) {
+    public ActiveTrain(Transit t, String name, int trainSource) {
         mTransit = t;
         mTrainName = name;
         mTrainSource = trainSource;
     }
-
-    static final ResourceBundle rb = ResourceBundle
-            .getBundle("jmri.jmrit.dispatcher.DispatcherBundle");
 
     /**
      * Constants representing the Status of this ActiveTrain When created, the
@@ -112,21 +125,21 @@ public class ActiveTrain {
     public static final int PAUSED = 0x02;    // paused for a number of fast minutes
     public static final int WAITING = 0x04;   // waiting for a section allocation
     public static final int WORKING = 0x08;   // actively working
-    public static final int READY = 0x10;	  // completed work, waiting for restart
+    public static final int READY = 0x10;   // completed work, waiting for restart
     public static final int STOPPED = 0x20;   // stopped by the dispatcher (auto trains only)
-    public static final int DONE = 0x40;	  // completed its transit
+    public static final int DONE = 0x40;   // completed its transit
 
     /**
      * Constants representing Type of ActiveTrains.
      */
     public static final int NONE = 0x00;               // no train type defined
-    public static final int LOCAL_PASSENGER = 0x01;    // low priority local passenger train 
-    public static final int LOCAL_FREIGHT = 0x02;      // low priority freight train performing local tasks 
+    public static final int LOCAL_PASSENGER = 0x01;    // low priority local passenger train
+    public static final int LOCAL_FREIGHT = 0x02;      // low priority freight train performing local tasks
     public static final int THROUGH_PASSENGER = 0x03;  // normal priority through passenger train
-    public static final int THROUGH_FREIGHT = 0x04;    // normal priority through freight train 
-    public static final int EXPRESS_PASSENGER = 0x05;  // high priority passenger train    
-    public static final int EXPRESS_FREIGHT = 0x06;    // high priority freight train 
-    public static final int MOW = 0x07;			       // low priority maintenance of way train  
+    public static final int THROUGH_FREIGHT = 0x04;    // normal priority through freight train
+    public static final int EXPRESS_PASSENGER = 0x05;  // high priority passenger train
+    public static final int EXPRESS_FREIGHT = 0x06;    // high priority freight train
+    public static final int MOW = 0x07;          // low priority maintenance of way train
 
     /**
      * Constants representing the mode of running of the Active Train The mode
@@ -144,18 +157,28 @@ public class ActiveTrain {
     public static final int OPERATIONS = 0x02;
     public static final int USER = 0x04;
 
+    /**
+     * The value of {@link #getAllocateMethod()} if allocating as many sections as are clear.
+     */
+    public static final int ALLOCATE_AS_FAR_AS_IT_CAN = -1;
+    /**
+     * The value of {@link #getAllocateMethod()} if allocating up until the next safe section
+     */
+    public static final int ALLOCATE_BY_SAFE_SECTIONS = 0;
+
     // instance variables
-    private jmri.Transit mTransit = null;
+    private Transit mTransit = null;
     private String mTrainName = "";
     private int mTrainSource = ROSTER;
-        private jmri.jmrit.roster.RosterEntry mRoster = null;
+    private jmri.jmrit.roster.RosterEntry mRoster = null;
     private int mStatus = WAITING;
     private int mMode = DISPATCHED;
     private boolean mTransitReversed = false;  // true if Transit is running in reverse
     private boolean mAllocationReversed = false;  // true if allocating Sections in reverse
     private AutoActiveTrain mAutoActiveTrain = null;
-    private ArrayList<AllocatedSection> mAllocatedSections = new ArrayList<AllocatedSection>();
+    private List<AllocatedSection> mAllocatedSections = new ArrayList<AllocatedSection>();
     private jmri.Section mLastAllocatedSection = null;
+    private int mLastAllocatedSectionSeqNumber = 0;
     private jmri.Section mSecondAllocatedSection = null;
     private int mNextAllocationNumber = 1;
     private jmri.Section mNextSectionToAllocate = null;
@@ -171,25 +194,27 @@ public class ActiveTrain {
     private String mDccAddress = "";
     private boolean mResetWhenDone = true;
     private boolean mReverseAtEnd = false;
-        public final static int NODELAY = 0x00;
-        public final static int TIMEDDELAY = 0x01;
-        public final static int SENSORDELAY = 0x02;
-        private int mDelayedRestart = NODELAY;
-        private int mDelayedStart = NODELAY;
+    private int mAllocateMethod = 3;
+    public final static int NODELAY = 0x00;
+    public final static int TIMEDDELAY = 0x01;
+    public final static int SENSORDELAY = 0x02;
+
+    private int mDelayedRestart = NODELAY;
+    private int mDelayedStart = NODELAY;
     private int mDepartureTimeHr = 8;
     private int mDepartureTimeMin = 0;
-        private int mRestartDelay = 0;
+    private int mRestartDelay = 0;
     private NamedBeanHandle<jmri.Sensor> mStartSensor = null; // A Sensor that when changes state to active will trigger the trains start.
     private NamedBeanHandle<jmri.Sensor> mRestartSensor = null; // A Sensor that when changes state to active will trigger the trains start.
     private int mTrainType = LOCAL_FREIGHT;
-        private boolean terminateWhenFinished = false;
+    private boolean terminateWhenFinished = false;
 
     // start up instance variables
     private boolean mStarted = false;
 
-    /**
-     * Access methods
-     */
+    //
+    // Access methods
+    //
     public boolean getStarted() {
         return mStarted;
     }
@@ -198,20 +223,20 @@ public class ActiveTrain {
         mStarted = true;
         mStatus = RUNNING;
         setStatus(WAITING);
-        if (mAutoActiveTrain != null && DispatcherFrame.instance().getSignalType() == DispatcherFrame.SIGNALMAST) {
-            mAutoActiveTrain.setupNewCurrentSignal();
+        if (mAutoActiveTrain != null && InstanceManager.getDefault(DispatcherFrame.class).getSignalType() == DispatcherFrame.SIGNALMAST) {
+            mAutoActiveTrain.setupNewCurrentSignal(null);
         }
     }
 
-    public jmri.Transit getTransit() {
+    public Transit getTransit() {
         return mTransit;
     }
 
     public String getTransitName() {
         String s = mTransit.getSystemName();
         String u = mTransit.getUserName();
-        if ((u != null) && (!u.equals(""))) {
-            return (s + "( " + u + " )");
+        if ((u != null) && (!u.equals("") && (!u.equals(s)))) {
+            return (s + "(" + u + ")");
         }
         return s;
     }
@@ -236,7 +261,7 @@ public class ActiveTrain {
     public jmri.jmrit.roster.RosterEntry getRosterEntry() {
         if (mRoster == null && getTrainSource() == ROSTER) {
             //Try to resolve the roster based upon the train name
-            mRoster = jmri.jmrit.roster.Roster.instance().getEntryForId(getTrainName());
+            mRoster = jmri.jmrit.roster.Roster.getDefault().getEntryForId(getTrainName());
         } else if (getTrainSource() != ROSTER) {
             mRoster = null;
         }
@@ -259,7 +284,7 @@ public class ActiveTrain {
                 firePropertyChange("status", Integer.valueOf(old), Integer.valueOf(mStatus));
             }
             if (mStatus == DONE && terminateWhenFinished) {
-                DispatcherFrame.instance().terminateActiveTrain(this);
+                InstanceManager.getDefault(DispatcherFrame.class).terminateActiveTrain(this);
             }
         } else {
             log.error("Invalid ActiveTrain status - " + status);
@@ -268,33 +293,33 @@ public class ActiveTrain {
 
     public String getStatusText() {
         if (mStatus == RUNNING) {
-            return rb.getString("RUNNING");
+            return Bundle.getMessage("RUNNING");
         } else if (mStatus == PAUSED) {
-            return rb.getString("PAUSED");
+            return Bundle.getMessage("PAUSED");
         } else if (mStatus == WAITING) {
             if (!mStarted) {
                 if (mDelayedStart == TIMEDDELAY) {
                     return jmri.jmrit.beantable.LogixTableAction.formatTime(mDepartureTimeHr,
-                            mDepartureTimeMin) + " " + rb.getString("START");
+                            mDepartureTimeMin) + " " + Bundle.getMessage("START");
                 } else if (mDelayedStart == SENSORDELAY) {
                     return (Bundle.getMessage("BeanNameSensor") + " " + getDelaySensorName());
                 }
             }
-            return rb.getString("WAITING");
+            return Bundle.getMessage("WAITING");
         } else if (mStatus == WORKING) {
-            return rb.getString("WORKING");
+            return Bundle.getMessage("WORKING");
         } else if (mStatus == READY) {
             if (restartPoint && getDelayedRestart() == TIMEDDELAY) {
                 return jmri.jmrit.beantable.LogixTableAction.formatTime(restartHr,
-                        restartMin) + " " + rb.getString("START");
+                        restartMin) + " " + Bundle.getMessage("START");
             } else if (restartPoint && getDelayedRestart() == SENSORDELAY) {
-                return (Bundle.getMessage("BeanNameSensor") + " " + getRestartDelaySensorName());
+                return (Bundle.getMessage("BeanNameSensor") + " " + getRestartSensorName());
             }
-            return rb.getString("READY");
+            return Bundle.getMessage("READY");
         } else if (mStatus == STOPPED) {
-            return rb.getString("STOPPED");
+            return Bundle.getMessage("STOPPED");
         } else if (mStatus == DONE) {
-            return rb.getString("DONE");
+            return Bundle.getMessage("DONE");
         }
         return ("");
     }
@@ -327,7 +352,7 @@ public class ActiveTrain {
         return mDelayedRestart;
     }
 
-    public void setDelayedReStart(int delay) {
+    public void setDelayedRestart(int delay) {
         mDelayedRestart = delay;
     }
 
@@ -391,21 +416,21 @@ public class ActiveTrain {
         mStartSensor = jmri.InstanceManager.getDefault(jmri.NamedBeanHandleManager.class).getNamedBeanHandle(s.getDisplayName(), s);
     }
 
-    public jmri.Sensor getRestartDelaySensor() {
+    public jmri.Sensor getRestartSensor() {
         if (mRestartSensor == null) {
             return null;
         }
         return mRestartSensor.getBean();
     }
 
-    public String getRestartDelaySensorName() {
+    public String getRestartSensorName() {
         if (mRestartSensor == null) {
             return null;
         }
         return mRestartSensor.getName();
     }
 
-    public void setRestartDelaySensor(jmri.Sensor s) {
+    public void setRestartSensor(jmri.Sensor s) {
         if (s == null) {
             mRestartSensor = null;
             return;
@@ -414,7 +439,7 @@ public class ActiveTrain {
     }
 
     private java.beans.PropertyChangeListener delaySensorListener = null;
-    private java.beans.PropertyChangeListener delayReStartSensorListener = null;
+    private java.beans.PropertyChangeListener restartSensorListener = null;
 
     public void initializeDelaySensor() {
         if (mStartSensor == null) {
@@ -424,13 +449,14 @@ public class ActiveTrain {
         if (delaySensorListener == null) {
             final ActiveTrain at = this;
             delaySensorListener = new java.beans.PropertyChangeListener() {
+                @Override
                 public void propertyChange(java.beans.PropertyChangeEvent e) {
                     if (e.getPropertyName().equals("KnownState")) {
                         if (((Integer) e.getNewValue()).intValue() == jmri.Sensor.ACTIVE) {
                             getDelaySensor().removePropertyChangeListener(delaySensorListener);
-                            DispatcherFrame.instance().removeDelayedTrain(at);
+                            InstanceManager.getDefault(DispatcherFrame.class).removeDelayedTrain(at);
                             setStarted();
-                            DispatcherFrame.instance().forceScanOfAllocation();
+                            InstanceManager.getDefault(DispatcherFrame.class).forceScanOfAllocation();
                             try {
                                 getDelaySensor().setKnownState(jmri.Sensor.INACTIVE);
                             } catch (jmri.JmriException ex) {
@@ -444,24 +470,25 @@ public class ActiveTrain {
         getDelaySensor().addPropertyChangeListener(delaySensorListener);
     }
 
-    public void initializeReStartDelaySensor() {
+    public void initializeRestartSensor() {
         if (mRestartSensor == null) {
             log.error("Call to initialise delay on start sensor, but none specified");
             return;
         }
-        if (delayReStartSensorListener == null) {
+        if (restartSensorListener == null) {
             final ActiveTrain at = this;
-            delayReStartSensorListener = new java.beans.PropertyChangeListener() {
+            restartSensorListener = new java.beans.PropertyChangeListener() {
+                @Override
                 public void propertyChange(java.beans.PropertyChangeEvent e) {
                     if (e.getPropertyName().equals("KnownState")) {
                         if (((Integer) e.getNewValue()).intValue() == jmri.Sensor.ACTIVE) {
-                            getRestartDelaySensor().removePropertyChangeListener(delayReStartSensorListener);
-                            delayReStartSensorListener = null;
-                            DispatcherFrame.instance().removeDelayedTrain(at);
+                            getRestartSensor().removePropertyChangeListener(restartSensorListener);
+                            restartSensorListener = null;
+                            InstanceManager.getDefault(DispatcherFrame.class).removeDelayedTrain(at);
                             restart();
-                            DispatcherFrame.instance().forceScanOfAllocation();
+                            InstanceManager.getDefault(DispatcherFrame.class).forceScanOfAllocation();
                             try {
-                                getRestartDelaySensor().setKnownState(jmri.Sensor.INACTIVE);
+                                getRestartSensor().setKnownState(jmri.Sensor.INACTIVE);
                             } catch (jmri.JmriException ex) {
                                 log.error("Error reseting start sensor back to in active");
                             }
@@ -470,11 +497,34 @@ public class ActiveTrain {
                 }
             };
         }
-        getRestartDelaySensor().addPropertyChangeListener(delayReStartSensorListener);
+        getRestartSensor().addPropertyChangeListener(restartSensorListener);
     }
 
     public void setTrainType(int type) {
         mTrainType = type;
+    }
+
+    /**
+     * set train type using localized string name as stored
+     *
+     * @param sType - name, such as "LOCAL_PASSENGER"
+     */
+    public void setTrainType(String sType) {
+        if (sType.equals(Bundle.getMessage("LOCAL_FREIGHT"))) {
+            setTrainType(LOCAL_FREIGHT);
+        } else if (sType.equals(Bundle.getMessage("LOCAL_PASSENGER"))) {
+            setTrainType(LOCAL_PASSENGER);
+        } else if (sType.equals(Bundle.getMessage("THROUGH_FREIGHT"))) {
+            setTrainType(THROUGH_FREIGHT);
+        } else if (sType.equals(Bundle.getMessage("THROUGH_PASSENGER"))) {
+            setTrainType(THROUGH_PASSENGER);
+        } else if (sType.equals(Bundle.getMessage("EXPRESS_FREIGHT"))) {
+            setTrainType(EXPRESS_FREIGHT);
+        } else if (sType.equals(Bundle.getMessage("EXPRESS_PASSENGER"))) {
+            setTrainType(EXPRESS_PASSENGER);
+        } else if (sType.equals(Bundle.getMessage("MOW"))) {
+            setTrainType(MOW);
+        }
     }
 
     public int getTrainType() {
@@ -483,19 +533,19 @@ public class ActiveTrain {
 
     public String getTrainTypeText() {
         if (mTrainType == LOCAL_FREIGHT) {
-            return rb.getString("LOCAL_FREIGHT");
+            return Bundle.getMessage("LOCAL_FREIGHT");
         } else if (mTrainType == LOCAL_PASSENGER) {
-            return rb.getString("LOCAL_PASSENGER");
+            return Bundle.getMessage("LOCAL_PASSENGER");
         } else if (mTrainType == THROUGH_FREIGHT) {
-            return rb.getString("THROUGH_FREIGHT");
+            return Bundle.getMessage("THROUGH_FREIGHT");
         } else if (mTrainType == THROUGH_PASSENGER) {
-            return rb.getString("THROUGH_PASSENGER");
+            return Bundle.getMessage("THROUGH_PASSENGER");
         } else if (mTrainType == EXPRESS_FREIGHT) {
-            return rb.getString("EXPRESS_FREIGHT");
+            return Bundle.getMessage("EXPRESS_FREIGHT");
         } else if (mTrainType == EXPRESS_PASSENGER) {
-            return rb.getString("EXPRESS_PASSENGER");
+            return Bundle.getMessage("EXPRESS_PASSENGER");
         } else if (mTrainType == MOW) {
-            return rb.getString("MOW");
+            return Bundle.getMessage("MOW");
         }
         return ("");
     }
@@ -517,11 +567,11 @@ public class ActiveTrain {
 
     public String getModeText() {
         if (mMode == AUTOMATIC) {
-            return rb.getString("AUTOMATIC");
+            return Bundle.getMessage("AUTOMATIC");
         } else if (mMode == MANUAL) {
-            return rb.getString("MANUAL");
+            return Bundle.getMessage("MANUAL");
         } else if (mMode == DISPATCHED) {
-            return rb.getString("DISPATCHED");
+            return Bundle.getMessage("DISPATCHED");
         }
         return ("");
     }
@@ -564,6 +614,7 @@ public class ActiveTrain {
             if (as.getSection() == mNextSectionToAllocate) {
                 // this  is the next Section in the Transit, update pointers
                 mLastAllocatedSection = as.getSection();
+                mLastAllocatedSectionSeqNumber = mNextSectionSeqNumber;
                 mNextSectionToAllocate = as.getNextSection();
                 mNextSectionSeqNumber = as.getNextSectionSequence();
                 mNextSectionDirection = getAllocationDirectionFromSectionAndSeq(
@@ -580,15 +631,15 @@ public class ActiveTrain {
             if (as.getSequence() == 2) {
                 mSecondAllocatedSection = as.getSection();
             }
-            if (DispatcherFrame.instance().getNameInAllocatedBlock()) {
-                if (DispatcherFrame.instance().getRosterEntryInBlock() && getRosterEntry() != null) {
+            if (InstanceManager.getDefault(DispatcherFrame.class).getNameInAllocatedBlock()) {
+                if (InstanceManager.getDefault(DispatcherFrame.class).getRosterEntryInBlock() && getRosterEntry() != null) {
                     as.getSection().setNameFromActiveBlock(getRosterEntry());
                 } else {
                     as.getSection().setNameInBlocks(mTrainName);
                 }
                 as.getSection().suppressNameUpdate(true);
             }
-            if (DispatcherFrame.instance().getExtraColorForAllocated()) {
+            if (InstanceManager.getDefault(DispatcherFrame.class).getExtraColorForAllocated()) {
                 as.getSection().setAlternateColorFromActiveBlock(true);
             }
             refreshPanel();
@@ -598,8 +649,8 @@ public class ActiveTrain {
     }
 
     private void refreshPanel() {
-        if (DispatcherFrame.instance().getLayoutEditor() != null) {
-            DispatcherFrame.instance().getLayoutEditor().redrawPanel();
+        if (InstanceManager.getDefault(DispatcherFrame.class).getLayoutEditor() != null) {
+            InstanceManager.getDefault(DispatcherFrame.class).getLayoutEditor().redrawPanel();
         }
     }
 
@@ -622,7 +673,7 @@ public class ActiveTrain {
         if (mAutoRun) {
             mAutoActiveTrain.removeAllocatedSection(as);
         }
-        if (DispatcherFrame.instance().getNameInAllocatedBlock()) {
+        if (InstanceManager.getDefault(DispatcherFrame.class).getNameInAllocatedBlock()) {
             as.getSection().clearNameInUnoccupiedBlocks();
             as.getSection().suppressNameUpdate(false);
         }
@@ -633,6 +684,7 @@ public class ActiveTrain {
             if (mAllocatedSections.size() > 0) {
                 mLastAllocatedSection = mAllocatedSections.get(
                         mAllocatedSections.size() - 1).getSection();
+                mLastAllocatedSectionSeqNumber = mAllocatedSections.size() - 1;
             }
         }
     }
@@ -643,14 +695,14 @@ public class ActiveTrain {
     public void allocateAFresh() {
         setStatus(WAITING);
         setTransitReversed(false);
-        ArrayList<AllocatedSection> sectionsToRelease = new ArrayList<AllocatedSection>();
-        for (AllocatedSection as : DispatcherFrame.instance().getAllocatedSectionsList()) {
+        List<AllocatedSection> sectionsToRelease = new ArrayList<AllocatedSection>();
+        for (AllocatedSection as : InstanceManager.getDefault(DispatcherFrame.class).getAllocatedSectionsList()) {
             if (as.getActiveTrain() == this) {
                 sectionsToRelease.add(as);
             }
         }
         for (AllocatedSection as : sectionsToRelease) {
-            DispatcherFrame.instance().releaseAllocatedSection(as, true); // need to find Allocated Section
+            InstanceManager.getDefault(DispatcherFrame.class).releaseAllocatedSection(as, true); // need to find Allocated Section
             as.getSection().setState(jmri.Section.FREE);
         }
         if (mLastAllocatedSection != null) {
@@ -661,7 +713,7 @@ public class ActiveTrain {
         if (mAutoRun) {
             mAutoActiveTrain.allocateAFresh();
         }
-        DispatcherFrame.instance().allocateNewActiveTrain(this);
+        InstanceManager.getDefault(DispatcherFrame.class).allocateNewActiveTrain(this);
     }
 
     public void clearAllocations() {
@@ -670,21 +722,97 @@ public class ActiveTrain {
         }
     }
 
-    public java.util.ArrayList<AllocatedSection> getAllocatedSectionList() {
-        ArrayList<AllocatedSection> list = new ArrayList<AllocatedSection>();
+    public List<AllocatedSection> getAllocatedSectionList() {
+        List<AllocatedSection> list = new ArrayList<>();
         for (int i = 0; i < mAllocatedSections.size(); i++) {
             list.add(mAllocatedSections.get(i));
         }
         return list;
     }
 
+    /**
+     * Returns list of all Blocks occupied by or allocated to this train. They
+     * are in order from the tail of the train to the head of the train then on
+     * to the forward-most allocated block. Note that unoccupied blocks can
+     * exist before and after the occupied blocks.
+     *
+     * TODO: doesn't handle reversing of adjacent multi-block sections well
+     *
+     * @return the list of blocks order of occupation
+     */
+    public List<Block> getBlockList() {
+        List<Block> list = new ArrayList<>();
+        for (int i = 0; i < mAllocatedSections.size(); i++) { // loop thru allocated sections, then all blocks for each section
+            Section s = mAllocatedSections.get(i).getSection();
+            List<Block> bl = s.getBlockList();
+            if (bl.size() > 1) { //sections with multiple blocks need extra logic
+
+                boolean blocksConnected = true;
+                //determine if blocks should be added in forward or reverse order based on connectivity
+                if (i == 0) { //for first section, compare last block to first of next section
+                    if (mAllocatedSections.size() > 1
+                            && //only one section, assume forward
+                            !connected(bl.get(bl.size() - 1), mAllocatedSections.get(i + 1).getSection().getBlockList().get(0))) {
+                        blocksConnected = false;
+                    }
+                } else { //not first section, check for connectivity between last block in list, and first block in this section
+                    if (!connected(list.get(list.size() - 1), bl.get(0))) { //last block is not connected to first block, add reverse
+                        blocksConnected = false;
+                    }
+                }
+                if (blocksConnected) { //blocks were connected, so add to outgoing in forward order
+                    for (int j = 0; j < bl.size(); j++) {
+                        Block b = bl.get(j);
+                        list.add(b);
+                        log.trace("block {} ({}) added to list for Section {} (fwd)", b.getDisplayName(),
+                                (b.getState() == Block.OCCUPIED ? "OCCUPIED" : "UNOCCUPIED"),
+                                s.getDisplayName());
+                    }
+                } else { //not connected, add in reverse order
+                    for (int j = bl.size() - 1; j >= 0; j--) {
+                        Block b = bl.get(j);
+                        list.add(b);
+                        log.trace("block {} ({}) added to list for Section {} (rev)", b.getDisplayName(),
+                                (b.getState() == Block.OCCUPIED ? "OCCUPIED" : "UNOCCUPIED"),
+                                s.getDisplayName());
+                    }
+                }
+
+            } else { //single block sections are simply added to the outgoing list
+                Block b = bl.get(0);
+                list.add(b);
+                log.trace("block {} ({}) added to list for Section {} (one)", b.getDisplayName(),
+                        (b.getState() == Block.OCCUPIED ? "OCCUPIED" : "UNOCCUPIED"),
+                        s.getDisplayName());
+            }
+        }
+        return list;
+    }
+
+    /* copied from Section.java */
+    private boolean connected(Block b1, Block b2) {
+        if ((b1 != null) && (b2 != null)) {
+            List<Path> paths = b1.getPaths();
+            for (int i = 0; i < paths.size(); i++) {
+                if (paths.get(i).getBlock() == b2) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public jmri.Section getLastAllocatedSection() {
         return mLastAllocatedSection;
     }
 
+    public int getLastAllocatedSectionSeqNumber() {
+        return mLastAllocatedSectionSeqNumber;
+    }
+
     public String getLastAllocatedSectionName() {
         if (mLastAllocatedSection == null) {
-            return rb.getString("None");
+            return "<" + Bundle.getMessage("None").toLowerCase() + ">"; // <none>
         }
         return getSectionName(mLastAllocatedSection);
     }
@@ -699,7 +827,7 @@ public class ActiveTrain {
 
     public String getNextSectionToAllocateName() {
         if (mNextSectionToAllocate == null) {
-            return rb.getString("None");
+            return "<" + Bundle.getMessage("None").toLowerCase() + ">"; // <none>
         }
         return getSectionName(mNextSectionToAllocate);
     }
@@ -707,8 +835,8 @@ public class ActiveTrain {
     private String getSectionName(jmri.Section sc) {
         String s = sc.getSystemName();
         String u = sc.getUserName();
-        if ((u != null) && (!u.equals(""))) {
-            return (s + "( " + u + " )");
+        if ((u != null) && (!u.equals("") && (!u.equals(s)))) {
+            return (s + "(" + u + ")");
         }
         return s;
     }
@@ -798,8 +926,27 @@ public class ActiveTrain {
     }
 
     /**
-     * Operating methods
+     * Returns the AllocateM Method to be used by autoAllocate
+     *
+     * @return The number of Blocks ahead to be allocated or 0 = Allocate By Safe
+     *         sections or -1 - Allocate All The Way.
      */
+    public int getAllocateMethod() {
+        return mAllocateMethod;
+    }
+
+    /**
+     * Sets the Allocation Method to be used bu autoAllocate
+     * @param i The number of Blocks ahead to be allocated or 0 = Allocate By Safe
+     *          sections or -1 - Allocate All The Way.
+     */
+    public void setAllocateMethod(int i) {
+        mAllocateMethod = i;
+    }
+
+    //
+    // Operating methods
+    //
     public AllocationRequest initializeFirstAllocation() {
         if (mAllocatedSections.size() > 0) {
             log.error("ERROR - Request to initialize first allocation, when allocations already present");
@@ -824,16 +971,16 @@ public class ActiveTrain {
             log.error("ERROR - Insufficient information to initialize first allocation");
             return null;
         }
-        if (!DispatcherFrame.instance().requestAllocation(this,
+        if (!InstanceManager.getDefault(DispatcherFrame.class).requestAllocation(this,
                 mNextSectionToAllocate, mNextSectionDirection, mNextSectionSeqNumber, true, null)) {
             log.error("Allocation request failed for first allocation of " + getActiveTrainName());
         }
-        if (DispatcherFrame.instance().getRosterEntryInBlock() && getRosterEntry() != null) {
+        if (InstanceManager.getDefault(DispatcherFrame.class).getRosterEntryInBlock() && getRosterEntry() != null) {
             mStartBlock.setValue(getRosterEntry());
-        } else if (DispatcherFrame.instance().getShortNameInBlock()) {
+        } else if (InstanceManager.getDefault(DispatcherFrame.class).getShortNameInBlock()) {
             mStartBlock.setValue(mTrainName);
         }
-        AllocationRequest ar = DispatcherFrame.instance().findAllocationRequestInQueue(mNextSectionToAllocate,
+        AllocationRequest ar = InstanceManager.getDefault(DispatcherFrame.class).findAllocationRequestInQueue(mNextSectionToAllocate,
                 mNextSectionSeqNumber, mNextSectionDirection, this);
         return ar;
     }
@@ -852,7 +999,7 @@ public class ActiveTrain {
         return true;
     }
 
-    /*This is for use where the transit has been extended, then the last section has been cancelled no 
+    /*This is for use where the transit has been extended, then the last section has been cancelled no
      checks are performed, these should be done by a higher level code*/
     protected void removeLastAllocatedSection() {
         AllocatedSection as = mAllocatedSections.get(mAllocatedSections.size() - 1);
@@ -868,9 +1015,10 @@ public class ActiveTrain {
         mNextSectionToAllocate = null;
     }
 
-    protected void reverseAllAllocatedSections() {
+    protected AllocatedSection reverseAllAllocatedSections() {
+        AllocatedSection aSec = null;
         for (int i = 0; i < mAllocatedSections.size(); i++) {
-            AllocatedSection aSec = mAllocatedSections.get(i);
+            aSec = mAllocatedSections.get(i);
             int dir = mTransit.getDirectionFromSectionAndSeq(aSec.getSection(), aSec.getSequence());
             if (dir == jmri.Section.FORWARD) {
                 aSec.getSection().setState(jmri.Section.REVERSE);
@@ -879,6 +1027,7 @@ public class ActiveTrain {
             }
             aSec.setStoppingSensors();
         }
+        return aSec;
     }
 
     protected void resetAllAllocatedSections() {
@@ -898,7 +1047,7 @@ public class ActiveTrain {
         setStatus(READY);
         restartPoint = true;
         if (getDelayedRestart() == TIMEDDELAY) {
-            Date now = jmri.InstanceManager.timebaseInstance().getTime();
+            Date now = jmri.InstanceManager.getDefault(jmri.Timebase.class).getTime();
             @SuppressWarnings("deprecation")
             int nowHours = now.getHours();
             @SuppressWarnings("deprecation")
@@ -908,7 +1057,7 @@ public class ActiveTrain {
             restartHr = nowHours + hours + ((nowMinutes + minutes) / 60);
             restartMin = ((nowMinutes + minutes) % 60);
         }
-        DispatcherFrame.instance().addDelayedTrain(this);
+        InstanceManager.getDefault(DispatcherFrame.class).addDelayedTrain(this);
     }
 
     boolean restartPoint = false;
@@ -932,19 +1081,19 @@ public class ActiveTrain {
         holdAllocation = false;
         setStatus(WAITING);
         if (mAutoActiveTrain != null) {
-            mAutoActiveTrain.setupNewCurrentSignal();
+            mAutoActiveTrain.setupNewCurrentSignal(null);
         }
     }
 
     public void terminate() {
-        DispatcherFrame.instance().removeDelayedTrain(this);
+        InstanceManager.getDefault(DispatcherFrame.class).removeDelayedTrain(this);
         if (getDelaySensor() != null && delaySensorListener != null) {
             getDelaySensor().removePropertyChangeListener(delaySensorListener);
         }
-        if (getRestartDelaySensor() != null && delayReStartSensorListener != null) {
-            getRestartDelaySensor().removePropertyChangeListener(delayReStartSensorListener);
+        if (getRestartSensor() != null && restartSensorListener != null) {
+            getRestartSensor().removePropertyChangeListener(restartSensorListener);
         }
-        mTransit.setState(jmri.Transit.IDLE);
+        mTransit.setState(Transit.IDLE);
     }
 
     public void dispose() {
@@ -966,7 +1115,6 @@ public class ActiveTrain {
         pcs.removePropertyChangeListener(l);
     }
 
-    static Logger log = LoggerFactory.getLogger(ActiveTrain.class.getName());
-}
+    private final static Logger log = LoggerFactory.getLogger(ActiveTrain.class);
 
-/* @(#)ActiveTrain.java */
+}

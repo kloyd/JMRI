@@ -1,6 +1,5 @@
 <!-- an ANT build.xml file for JMRI XSLT -->
 <!-- Bob Jacobsen, Copyright 2002, 2003, 2004, 2005 -->
-<!-- Revision $Revision$ -->
 
 <!-- This file is part of JMRI.                                             -->
 <!--                                                                        -->
@@ -23,7 +22,7 @@
   Provides build services for JMRI web pages
   </description>
 
-  <property name="jmri.copyright.year" value="1997-2015"/>
+  <property name="jmri.copyright.year" value="1997-2018"/>
 
   <!-- set global properties for this build -->
   <property name="xml" value=".."/>
@@ -52,12 +51,12 @@
     <mkdir dir="${propertiesdir}"/>
   </target>
 
-  <target name="clean" depends="init"
+  <target name="clean" 
   			description="remove results">
-    <delete dir="${target}" />
-    <delete dir="${toDTD}"/>
-    <delete dir="${propertiesdir}"/>
-    <delete dir="xml"/>
+   <delete dir="${target}"/>
+   <delete dir="${toDTD}"/>
+   <delete dir="${propertiesdir}"/>
+   <delete dir="xml"/>
   </target>
 
   <target name="copyDTD" description="ensure local DTD file copies present where needed for processing">

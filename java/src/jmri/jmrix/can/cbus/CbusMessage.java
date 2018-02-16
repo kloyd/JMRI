@@ -1,13 +1,8 @@
-/*
- * CbusMessage.java
- *
- */
 package jmri.jmrix.can.cbus;
 
 import jmri.ProgrammingMode;
 import jmri.jmrix.can.CanMessage;
 import jmri.jmrix.can.CanReply;
-import jmri.managers.DefaultProgrammerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +10,6 @@ import org.slf4j.LoggerFactory;
  * Class to allow use of CBUS concepts to access the underlying can message
  *
  * @author Andrew Crosland Copyright (C) 2008
- * @version $Revision$
  */
 public class CbusMessage {
     /* Methods that take a CanMessage as argument */
@@ -273,11 +267,11 @@ public class CbusMessage {
         m.setElement(1, CbusConstants.SERVICE_HANDLE);
         m.setElement(2, (cv / 256) & 0xff);
         m.setElement(3, cv & 0xff);
-        if (mode.equals(DefaultProgrammerManager.PAGEMODE)) {
+        if (mode.equals(ProgrammingMode.PAGEMODE)) {
             m.setElement(4, CbusConstants.CBUS_PROG_PAGED);
-        } else if (mode.equals(DefaultProgrammerManager.DIRECTBITMODE)) {
+        } else if (mode.equals(ProgrammingMode.DIRECTBITMODE)) {
             m.setElement(4, CbusConstants.CBUS_PROG_DIRECT_BIT);
-        } else if (mode.equals(DefaultProgrammerManager.DIRECTBYTEMODE)) {
+        } else if (mode.equals(ProgrammingMode.DIRECTBYTEMODE)) {
             m.setElement(4, CbusConstants.CBUS_PROG_DIRECT_BYTE);
         } else {
             m.setElement(4, CbusConstants.CBUS_PROG_REGISTER);
@@ -292,11 +286,11 @@ public class CbusMessage {
         m.setElement(1, CbusConstants.SERVICE_HANDLE);
         m.setElement(2, (cv / 256) & 0xff);
         m.setElement(3, cv & 0xff);
-        if (mode.equals(DefaultProgrammerManager.PAGEMODE)) {
+        if (mode.equals(ProgrammingMode.PAGEMODE)) {
             m.setElement(4, CbusConstants.CBUS_PROG_PAGED);
-        } else if (mode.equals(DefaultProgrammerManager.DIRECTBITMODE)) {
+        } else if (mode.equals(ProgrammingMode.DIRECTBITMODE)) {
             m.setElement(4, CbusConstants.CBUS_PROG_DIRECT_BIT);
-        } else if (mode.equals(DefaultProgrammerManager.DIRECTBYTEMODE)) {
+        } else if (mode.equals(ProgrammingMode.DIRECTBYTEMODE)) {
             m.setElement(4, CbusConstants.CBUS_PROG_DIRECT_BYTE);
         } else {
             m.setElement(4, CbusConstants.CBUS_PROG_REGISTER);
@@ -500,5 +494,5 @@ public class CbusMessage {
         return (false);
     }
 
-    static Logger log = LoggerFactory.getLogger(CbusMessage.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CbusMessage.class);
 }

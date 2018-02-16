@@ -1,4 +1,3 @@
-/* EasyDccOpsModeProgrammer.java */
 package jmri.jmrix.easydcc;
 
 import java.util.ArrayList;
@@ -8,38 +7,35 @@ import jmri.NmraPacket;
 import jmri.ProgListener;
 import jmri.ProgrammerException;
 import jmri.ProgrammingMode;
-import jmri.managers.DefaultProgrammerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provide an Ops Mode Programmer via a wrapper what works with the EasyDcc
- * command station object.
- * <P>
- * Functionally, this just creates packets to send via the command station.
+ * Provide an Ops Mode Programmer via a wrapper that works with the
+ * EasyDccCommandStation object.
+ * <p>
+ * Functionally, this just creates packets to send via the Command Station.
  *
  * @see jmri.Programmer
- * @author	Bob Jacobsen Copyright (C) 2002
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2002
  */
 public class EasyDccOpsModeProgrammer extends EasyDccProgrammer implements AddressedProgrammer {
 
     int mAddress;
     boolean mLongAddr;
 
-    public EasyDccOpsModeProgrammer(int pAddress, boolean pLongAddr) {
-
+    public EasyDccOpsModeProgrammer(int pAddress, boolean pLongAddr, EasyDccSystemConnectionMemo memo) {
+        super(memo);
         mAddress = pAddress;
         mLongAddr = pLongAddr;
     }
 
     /**
-     * Forward a write request to an ops-mode write operation
+     * Forward a write request to an ops-mode write operation.
      */
+    @Override
     public synchronized void writeCV(int CV, int val, ProgListener p) throws ProgrammerException {
-        if (log.isDebugEnabled()) {
-            log.debug("write CV=" + CV + " val=" + val);
-        }
+        log.debug("write CV={} val={}", CV, val);
         // create the message and fill it,
         byte[] contents = NmraPacket.opsCvWriteByte(mAddress, mLongAddr, CV, val);
         EasyDccMessage msg = new EasyDccMessage(4 + 3 * contents.length);
@@ -68,18 +64,16 @@ public class EasyDccOpsModeProgrammer extends EasyDccProgrammer implements Addre
         controller().sendEasyDccMessage(msg, this);
     }
 
+    @Override
     public synchronized void readCV(int CV, ProgListener p) throws ProgrammerException {
-        if (log.isDebugEnabled()) {
-            log.debug("read CV=" + CV);
-        }
+        log.debug("read CV={}", CV);
         log.error("readCV not available in this protocol");
         throw new ProgrammerException();
     }
 
-    public synchronized void confirmCV(int CV, int val, ProgListener p) throws ProgrammerException {
-        if (log.isDebugEnabled()) {
-            log.debug("confirm CV=" + CV);
-        }
+    @Override
+    public synchronized void confirmCV(String CV, int val, ProgListener p) throws ProgrammerException {
+        log.debug("confirm CV={}", CV);
         log.error("confirmCV not available in this protocol");
         throw new ProgrammerException();
     }
@@ -90,7 +84,7 @@ public class EasyDccOpsModeProgrammer extends EasyDccProgrammer implements Addre
     @Override
     public List<ProgrammingMode> getSupportedModes() {
         List<ProgrammingMode> ret = new ArrayList<ProgrammingMode>();
-        ret.add(DefaultProgrammerManager.OPSBYTEMODE);
+        ret.add(ProgrammingMode.OPSBYTEMODE);
         return ret;
     }
 
@@ -105,14 +99,17 @@ public class EasyDccOpsModeProgrammer extends EasyDccProgrammer implements Addre
         return false;
     }
 
+    @Override
     public boolean getLongAddress() {
         return mLongAddr;
     }
 
+    @Override
     public int getAddressNumber() {
         return mAddress;
     }
 
+    @Override
     public String getAddress() {
         return "" + getAddressNumber() + " " + getLongAddress();
     }
@@ -123,12 +120,11 @@ public class EasyDccOpsModeProgrammer extends EasyDccProgrammer implements Addre
      * this routine does nothing except to replace the parent routine that does
      * something.
      */
+    @Override
     void cleanup() {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(EasyDccOpsModeProgrammer.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(EasyDccOpsModeProgrammer.class);
 
 }
-
-/* @(#)EasyDccOpsModeProgrammer.java */

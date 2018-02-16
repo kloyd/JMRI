@@ -1,69 +1,73 @@
 //LocationEditFrameTest.java
 package jmri.jmrit.operations.locations;
 
+import java.awt.GraphicsEnvironment;
+import jmri.InstanceManager;
 import jmri.jmrit.operations.OperationsSwingTestCase;
-import junit.extensions.jfcunit.eventdata.MouseEventData;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the Operations Locations GUI class
  *
  * @author	Dan Boudreau Copyright (C) 2009
- * @version $Revision$
  */
 public class LocationEditFrameTest extends OperationsSwingTestCase {
 
     final static int ALL = Track.EAST + Track.WEST + Track.NORTH + Track.SOUTH;
 
+    @Test
     public void testLocationEditFrame() {
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         loadLocations();
-        
+
         LocationEditFrame f = new LocationEditFrame(null);
         f.setTitle("Test Add Location Frame");
 
         f.locationNameTextField.setText("New Test Location");
-        //f.addLocationButton.doClick();
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.addLocationButton));
+        enterClickAndLeave(f.addLocationButton);
 
-        LocationManager lManager = LocationManager.instance();
+        LocationManager lManager = InstanceManager.getDefault(LocationManager.class);
         Assert.assertEquals("should be 6 locations", 6, lManager.getLocationsByNameList().size());
         Location newLoc = lManager.getLocationByName("New Test Location");
 
         Assert.assertNotNull(newLoc);
 
         // add a yard track
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.addYardButton));
+        enterClickAndLeave(f.addYardButton);
 
         // add an interchange track
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.addInterchangeButton));
+        enterClickAndLeave(f.addInterchangeButton);
 
         // add a staging track
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.addStagingButton));
+        enterClickAndLeave(f.addStagingButton);
 
         // add a yard track
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.addYardButton));
+        enterClickAndLeave(f.addYardButton);
 
         f.locationNameTextField.setText("Newer Test Location");
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.saveLocationButton));
+        enterClickAndLeave(f.saveLocationButton);
 
         Assert.assertEquals("changed location name", "Newer Test Location", newLoc.getName());
 
         // test delete button
-        getHelper().enterClickAndLeave(new MouseEventData(this, f.deleteLocationButton));
+        enterClickAndLeave(f.deleteLocationButton);
         Assert.assertEquals("should be 6 locations", 6, lManager.getLocationsByNameList().size());
         // confirm delete dialog window should appear
-        pressDialogButton(f, "Yes");
+        pressDialogButton(f, Bundle.getMessage("deletelocation?"), Bundle.getMessage("ButtonYes"));
         // location now deleted
         Assert.assertEquals("should be 5 locations", 5, lManager.getLocationsByNameList().size());
 
-        f.dispose();
+        JUnitUtil.dispose(f);
     }
 
     private void loadLocations() {
         // create 5 locations
-        LocationManager lManager = LocationManager.instance();
+        LocationManager lManager = InstanceManager.getDefault(LocationManager.class);
         Location l1 = lManager.newLocation("Test Loc E");
         l1.setLength(1001);
         Location l2 = lManager.newLocation("Test Loc D");
@@ -78,28 +82,14 @@ public class LocationEditFrameTest extends OperationsSwingTestCase {
     }
 
     @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
     }
 
-    public LocationEditFrameTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", LocationEditFrameTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(LocationEditFrameTest.class);
-        return suite;
-    }
-
     @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 }

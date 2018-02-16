@@ -1,10 +1,10 @@
-// LnSensorAddressTest.java
 package jmri.jmrix.loconet;
 
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
  * Tests for the jmri.jmrix.loconet.LnSensorAddress class.
  *
  * @author	Bob Jacobsen Copyright 2001, 2002
- * @version $Revision$
  */
 public class LnSensorAddressTest extends TestCase {
 
@@ -30,6 +29,7 @@ public class LnSensorAddressTest extends TestCase {
     public void testLnSensorInvalid() {
         LnSensorAddress a;
         a = new LnSensorAddress("foo", "L") {
+            @Override
             void reportParseError(String s) {
             }
         };
@@ -107,7 +107,7 @@ public class LnSensorAddressTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {LnSensorAddressTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -116,15 +116,17 @@ public class LnSensorAddressTest extends TestCase {
         return suite;
     }
 
-    static Logger log = LoggerFactory.getLogger(LnSensorAddressTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LnSensorAddressTest.class);
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

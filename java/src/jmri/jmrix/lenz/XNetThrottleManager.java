@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 /**
  * XNet implementation of a ThrottleManager based on the
  * AbstractThrottleManager.
- *
+ * <P>
  * @author Paul Bender Copyright (C) 2002-2004
- * @version $Revision$
+ * @navassoc 1 - * jmri.jmrix.lenz.XNetThrottle
  */
 public class XNetThrottleManager extends AbstractThrottleManager implements ThrottleManager, XNetListener {
 
@@ -35,8 +35,8 @@ public class XNetThrottleManager extends AbstractThrottleManager implements Thro
     /**
      * Request a new throttle object be creaetd for the address, and let the
      * throttle listeners know about it.
-     *
      */
+    @Override
     public void requestThrottleSetup(LocoAddress address, boolean control) {
         XNetThrottle throttle;
         if (log.isDebugEnabled()) {
@@ -51,33 +51,35 @@ public class XNetThrottleManager extends AbstractThrottleManager implements Thro
         }
     }
 
-    /*
-     * XPressNet based systems DO NOT use the Dispatch Function
+    /**
+     * XpressNet based systems DO NOT use the Dispatch Function.
      */
+    @Override
     public boolean hasDispatchFunction() {
         return false;
     }
 
-    /*
-     * XPressNet based systems can have multiple throttles for the same 
-     * device
+    /**
+     * XpressNet based systems can have multiple throttles for the same
+     * device.
      */
+    @Override
     protected boolean singleUse() {
         return false;
     }
 
     /**
-     * Address 100 and above is a long address
-     *
+     * Address 100 and above is a long address.
      */
+    @Override
     public boolean canBeLongAddress(int address) {
         return isLongAddress(address);
     }
 
     /**
-     * Address 99 and below is a short address
-     *
+     * Address 99 and below is a short address.
      */
+    @Override
     public boolean canBeShortAddress(int address) {
         return !isLongAddress(address);
     }
@@ -85,11 +87,12 @@ public class XNetThrottleManager extends AbstractThrottleManager implements Thro
     /**
      * Are there any ambiguous addresses (short vs long) on this system?
      */
+    @Override
     public boolean addressTypeUnique() {
         return true;
     }
 
-    /*
+    /**
      * Local method for deciding short/long address
      */
     static protected boolean isLongAddress(int num) {
@@ -98,9 +101,10 @@ public class XNetThrottleManager extends AbstractThrottleManager implements Thro
 
     /**
      * What speed modes are supported by this system? value should be xor of
-     * possible modes specifed by the DccThrottle interface XPressNet supports
+     * possible modes specifed by the DccThrottle interface XpressNet supports
      * 14,27,28 and 128 speed step modes
      */
+    @Override
     public int supportedSpeedModes() {
         return (jmri.DccThrottle.SpeedStepMode128
                 | jmri.DccThrottle.SpeedStepMode28
@@ -108,7 +112,10 @@ public class XNetThrottleManager extends AbstractThrottleManager implements Thro
                 | jmri.DccThrottle.SpeedStepMode14);
     }
 
-    // Handle incoming messages for throttles.
+    /**
+     * Handle incoming messages for throttles.
+     */
+    @Override
     public void message(XNetReply r) {
         // We want to check to see if a throttle has taken over an address
         if (r.getElement(0) == XNetConstants.LOCO_INFO_RESPONSE) {
@@ -125,27 +132,37 @@ public class XNetThrottleManager extends AbstractThrottleManager implements Thro
 
     }
 
-    // listen for the messages to the LI100/LI101
+    /**
+     * Listen for the messages to the LI100/LI101.
+     */
+    @Override
     public void message(XNetMessage l) {
     }
 
-    // Handle a timeout notification
+    /**
+     * Handle a timeout notification.
+     */
+    @Override
     public void notifyTimeout(XNetMessage msg) {
     }
 
+    @Override
     public void releaseThrottle(jmri.DccThrottle t, jmri.ThrottleListener l) {
     }
 
+    @Override
     public boolean disposeThrottle(jmri.DccThrottle t, jmri.ThrottleListener l) {
         if (super.disposeThrottle(t, l)) {
+            if(!(t instanceof XNetThrottle)) {
+               throw new IllegalArgumentException("Attempt to dispose non-XpressNet Throttle");
+            }
             XNetThrottle lnt = (XNetThrottle) t;
             lnt.throttleDispose();
             return true;
         }
         return false;
-        //LocoNetSlot tSlot = lnt.getLocoNetSlot();
     }
 
-    static Logger log = LoggerFactory.getLogger(XNetThrottleManager.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(XNetThrottleManager.class);
 
 }

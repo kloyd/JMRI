@@ -1,32 +1,35 @@
-// SendPacketTest.java
 package jmri.jmrit.sendpacket;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.awt.GraphicsEnvironment;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Test;
 
 /**
  * Tests for classes in the jmri.jmrit.sendpacket package
  *
  * @author	Bob Jacobsen Copyright 2003
- * @version	$Revision$
- */
-public class SendPacketTest extends TestCase {
+  */
+public class SendPacketTest {
 
+    @Test
     public void testFrameCreate() {
-        new SendPacketFrame();
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
+        SendPacketFrame t = new SendPacketFrame();
+        Assert.assertNotNull(t);
     }
 
+    @Test
     public void testPacketNull() {
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         SendPacketFrame t = new SendPacketFrame();
         byte[] m = t.createPacket("");
-        Assert.assertEquals("null pointer", null, m);
+        Assert.assertNull("null pointer", m);
     }
 
+    @Test
     public void testPacketCreate() {
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         SendPacketFrame t = new SendPacketFrame();
         byte[] m = t.createPacket("12 34 AB 3 19 6 B B1");
         Assert.assertEquals("length", 8, m.length);
@@ -39,24 +42,5 @@ public class SendPacketTest extends TestCase {
         Assert.assertEquals("6th byte", 0x0B, m[6] & 0xFF);
         Assert.assertEquals("7th byte", 0xB1, m[7] & 0xFF);
     }
-
-    // from here down is testing infrastructure
-    public SendPacketTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {SendPacketTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(SendPacketTest.class);
-        return suite;
-    }
-
-    static Logger log = LoggerFactory.getLogger(SendPacketTest.class.getName());
 
 }

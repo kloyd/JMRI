@@ -34,12 +34,7 @@ import org.slf4j.LoggerFactory;
 
 public class RestoreDialog extends JDialog {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -6808252535357802460L;
-
-    static Logger log = LoggerFactory.getLogger(RestoreDialog.class
+    private final static Logger log = LoggerFactory.getLogger(RestoreDialog.class
             .getName());
 
     private JPanel mainPanel;
@@ -90,6 +85,7 @@ public class RestoreDialog extends JDialog {
                 {
                     automaticBackupsRadioButton = new JRadioButton(Bundle.getMessage("RestoreDialog.radioButton.autoBackup"));
                     automaticBackupsRadioButton.addActionListener(new ActionListener() {
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             do_automaticBackupsRadioButton_actionPerformed(e);
                         }
@@ -100,6 +96,7 @@ public class RestoreDialog extends JDialog {
                 {
                     defaultBackupsRadioButton = new JRadioButton(Bundle.getMessage("RestoreDialog.radioButton.defaultBackup"));
                     defaultBackupsRadioButton.addActionListener(new ActionListener() {
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             do_defaultBackupsRadioButton_actionPerformed(e);
                         }
@@ -117,6 +114,7 @@ public class RestoreDialog extends JDialog {
             {
                 comboBox = new JComboBox<>();
                 comboBox.addItemListener(new ItemListener() {
+                    @Override
                     public void itemStateChanged(ItemEvent arg0) {
                         do_comboBox_itemStateChanged(arg0);
                     }
@@ -134,6 +132,7 @@ public class RestoreDialog extends JDialog {
             {
                 restoreButton = new JButton(Bundle.getMessage("RestoreDialog.retoreButton.text"));
                 restoreButton.addActionListener(new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         do_restoreButton_actionPerformed(e);
                     }
@@ -141,8 +140,9 @@ public class RestoreDialog extends JDialog {
                 buttonPane.add(restoreButton);
             }
             {
-                JButton cancelButton = new JButton(Bundle.getMessage("BackupDialog.cancelButton.text"));
+                JButton cancelButton = new JButton(Bundle.getMessage("ButtonCancel"));
                 cancelButton.addActionListener(new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent arg0) {
                         do_cancelButton_actionPerformed(arg0);
                     }
@@ -233,7 +233,7 @@ public class RestoreDialog extends JDialog {
         catch (IOException ex) {
             ExceptionContext context = new ExceptionContext(ex, Bundle.getMessage("RestoreDialog.restoring")
                     + " " + setName, "Hint about checking valid names, etc."); // NOI18N
-            new ExceptionDisplayFrame(context);
+            new ExceptionDisplayFrame(context, this).setVisible(true);
 
         } catch (Exception ex) {
             log.error("Doing restore from " + setName, ex);
@@ -241,7 +241,7 @@ public class RestoreDialog extends JDialog {
             UnexpectedExceptionContext context = new UnexpectedExceptionContext(ex,
                     Bundle.getMessage("RestoreDialog.restoring") + " " + setName);
 
-            new ExceptionDisplayFrame(context);
+            new ExceptionDisplayFrame(context, this).setVisible(true);
         }
     }
 

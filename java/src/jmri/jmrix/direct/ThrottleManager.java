@@ -16,26 +16,26 @@ import org.slf4j.LoggerFactory;
  * time. It also is missing logic to alternate sending speed and function
  * commands; right now it only sends the first group of function packets.
  *
- * @author	Bob Jacobsen Copyright (C) 2004
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2004
  */
 public class ThrottleManager extends AbstractThrottleManager {
 
+    private jmri.CommandStation tc = null;
     /**
      * Constructor.
      */
-    public ThrottleManager() {
+    public ThrottleManager(jmri.CommandStation tcl) {
         super();
-        if (mInstance != null) {
-            log.warn("Creating too many objects");
-        }
-        mInstance = this;
+        tc = tcl;
+        jmri.InstanceManager.setDefault(jmri.jmrix.direct.ThrottleManager.class,this);
     }
 
-    static private ThrottleManager mInstance = null;
-
+    /**
+     * @deprecated JMRI Since 4.4 instance() shouldn't be used, convert to JMRI multi-system support structure
+     */
+    @Deprecated
     static public ThrottleManager instance() {
-        return mInstance;
+        return jmri.InstanceManager.getDefault(jmri.jmrix.direct.ThrottleManager.class);
     }
 
     Throttle currentThrottle = null;
@@ -43,6 +43,7 @@ public class ThrottleManager extends AbstractThrottleManager {
     /**
      * Create throttle data structures.
      */
+    @Override
     public void requestThrottleSetup(LocoAddress address, boolean control) {
         if (currentThrottle != null) {
             log.error("DCC direct cannot handle more than one throttle now");
@@ -50,18 +51,21 @@ public class ThrottleManager extends AbstractThrottleManager {
             return;
         }
         log.warn("requestThrottleSetup should preserve actual address object, not use ints");
-        currentThrottle = new Throttle(((DccLocoAddress) address).getNumber());
+        currentThrottle = new Throttle(((DccLocoAddress) address).getNumber(),tc);
         notifyThrottleKnown(currentThrottle, currentThrottle.getLocoAddress());
     }
 
+    @Override
     public boolean addressTypeUnique() {
         return false;
     }
 
+    @Override
     public boolean canBeShortAddress(int a) {
         return a < 128;
     }
 
+    @Override
     public boolean canBeLongAddress(int a) {
         return a > 0;
     }
@@ -70,6 +74,7 @@ public class ThrottleManager extends AbstractThrottleManager {
      * Invoked when a throttle is released, this updates the local data
      * structures
      */
+    @Override
     public boolean disposeThrottle(jmri.DccThrottle t, jmri.ThrottleListener l) {
         if (super.disposeThrottle(t, l)) {
             currentThrottle = null;
@@ -78,6 +83,6 @@ public class ThrottleManager extends AbstractThrottleManager {
         return false;
     }
 
-    static Logger log = LoggerFactory.getLogger(ThrottleManager.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ThrottleManager.class);
 
 }

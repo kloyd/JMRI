@@ -6,21 +6,11 @@ import java.awt.geom.Ellipse2D;
 import javax.swing.JPopupMenu;
 import jmri.jmrit.display.Editor;
 import jmri.jmrit.display.Positionable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * PositionableRoundRect.
- * <P>
- * @author Pete cresman Copyright (c) 2012
- * @version $Revision: 1 $
+ * @author Pete Cressman Copyright (c) 2012
  */
 public class PositionableEllipse extends PositionableRectangle {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 2828662466661825613L;
 
     public PositionableEllipse(Editor editor) {
         super(editor);
@@ -30,43 +20,39 @@ public class PositionableEllipse extends PositionableRectangle {
         super(editor, shape);
     }
 
-    /**
-     * this class must be overridden by its subclasses and executed only after
-     * its parameters have been set
-     */
-    public void makeShape() {
-        setShape(new Ellipse2D.Double(0, 0, _width, _height));
+    @Override
+    protected Shape makeShape() {
+        return new Ellipse2D.Double(0, 0, _width, _height);
     }
 
+    @Override
     public Positionable deepClone() {
         PositionableEllipse pos = new PositionableEllipse(_editor);
         return finishClone(pos);
     }
 
-    public Positionable finishClone(Positionable p) {
-        PositionableEllipse pos = (PositionableEllipse) p;
+    /*    protected Positionable finishClone(PositionableShape pos) {
         pos._width = _width;
         pos._height = _height;
         return super.finishClone(pos);
-    }
-
+    }*/
+    @Override
     public boolean setEditItemMenu(JPopupMenu popup) {
-        String txt = Bundle.getMessage("editShape", Bundle.getMessage("ellipse"));
+        String txt = Bundle.getMessage("editShape", Bundle.getMessage("Ellipse"));
         popup.add(new javax.swing.AbstractAction(txt) {
-            /**
-             *
-             */
-            private static final long serialVersionUID = -2502324392840592055L;
-
+            @Override
             public void actionPerformed(ActionEvent e) {
-                if (_editFrame == null) {
-                    _editFrame = new DrawEllipse("editShape", "ellipse", null);
-                    setEditParams();
-                }
+                makeEditFrame();
             }
         });
         return true;
     }
 
-    static Logger log = LoggerFactory.getLogger(PositionableEllipse.class.getName());
+    private void makeEditFrame() {
+        if (_editFrame == null) {
+            _editFrame = new DrawEllipse("editShape", "Ellipse", this);
+            setEditParams();
+        }
+    }
+
 }

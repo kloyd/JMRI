@@ -1,4 +1,3 @@
-// OakTreeMenu.java
 package jmri.jmrix.oaktree;
 
 import java.util.ResourceBundle;
@@ -7,22 +6,18 @@ import javax.swing.JMenu;
 /**
  * Create a "Systems" menu containing the Jmri Oak Tree-specific tools
  *
- * @author	Bob Jacobsen Copyright 2003, 2006
- * @version $Revision$
+ * @author Bob Jacobsen Copyright 2003, 2006
  */
 public class OakTreeMenu extends JMenu {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3502858569724894577L;
+    private OakTreeSystemConnectionMemo _memo = null;
 
-    public OakTreeMenu(String name) {
-        this();
+    public OakTreeMenu(String name,OakTreeSystemConnectionMemo memo) {
+        this(memo);
         setText(name);
     }
 
-    public OakTreeMenu() {
+    public OakTreeMenu(OakTreeSystemConnectionMemo memo) {
 
         super();
 
@@ -30,8 +25,8 @@ public class OakTreeMenu extends JMenu {
 
         setText(rb.getString("MenuOakTree"));
 
-        add(new jmri.jmrix.oaktree.serialmon.SerialMonAction(rb.getString("MenuItemCommandMonitor")));
-        add(new jmri.jmrix.oaktree.packetgen.SerialPacketGenAction(rb.getString("MenuItemSendCommand")));
+        add(new jmri.jmrix.oaktree.serialmon.SerialMonAction(rb.getString("MenuItemCommandMonitor"),_memo));
+        add(new jmri.jmrix.oaktree.packetgen.SerialPacketGenAction(rb.getString("MenuItemSendCommand"),_memo));
 
     }
 

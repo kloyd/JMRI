@@ -1,10 +1,10 @@
 package jmri.jmrix.openlcb;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * OlcbSystemConnectionMemoTest.java
@@ -12,39 +12,28 @@ import org.slf4j.LoggerFactory;
  * Description:	tests for the jmri.jmrix.openlcb.OlcbSystemConnectionMemo class
  *
  * @author	Bob Jacobsen
- * @version $Revision: 28820 $
+ * @author      Paul Bender Copyright (C) 2016	
  */
-public class OlcbSystemConnectionMemoTest extends TestCase {
+public class OlcbSystemConnectionMemoTest extends jmri.jmrix.SystemConnectionMemoTestBase {
 
-    public void testCtor() {
-    }
-
-    // from here down is testing infrastructure
-    public OlcbSystemConnectionMemoTest(String s) {
-        super(s);
-    }
-
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {"-noloading", OlcbSystemConnectionMemoTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(OlcbSystemConnectionMemoTest.class);
-        return suite;
+    @Override
+    @Test
+    public void testProvidesConsistManager(){
+       ((OlcbSystemConnectionMemo)scm).configureManagers();
+       Assert.assertFalse("Provides ConsistManager",scm.provides(jmri.ConsistManager.class));
     }
 
     // The minimal setup for log4J
     @Override
-    protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
+        scm = OlcbTestInterface.createForLegacyTests();
     }
 
     @Override
-    protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
-    static Logger log = LoggerFactory.getLogger(OlcbSystemConnectionMemoTest.class.getName());
 }

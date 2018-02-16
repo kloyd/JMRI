@@ -11,8 +11,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Handle configuration for display.PositionableShape objects
  *
- * @author Pete Cressman Copyright: Copyright (c) 2012
- * @version $Revision: 1 $
+ * @author Pete Cressman Copyright (c) 2012
  */
 public class PositionablePolygonXml extends PositionableShapeXml {
 
@@ -25,6 +24,7 @@ public class PositionablePolygonXml extends PositionableShapeXml {
      * @param o Object to store, of type PositionableShape
      * @return Element containing the complete info
      */
+    @Override
     public Element store(Object o) {
         PositionablePolygon p = (PositionablePolygon) o;
 
@@ -66,6 +66,7 @@ public class PositionablePolygonXml extends PositionableShapeXml {
      * @param element Top level Element to unpack.
      * @param o       Editor as an Object
      */
+    @Override
     public void load(Element element, Object o) {
         // create the objects
         Editor ed = (Editor) o;
@@ -91,10 +92,13 @@ public class PositionablePolygonXml extends PositionableShapeXml {
                     path.quadTo(coord[0], coord[1], coord[2], coord[3]);
                     break;
                 case PathIterator.SEG_CUBICTO:
-                    path.curveTo(coord[0], coord[1], coord[2], coord[3], coord[4], coord[53]);
+                    path.curveTo(coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]);
                     break;
                 case PathIterator.SEG_CLOSE:
                     path.closePath();
+                    break;
+                default:
+                    log.warn("Unhandled type: {}", type);
                     break;
             }
         }
@@ -104,6 +108,5 @@ public class PositionablePolygonXml extends PositionableShapeXml {
         // load individual item's option settings after editor has set its global settings
         loadCommonAttributes(ps, Editor.MARKERS, element);
     }
-
-    static Logger log = LoggerFactory.getLogger(PositionablePolygonXml.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PositionablePolygonXml.class);
 }

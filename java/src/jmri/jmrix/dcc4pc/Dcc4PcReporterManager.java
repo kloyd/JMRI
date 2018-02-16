@@ -1,44 +1,35 @@
-// Dcc4PcReporterManager.java
 package jmri.jmrix.dcc4pc;
 
 import jmri.Reporter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Dcc4PcReporterManager implements the ReporterManager.
- * <P>
- * Description:	Implement Reporter manager for dcc4pc
+ * Dcc4PcReporterManager implements the ReporterManage for dcc4pc
  *
- * @author	Kevin Dickerson Copyright (C) 2012
- * @version $Revision: 17977 $
+ * @author Kevin Dickerson Copyright (C) 2012
  */
 public class Dcc4PcReporterManager extends jmri.managers.AbstractReporterManager {
 
     // ctor has to register for LocoNet events
     public Dcc4PcReporterManager(Dcc4PcTrafficController tc, Dcc4PcSystemConnectionMemo memo) {
         this.memo = memo;
-        this.tc = tc;
     }
 
-    Dcc4PcTrafficController tc;
     Dcc4PcSystemConnectionMemo memo;
 
+    @Override
     public String getSystemPrefix() {
         return memo.getSystemPrefix();
     }
 
+    @Override
     public void dispose() {
         super.dispose();
     }
 
+    @Override
     public Reporter createNewReporter(String systemName, String userName) {
         Reporter r = new Dcc4PcReporter(systemName, userName);
         register(r);
         return r;
     }
-
-    static Logger log = LoggerFactory.getLogger(Dcc4PcReporterManager.class.getName());
 }
-
-/* @(#)Dcc4PcReporterManager.java */

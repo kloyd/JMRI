@@ -1,4 +1,3 @@
-// CompositeVariableValueTest.java
 package jmri.jmrit.symbolicprog;
 
 import java.util.ArrayList;
@@ -8,21 +7,22 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import jmri.progdebugger.ProgDebugger;
-import junit.framework.Assert;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Test CompositeVariableValue class.
  *
- * @author	Bob Jacobsen Copyright 2006
- * @version $Revision$
+ * @author	Bob Jacobsen Copyright 2006, 2015
  */
-public class CompositeVariableValueTest extends VariableValueTest {
+public class CompositeVariableValueTest extends AbstractVariableValueTestBase {
 
-    // abstract members invoked by tests in parent VariableValueTest class
+    // abstract members invoked by tests in parent AbstractVariableValueTestBase class
+    @Override
     VariableValue makeVar(String label, String comment, String cvName,
             boolean readOnly, boolean infoOnly, boolean writeOnly, boolean opsOnly,
             String cvNum, String mask, int minVal, int maxVal,
@@ -34,19 +34,23 @@ public class CompositeVariableValueTest extends VariableValueTest {
         return new CompositeVariableValue(label, comment, "", readOnly, infoOnly, writeOnly, opsOnly, cvNum, mask, minVal, maxVal, v, status, item);
     }
 
+    @Override
     void setValue(VariableValue var, String val) {
         ((JTextField) var.getCommonRep()).setText(val);
         ((JTextField) var.getCommonRep()).postActionEvent();
     }
 
+    @Override
     void setReadOnlyValue(VariableValue var, String val) {
         ((CompositeVariableValue) var).setValue(Integer.valueOf(val).intValue());
     }
 
+    @Override
     void checkValue(VariableValue var, String comment, String val) {
         Assert.assertEquals(comment, val, var.getCommonRep().toString());
     }
 
+    @Override
     void checkReadOnlyValue(VariableValue var, String comment, String val) {
         Assert.assertEquals(comment, val, var.getCommonRep().toString());
     }
@@ -54,54 +58,70 @@ public class CompositeVariableValueTest extends VariableValueTest {
     // end of abstract members
     // some of the premade tests don't quite make sense; override them here.
     // (This is removing the majority of the tests, which seems rather much)
+    @Override
     public void testVariableValueCreate() {
     }// mask is ignored 
 
+    @Override
     public void testVariableValueCreateLargeValue() {
     } // mask is ignored 
 
+    @Override
     public void testVariableValueCreateLargeMaskValue() {
     } // mask is ignored 
 
+    @Override
     public void testVariableValueCreateLargeMaskValue256() {
     } // mask is ignored 
 
+    @Override
     public void testVariableValueCreateLargeMaskValue2up16() {
     } // mask is ignored 
 
+    @Override
     public void testVariableSynch() {
     }     // low CV is upper part of address
 
+    @Override
     public void testVariableReadOnly() {
     }     // low CV is upper part of address
 
+    @Override
     public void testVariableFromCV() {
     }     // low CV is upper part of address
 
+    @Override
     public void testVariableValueRead() {
     }	// due to multi-cv nature
 
+    @Override
     public void testVariableValueStates() {
     }	// due to multi-cv nature
 
+    @Override
     public void testVariableValueStateColor() {
     }	// due to multi-cv nature
 
+    @Override
     public void testVariableRepStateColor() {
     }	// due to multi-cv nature
 
     public void testVariableValueRepStateColor() {
     }	// due to multi-cv nature
 
+    @Override
     public void testVariableVarChangeColorRep() {
     }	// due to multi-cv nature
 
+    @Override
     public void testVariableValueWrite() {
     } // due to multi-cv nature
 
+    @Override
     public void testVariableCvWrite() {
     }    // due to multi-cv nature
 
+    @Override
     public void testWriteSynch2() {
     }        // programmer synch is different
 
@@ -153,6 +173,7 @@ public class CompositeVariableValueTest extends VariableValueTest {
 
         // register a listener for parameter changes
         java.beans.PropertyChangeListener listen = new java.beans.PropertyChangeListener() {
+            @Override
             public void propertyChange(java.beans.PropertyChangeEvent e) {
                 evtList.add(e);
                 if (e.getPropertyName().equals("Busy") && ((Boolean) e.getNewValue()).equals(Boolean.FALSE)) {
@@ -170,16 +191,7 @@ public class CompositeVariableValueTest extends VariableValueTest {
         log.debug("============ end test read ===============");
 
         // wait for reply (normally, done by callback; will check that later)
-        int i = 0;
-        log.debug("============== enter loop  =================");
-        while (testVar.isBusy() && i++ < 10) {
-            try {
-                Thread.sleep(100);
-            } catch (Exception e) {
-            }
-        }
-        log.debug("============== out of loop  ===================");
-        Assert.assertTrue("wait satisfied ", i < 10);
+        JUnitUtil.waitFor(()->{return !testVar.isBusy();}, "testVar.isBusy");
 
         int nBusyFalse = 0;
         for (int k = 0; k < evtList.size(); k++) {
@@ -208,6 +220,7 @@ public class CompositeVariableValueTest extends VariableValueTest {
 
         // register a listener for parameter changes
         java.beans.PropertyChangeListener listen = new java.beans.PropertyChangeListener() {
+            @Override
             public void propertyChange(java.beans.PropertyChangeEvent e) {
                 evtList.add(e);
                 if (e.getPropertyName().equals("Busy") && ((Boolean) e.getNewValue()).equals(Boolean.FALSE)) {
@@ -221,14 +234,7 @@ public class CompositeVariableValueTest extends VariableValueTest {
         testVar.setToWrite(true);
         testVar.writeAll();
         // wait for reply (normally, done by callback; will check that later)
-        int i = 0;
-        while (testVar.isBusy() && i++ < 100) {
-            try {
-                Thread.sleep(100);
-            } catch (Exception e) {
-            }
-        }
-        Assert.assertTrue("wait satisfied ", i < 100);
+        JUnitUtil.waitFor(()->{return !testVar.isBusy();}, "testVar.isBusy");
 
         int nBusyFalse = 0;
         for (int k = 0; k < evtList.size(); k++) {
@@ -327,7 +333,7 @@ public class CompositeVariableValueTest extends VariableValueTest {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", CompositeVariableValueTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -336,15 +342,17 @@ public class CompositeVariableValueTest extends VariableValueTest {
         return suite;
     }
 
-    static Logger log = LoggerFactory.getLogger(CompositeVariableValueTest.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CompositeVariableValueTest.class);
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

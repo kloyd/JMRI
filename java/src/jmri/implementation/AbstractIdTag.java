@@ -1,4 +1,3 @@
-// AbstractIdTag.java
 package jmri.implementation;
 
 import java.util.Date;
@@ -20,20 +19,14 @@ import jmri.Reporter;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  *
- * @author Matthew Harris Copyright (C) 2011
- * @version $Revision$
+ * @author  Matthew Harris Copyright (C) 2011
  * @since 2.11.4
  */
 public abstract class AbstractIdTag extends AbstractNamedBean implements IdTag {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8149992170721277901L;
+    protected Reporter whereLastSeen = null;
 
-    protected Reporter _whereLastSeen = null;
-
-    protected Date _whenLastSeen = null;
+    protected Date whenLastSeen = null;
 
     public AbstractIdTag(String systemName) {
         super(systemName.toUpperCase());
@@ -52,28 +45,28 @@ public abstract class AbstractIdTag extends AbstractNamedBean implements IdTag {
 
     @Override
     public Reporter getWhereLastSeen() {
-        return this._whereLastSeen;
+        return this.whereLastSeen;
     }
 
     @Override
     public Date getWhenLastSeen() {
-        if (this._whenLastSeen == null) {
+        if (this.whenLastSeen == null) {
             return null;
         } else {
-            return (Date) this._whenLastSeen.clone();  // Date is mutable, so return copy
+            return (Date) this.whenLastSeen.clone();  // Date is mutable, so return copy
         }
     }
 
     @Override
     public String toString() {
-        return (mUserName == null || mUserName.length() == 0) ? getTagID() : mUserName;
+        String userName = getUserName();
+        return (userName == null || userName.isEmpty()) ? getTagID() : userName;
     }
 
+    @Override
     public String getBeanType() {
         return Bundle.getMessage("BeanNameReporter");
     }
 
-//    private static final Logger log = LoggerFactory.getLogger(AbstractIdTag.class.getName());
+//    private static final Logger log = LoggerFactory.getLogger(AbstractIdTag.class);
 }
-
-/* @(#)AbstractIdTag.java */

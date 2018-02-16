@@ -1,34 +1,32 @@
-// NodeConfigAction.java
 package jmri.jmrix.secsi.nodeconfig;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jmri.jmrix.secsi.SecsiSystemConnectionMemo;
 
 /**
  * Swing action to create and register a NodeConfigFrame object
  *
  * @author	Bob Jacobsen Copyright (C) 2006, 2008
- * @version	$Revision$
  */
 public class NodeConfigAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 5110730322384604465L;
+    private SecsiSystemConnectionMemo memo;
 
-    public NodeConfigAction(String s) {
+    public NodeConfigAction(String s, SecsiSystemConnectionMemo _memo) {
         super(s);
+        memo = _memo;
     }
 
-    public NodeConfigAction() {
-        this("Configure SECSI Nodes");
+    public NodeConfigAction(SecsiSystemConnectionMemo _memo) {
+        this("Configure SECSI Nodes",_memo);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        NodeConfigFrame f = new NodeConfigFrame();
+        NodeConfigFrame f = new NodeConfigFrame(memo);
         try {
             f.initComponents();
         } catch (Exception ex) {
@@ -37,8 +35,5 @@ public class NodeConfigAction extends AbstractAction {
         f.setLocation(100, 30);
         f.setVisible(true);
     }
-    static Logger log = LoggerFactory.getLogger(NodeConfigAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(NodeConfigAction.class);
 }
-
-
-/* @(#)NodeConfigAction.java */

@@ -1,4 +1,3 @@
-// NodeConfigFrame.java
 package jmri.jmrix.secsi.nodeconfig;
 
 import java.awt.Container;
@@ -12,7 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import jmri.jmrix.secsi.SerialNode;
 import jmri.jmrix.secsi.SerialSensorManager;
-import jmri.jmrix.secsi.SerialTrafficController;
+import jmri.jmrix.secsi.SecsiSystemConnectionMemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,14 +20,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author	Bob Jacobsen Copyright (C) 2004, 2007, 2008
  * @author	Dave Duchamp Copyright (C) 2004, 2006
- * @version	$Revision$
  */
 public class NodeConfigFrame extends jmri.util.JmriJFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -3775018049333679363L;
+    private SecsiSystemConnectionMemo memo;
 
     ResourceBundle rb = ResourceBundle.getBundle("jmri.jmrix.secsi.nodeconfig.NodeConfigBundle");
 
@@ -66,13 +61,15 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
     /**
      * Constructor method
      */
-    public NodeConfigFrame() {
+    public NodeConfigFrame(SecsiSystemConnectionMemo _memo) {
         super();
+        memo = _memo;
     }
 
     /**
      * Initialize the config window
      */
+    @Override
     public void initComponents() {
         setTitle(rb.getString("WindowTitle"));
 
@@ -132,6 +129,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         addButton.setVisible(true);
         addButton.setToolTipText(rb.getString("TipAddButton"));
         addButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 addButtonActionPerformed();
             }
@@ -142,6 +140,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         editButton.setToolTipText(rb.getString("TipEditButton"));
         panel4.add(editButton);
         editButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 editButtonActionPerformed();
             }
@@ -152,6 +151,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         deleteButton.setToolTipText(rb.getString("TipDeleteButton"));
         panel4.add(deleteButton);
         deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 deleteButtonActionPerformed();
             }
@@ -162,6 +162,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         doneButton.setToolTipText(rb.getString("TipDoneButton"));
         panel4.add(doneButton);
         doneButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 doneButtonActionPerformed();
             }
@@ -172,6 +173,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         updateButton.setToolTipText(rb.getString("TipUpdateButton"));
         panel4.add(updateButton);
         updateButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 updateButtonActionPerformed();
             }
@@ -183,6 +185,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         cancelButton.setToolTipText(rb.getString("TipCancelButton"));
         panel4.add(cancelButton);
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 cancelButtonActionPerformed();
             }
@@ -204,7 +207,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
             return;
         }
         // get a SerialNode corresponding to this node address if one exists
-        curNode = (SerialNode) SerialTrafficController.instance().getNodeFromAddress(nodeAddress);
+        curNode = (SerialNode) memo.getTrafficController().getNodeFromAddress(nodeAddress);
         if (curNode != null) {
             statusText1.setText(rb.getString("Error1") + Integer.toString(nodeAddress)
                     + rb.getString("Error2"));
@@ -216,7 +219,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         nodeType = nodeTypeBox.getSelectedIndex();
 
         // all ready, create the new node
-        curNode = new SerialNode(nodeAddress, nodeType);
+        curNode = new SerialNode(nodeAddress, nodeType,memo.getTrafficController());
         if (curNode == null) {
             statusText1.setText(rb.getString("Error3"));
             statusText1.setVisible(true);
@@ -228,7 +231,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         // configure the new node
         setNodeParameters();
         // register any orphan sensors that this node may have
-        SerialSensorManager.instance().registerSensorsForNode(curNode);
+        ((SerialSensorManager)memo.getSensorManager()).registerSensorsForNode(curNode);
         // reset after succefully adding node
         resetNotes();
         changedNode = true;
@@ -248,7 +251,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
             return;
         }
         // get the SerialNode corresponding to this node address
-        curNode = (SerialNode) SerialTrafficController.instance().getNodeFromAddress(nodeAddress);
+        curNode = (SerialNode) memo.getTrafficController().getNodeFromAddress(nodeAddress);
         if (curNode == null) {
             statusText1.setText(rb.getString("Error4"));
             statusText1.setVisible(true);
@@ -287,7 +290,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
             return;
         }
         // get the SerialNode corresponding to this node address
-        curNode = (SerialNode) SerialTrafficController.instance().getNodeFromAddress(nodeAddress);
+        curNode = (SerialNode) memo.getTrafficController().getNodeFromAddress(nodeAddress);
         if (curNode == null) {
             statusText1.setText(rb.getString("Error4"));
             statusText1.setVisible(true);
@@ -302,7 +305,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
                 javax.swing.JOptionPane.OK_CANCEL_OPTION,
                 javax.swing.JOptionPane.WARNING_MESSAGE)) {
             // delete this node
-            SerialTrafficController.instance().deleteNode(nodeAddress);
+            memo.getTrafficController().deleteNode(nodeAddress);
             // provide user feedback
             resetNotes();
             statusText1.setText(rb.getString("FeedBackDelete") + " "
@@ -405,6 +408,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
     /**
      * Do the done action if the window is closed early.
      */
+    @Override
     public void windowClosing(java.awt.event.WindowEvent e) {
         doneButtonActionPerformed();
     }
@@ -417,7 +421,7 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         // set curNode type
         curNode.setNodeType(nodeType);
         // Cause reinitialization of this Node to reflect these parameters
-        SerialTrafficController.instance().initializeSerialNode(curNode);
+        memo.getTrafficController().initializeSerialNode(curNode);
     }
 
     /**
@@ -475,6 +479,6 @@ public class NodeConfigFrame extends jmri.util.JmriJFrame {
         return (addr);
     }
 
-    static Logger log = LoggerFactory.getLogger(NodeConfigFrame.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(NodeConfigFrame.class);
 
 }

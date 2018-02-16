@@ -1,4 +1,3 @@
-// SpecificSystemConnectionMemo.java
 package jmri.jmrix.rfid.merg.concentrator;
 
 import jmri.InstanceManager;
@@ -26,7 +25,6 @@ import jmri.jmrix.rfid.RfidSystemConnectionMemo;
  * <P>
  *
  * @author Matthew Harris Copyright (C) 2011
- * @version $Revision$
  * @since 2.11.4
  */
 public class ConcentratorSystemConnectionMemo extends RfidSystemConnectionMemo {
@@ -41,8 +39,10 @@ public class ConcentratorSystemConnectionMemo extends RfidSystemConnectionMemo {
      */
     @Override
     public void configureManagers(RfidSensorManager sensorManager, RfidReporterManager reporterManager) {
-        InstanceManager.setSensorManager(new ConcentratorSensorManager(getTrafficController(), getSystemPrefix()));
-        InstanceManager.setReporterManager(new ConcentratorReporterManager(getTrafficController(), getSystemPrefix()));
+        this.sensorManager = new ConcentratorSensorManager(getTrafficController(), getSystemPrefix());
+        InstanceManager.setSensorManager(getSensorManager());
+        this.reporterManager = new ConcentratorReporterManager(getTrafficController(), getSystemPrefix());
+        InstanceManager.setReporterManager(getReporterManager());
     }
 
     @Override
@@ -52,5 +52,3 @@ public class ConcentratorSystemConnectionMemo extends RfidSystemConnectionMemo {
     }
 
 }
-
-/* @(#)SpecificSystemConnectionMemo.java */

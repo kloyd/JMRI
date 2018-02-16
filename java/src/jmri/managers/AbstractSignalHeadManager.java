@@ -1,11 +1,13 @@
-// AbstractSignalHeadManager.java
 package jmri.managers;
 
 import jmri.Manager;
+import jmri.NamedBean;
 import jmri.SignalHead;
 import jmri.SignalHeadManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
 
 /**
  * Abstract partial implementation of a SignalHeadManager.
@@ -18,9 +20,8 @@ import org.slf4j.LoggerFactory;
  * the present time. They're just names...
  *
  * @author Bob Jacobsen Copyright (C) 2003
- * @version	$Revision$
  */
-public class AbstractSignalHeadManager extends AbstractManager
+public class AbstractSignalHeadManager extends AbstractManager<SignalHead>
         implements SignalHeadManager, java.beans.PropertyChangeListener {
 
     public AbstractSignalHeadManager() {
@@ -28,18 +29,22 @@ public class AbstractSignalHeadManager extends AbstractManager
         jmri.InstanceManager.turnoutManagerInstance().addVetoableChangeListener(this);
     }
 
+    @Override
     public int getXMLOrder() {
         return Manager.SIGNALHEADS;
     }
 
+    @Override
     public String getSystemPrefix() {
         return "I";
     }
 
+    @Override
     public char typeLetter() {
         return 'H';
     }
 
+    @Override
     public SignalHead getSignalHead(String name) {
         if (name == null || name.length() == 0) {
             return null;
@@ -52,19 +57,32 @@ public class AbstractSignalHeadManager extends AbstractManager
         return getBySystemName(name);
     }
 
+    @Override
     public SignalHead getBySystemName(String name) {
-        return (SignalHead) _tsys.get(name);
+        return _tsys.get(name);
     }
 
+    @Override
     public SignalHead getByUserName(String key) {
-        return (SignalHead) _tuser.get(key);
+        return _tuser.get(key);
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * Forces upper case and trims leading and trailing whitespace.
+     * Does not check for valid prefix, hence doesn't throw NamedBean.BadSystemNameException.
+     */
+    @CheckReturnValue
+    @Override
+    public @Nonnull
+    String normalizeSystemName(@Nonnull String inputName) throws NamedBean.BadSystemNameException {
+        // does not check for valid prefix, hence doesn't throw NamedBean.BadSystemNameException
+        return inputName.toUpperCase().trim();
+    }
+
+    @Override
     public String getBeanTypeHandled() {
         return Bundle.getMessage("BeanNameSignalHead");
     }
-
-    static Logger log = LoggerFactory.getLogger(AbstractSignalHeadManager.class.getName());
 }
-
-/* @(#)AbstractSignalHeadManager.java */

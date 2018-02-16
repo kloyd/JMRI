@@ -2,7 +2,6 @@ package jmri.jmrit.display;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import jmri.InstanceManager;
 import jmri.Reporter;
@@ -13,14 +12,8 @@ import org.slf4j.LoggerFactory;
  * An icon to display info from a Reporter, e.g. transponder or RFID reader.<P>
  *
  * @author Bob Jacobsen Copyright (c) 2004
- * @version $Revision$
  */
 public class ReporterIcon extends PositionableLabel implements java.beans.PropertyChangeListener {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 729371636139026298L;
 
     public ReporterIcon(Editor editor) {
         // super ctor call to make sure this is a String label
@@ -36,28 +29,28 @@ public class ReporterIcon extends PositionableLabel implements java.beans.Proper
             super(parent, textComp);
         }
 
+        @Override
         public void setTextJustificationMenu(JPopupMenu popup) {
         }
 
+        @Override
         public void setFixedTextMenu(JPopupMenu popup) {
         }
 
+        @Override
         public void setTextMarginMenu(JPopupMenu popup) {
-            JMenu colorMenu = new JMenu(Bundle.getMessage("FontBackgroundColor"));
-            makeColorMenu(colorMenu, BACKGROUND_COLOR);
-            popup.add(colorMenu);
         }
     }
     // the associated Reporter object
     Reporter reporter = null;
 
+    @Override
     public Positionable deepClone() {
         ReporterIcon pos = new ReporterIcon(_editor);
         return finishClone(pos);
     }
 
-    public Positionable finishClone(Positionable p) {
-        ReporterIcon pos = (ReporterIcon) p;
+    protected Positionable finishClone(ReporterIcon pos) {
         pos.setReporter(reporter.getSystemName());
         return super.finishClone(pos);
     }
@@ -68,12 +61,12 @@ public class ReporterIcon extends PositionableLabel implements java.beans.Proper
      * @param pName Used as a system/user name to lookup the Reporter object
      */
     public void setReporter(String pName) {
-        if (InstanceManager.reporterManagerInstance() != null) {
-            reporter = InstanceManager.reporterManagerInstance().
+        if (InstanceManager.getNullableDefault(jmri.ReporterManager.class) != null) {
+            try {
+                reporter = InstanceManager.getDefault(jmri.ReporterManager.class).
                     provideReporter(pName);
-            if (reporter != null) {
                 setReporter(reporter);
-            } else {
+            } catch (IllegalArgumentException e) {
                 log.error("Reporter '" + pName + "' not available, icon won't see changes");
             }
         } else {
@@ -97,6 +90,7 @@ public class ReporterIcon extends PositionableLabel implements java.beans.Proper
     }
 
     // update icon as state changes
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("property change: "
@@ -106,6 +100,7 @@ public class ReporterIcon extends PositionableLabel implements java.beans.Proper
         displayState();
     }
 
+    @Override
     public String getNameString() {
         String name;
         if (reporter == null) {
@@ -135,10 +130,12 @@ public class ReporterIcon extends PositionableLabel implements java.beans.Proper
         return;
     }
 
+    @Override
     protected void edit() {
         makeIconEditorFrame(this, "Reporter", true, null);
         _iconEditor.setPickList(jmri.jmrit.picker.PickListModel.reporterPickModelInstance());
         ActionListener addIconAction = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent a) {
                 editReporter();
             }
@@ -157,6 +154,7 @@ public class ReporterIcon extends PositionableLabel implements java.beans.Proper
         invalidate();
     }
 
+    @Override
     public void dispose() {
         reporter.removePropertyChangeListener(this);
         reporter = null;
@@ -164,13 +162,15 @@ public class ReporterIcon extends PositionableLabel implements java.beans.Proper
         super.dispose();
     }
 
+    @Override
     public int maxHeight() {
         return ((javax.swing.JLabel) this).getMaximumSize().height;  // defer to superclass
     }
 
+    @Override
     public int maxWidth() {
         return ((javax.swing.JLabel) this).getMaximumSize().width;  // defer to superclass
     }
 
-    static Logger log = LoggerFactory.getLogger(ReporterIcon.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ReporterIcon.class);
 }

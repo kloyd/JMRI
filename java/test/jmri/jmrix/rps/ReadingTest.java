@@ -1,23 +1,21 @@
-// ReadingTest.java
 package jmri.jmrix.rps;
 
-import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 /**
  * JUnit tests for the rps.Reading class.
  *
  * @author	Bob Jacobsen Copyright 2006
- * @version	$Revision$
- */
+  */
 public class ReadingTest extends TestCase {
 
     public void testCtorAndID() {
         double[] v = new double[]{0., 1., 2.};
         Reading r = new Reading("21", v);
-        Assert.assertEquals("ID ok", "21", r.getID());
+        Assert.assertEquals("ID ok", "21", r.getId());
     }
 
     public void testValues() {
@@ -40,7 +38,7 @@ public class ReadingTest extends TestCase {
     public void testCopyCtorID() {
         Reading r1 = new Reading("21", new double[]{0., 1., 2.});
         Reading r2 = new Reading(r1);
-        Assert.assertEquals("ID ok", "21", r2.getID());
+        Assert.assertEquals("ID ok", "21", r2.getId());
     }
 
     public void testCopyCtorData() {
@@ -57,7 +55,7 @@ public class ReadingTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {ReadingTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests

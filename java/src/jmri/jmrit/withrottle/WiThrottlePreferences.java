@@ -1,15 +1,23 @@
 package jmri.jmrit.withrottle;
 
+import java.io.File;
+import java.util.Set;
+import jmri.InstanceInitializer;
+import jmri.implementation.AbstractInstanceInitializer;
+import jmri.util.FileUtil;
 import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
 import org.jdom2.Element;
+import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Brett Hoffman Copyright (C) 2010
- * @version $Revision$
  */
 public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
+
+    public static final int DEFAULT_PORT = 12090;
 
     //  Flag that restart is required to apply preferences
     private boolean isRestartRequired = false;
@@ -19,8 +27,7 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
 
     private boolean useMomF2 = true;
 
-    private boolean useFixedPort = false;
-    private String port = null;
+    private int port = DEFAULT_PORT;
 
     private boolean allowTrackPower = true;
     private boolean allowTurnout = true;
@@ -34,8 +41,7 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
 
     private boolean asLoadedUseMomF2 = true;
 
-    private boolean asLoadedUseFixedPort = false;
-    private String asLoadedPort = null;
+    private int asLoadedPort = 0;
 
     private boolean asLoadedAllowTrackPower = true;
     private boolean asLoadedAllowTurnout = true;
@@ -69,12 +75,12 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
             setUseMomF2(a.getValue().equalsIgnoreCase("true"));
             this.asLoadedUseMomF2 = this.isUseMomF2();
         }
-        if ((a = child.getAttribute("isUseFixedPort")) != null) {
-            setUseFixedPort(a.getValue().equalsIgnoreCase("true"));
-            this.asLoadedUseFixedPort = this.isUseFixedPort();
-        }
         if ((a = child.getAttribute("getPort")) != null) {
-            setPort(a.getValue());
+            try {
+                setPort(a.getIntValue());
+            } catch (DataConversionException ex) {
+                log.error("Port {} is invalid.", a.getValue());
+            }
             this.asLoadedPort = this.getPort();
         }
 
@@ -127,20 +133,13 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
         if (isUseMomF2() != prefs.isUseMomF2()) {
             return true;
         }
-        if (isUseFixedPort() != prefs.isUseFixedPort()) {
-            return true;
-        }
-        if (!(getPort().equals(prefs.getPort()))) {
-            return true;
-        }
-        return false;
+        return getPort() != prefs.getPort();
     }
 
     public void apply(WiThrottlePreferences prefs) {
         setUseEStop(prefs.isUseEStop());
         setEStopDelay(prefs.getEStopDelay());
         setUseMomF2(prefs.isUseMomF2());
-        setUseFixedPort(prefs.isUseFixedPort());
         setPort(prefs.getPort());
         setAllowTrackPower(prefs.isAllowTrackPower());
         setAllowTurnout(prefs.isAllowTurnout());
@@ -161,8 +160,6 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
         this.asLoadedEStopDelay = this.getEStopDelay();
         element.setAttribute("isUseMomF2", "" + isUseMomF2());
         this.asLoadedUseMomF2 = this.isUseMomF2();
-        element.setAttribute("isUseFixedPort", "" + isUseFixedPort());
-        this.asLoadedUseFixedPort = this.isUseFixedPort();
         element.setAttribute("getPort", "" + getPort());
         this.asLoadedPort = this.getPort();
         element.setAttribute("isAllowTrackPower", "" + isAllowTrackPower());
@@ -182,8 +179,8 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
         return this.asLoadedUseEStop != this.isUseEStop()
                 || this.asLoadedEStopDelay != this.getEStopDelay()
                 || this.asLoadedUseMomF2 != this.isUseMomF2()
-                || this.asLoadedUseFixedPort != this.isUseFixedPort()
-                || ((this.asLoadedPort != null) ? !this.asLoadedPort.equals(this.getPort()) : this.getPort() != null)
+                || this.asLoadedPort == 0
+                || this.asLoadedPort != this.getPort()
                 || this.asLoadedAllowTrackPower != this.isAllowTrackPower()
                 || this.asLoadedAllowTurnout != this.isAllowTurnout()
                 || this.asLoadedAllowRoute != this.isAllowRoute()
@@ -219,19 +216,11 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
         useMomF2 = value;
     }
 
-    public boolean isUseFixedPort() {
-        return useFixedPort;
-    }
-
-    public void setUseFixedPort(boolean value) {
-        useFixedPort = value;
-    }
-
-    public String getPort() {
+    public int getPort() {
         return port;
     }
 
-    public void setPort(String value) {
+    public void setPort(int value) {
         port = value;
     }
 
@@ -275,6 +264,24 @@ public class WiThrottlePreferences extends AbstractWiThrottlePreferences {
         useWiFiConsist = value;
     }
 
-    private static Logger log = LoggerFactory.getLogger(WiThrottlePreferences.class);
+    private final static Logger log = LoggerFactory.getLogger(WiThrottlePreferences.class);
 
+    @ServiceProvider(service = InstanceInitializer.class)
+    public static class Initializer extends AbstractInstanceInitializer {
+
+        @Override
+        public <T> Object getDefault(Class<T> type) throws IllegalArgumentException {
+            if (type.equals(WiThrottlePreferences.class)) {
+                return new WiThrottlePreferences(FileUtil.getUserFilesPath() + "throttle" + File.separator + "WiThrottlePreferences.xml"); // NOI18N
+            }
+            return super.getDefault(type);
+        }
+
+        @Override
+        public Set<Class<?>> getInitalizes() {
+            Set<Class<?>> set = super.getInitalizes();
+            set.add(WiThrottlePreferences.class);
+            return set;
+        }
+    }
 }

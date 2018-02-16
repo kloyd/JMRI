@@ -1,29 +1,21 @@
-// FollowerFrame.java
 package jmri.jmrit.ussctc;
 
 import javax.swing.BoxLayout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * User interface frame for creating and editing "Follower" logic on USS CTC
  * machines.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2007
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2007
  */
 public class FollowerFrame extends jmri.util.JmriJFrame {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 6090025917852821775L;
 
     public FollowerFrame() {
         super();
     }
 
-    public void initComponents() throws Exception {
+    @Override
+    public void initComponents() {
         addHelpMenu("package.jmri.jmrit.ussctc.FollowerFrame", true);
 
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -34,7 +26,5 @@ public class FollowerFrame extends jmri.util.JmriJFrame {
         // pack to cause display
         pack();
     }
-
-    static Logger log = LoggerFactory.getLogger(FollowerFrame.class.getName());
 
 }

@@ -1,6 +1,6 @@
-// CompositeVariableValue.java
 package jmri.jmrit.symbolicprog;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -46,8 +46,7 @@ import org.slf4j.LoggerFactory;
  * target variables on the same programming page.
  * </ol>
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2001, 2005, 2013
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001, 2005, 2013
  *
  */
 public class CompositeVariableValue extends EnumVariableValue implements ActionListener, PropertyChangeListener {
@@ -73,6 +72,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         _value = new JComboBox<String>();
     }
 
+    @Override
     public CvValue[] usesCVs() {
         HashSet<CvValue> cvSet = new HashSet<CvValue>(20);  // 20 is arbitrary
         Iterator<VariableValue> i = variables.iterator();
@@ -132,11 +132,6 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
      * Serves as a home for various service methods
      */
     static class SettingList extends ArrayList<Setting> {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = -931774092092164586L;
 
         public SettingList() {
             super();
@@ -211,8 +206,9 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
      * Do end of initialization processing.
      */
     @SuppressWarnings("null")
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "NP_NULL_ON_SOME_PATH",
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
             justification = "we want to force an exception")
+    @Override
     public void lastItem() {
         // configure the representation object
         _defaultColor = _value.getBackground();
@@ -238,15 +234,18 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         _value.addActionListener(this);
     }
 
+    @Override
     public void setToolTipText(String t) {
         super.setToolTipText(t);   // do default stuff
         _value.setToolTipText(t);  // set our value
     }
 
+    @Override
     public Object rangeVal() {
         return "composite: " + _minVal + " - " + _maxVal;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         // see if this is from _value itself, or from an alternate rep.
         // if from an alternate rep, it will contain the value to select
@@ -267,6 +266,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
     /**
      * This variable doesn't change state, hence doesn't change color.
      */
+    @Override
     public void setState(int state) {
         if (log.isDebugEnabled()) {
             log.debug("Ignore setState(" + state + ")");
@@ -278,8 +278,8 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
      * <P>
      * Does this by delegating to the SettingList
      *
-     * @param value
      */
+    @Override
     protected void selectValue(int value) {
         if (log.isDebugEnabled()) {
             log.debug("selectValue(" + value + ")");
@@ -296,14 +296,17 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
 
     }
 
+    @Override
     public int getIntValue() {
         return _value.getSelectedIndex();
     }
 
+    @Override
     public Component getCommonRep() {
         return _value;
     }
 
+    @Override
     public void setValue(int value) {
         int oldVal = getIntValue();
         selectValue(value);
@@ -317,8 +320,8 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
      * Notify the connected CVs of a state change from above by way of the
      * variables (e.g. not direct to CVs)
      *
-     * @param state
      */
+    @Override
     public void setCvState(int state) {
         Iterator<VariableValue> i = variables.iterator();
         while (i.hasNext()) {
@@ -327,6 +330,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         }
     }
 
+    @Override
     public boolean isChanged() {
         Iterator<VariableValue> i = variables.iterator();
         while (i.hasNext()) {
@@ -338,6 +342,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         return false;
     }
 
+    @Override
     public void setToRead(boolean state) {
 
         Iterator<VariableValue> i = variables.iterator();
@@ -351,6 +356,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
      * This variable needs to be read if any of it's subsidiary variables needs
      * to be read.
      */
+    @Override
     public boolean isToRead() {
         Iterator<VariableValue> i = variables.iterator();
         while (i.hasNext()) {
@@ -362,6 +368,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         return false;
     }
 
+    @Override
     public void setToWrite(boolean state) {
         if (log.isDebugEnabled()) {
             log.debug("Start setToWrite with " + state);
@@ -379,6 +386,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
      * This variable needs to be written if any of it's subsidiary variables
      * needs to be written.
      */
+    @Override
     public boolean isToWrite() {
         Iterator<VariableValue> i = variables.iterator();
         while (i.hasNext()) {
@@ -390,6 +398,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         return false;
     }
 
+    @Override
     public void readChanges() {
         if (isChanged()) {
             readingChanges = true;
@@ -398,6 +407,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         }
     }
 
+    @Override
     public void writeChanges() {
         if (isChanged()) {
             writingChanges = true;
@@ -406,6 +416,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         }
     }
 
+    @Override
     public void readAll() {
         readingChanges = false;
         amReading = true;
@@ -445,6 +456,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
         log.debug("End continueRead, nothing to do");
     }
 
+    @Override
     public void writeAll() {
         if (getReadOnly()) {
             log.error("unexpected write operation when readOnly is set");
@@ -490,6 +502,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
     }
 
     // handle incoming parameter notification
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         // notification from CV; check for Value being changed
         if (log.isDebugEnabled()) {
@@ -539,6 +552,7 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
     }
 
     // clean up connections when done
+    @Override
     public void dispose() {
         if (log.isDebugEnabled()) {
             log.debug("dispose");
@@ -555,6 +569,6 @@ public class CompositeVariableValue extends EnumVariableValue implements ActionL
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(CompositeVariableValue.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CompositeVariableValue.class);
 
 }

@@ -1,39 +1,29 @@
-// IEEE802154Reply.java
 package jmri.jmrix.ieee802154;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Contains the data payload of a serial reply packet. Note that its _only_ the
  * payload.
  *
- * @author	Bob Jacobsen Copyright (C) 2002, 2006, 2007, 2008 Converted to
+ * @author Bob Jacobsen Copyright (C) 2002, 2006, 2007, 2008 Converted to
  * multiple connection
  * @author kcameron Copyright (C) 2011 Modified for IEEE 802.15.4 connection
  * @author Paul Bender Copyright (C) 2013
- * @version $Revision$
  */
 public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
 
-    IEEE802154TrafficController tc = null;
-
     // create a new one
-    public IEEE802154Reply(IEEE802154TrafficController tc) {
+    public IEEE802154Reply() {
         super();
-        this.tc = tc;
         setBinary(true);
     }
 
-    public IEEE802154Reply(IEEE802154TrafficController tc, String s) {
+    public IEEE802154Reply(String s) {
         super(s);
-        this.tc = tc;
         setBinary(true);
     }
 
-    public IEEE802154Reply(IEEE802154TrafficController tc, IEEE802154Reply l) {
+    public IEEE802154Reply(IEEE802154Reply l) {
         super(l);
-        this.tc = tc;
         setBinary(true);
     }
 
@@ -44,7 +34,7 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
      */
     public byte[] getDestinationAddress() {
         int destinationMode = getDestinationAddressMode();
-        //int sourceMode = getSourceAddressMode();	// not used
+        //int sourceMode = getSourceAddressMode(); // not used
         int offset = 4; // position of first byte of destination address if
         // it is present.
         int length = 0; // minimum destination address length.
@@ -62,6 +52,8 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
             case 0x11:
                 length += 8; // 64 bit address
                 break;
+            default:
+                return null; // this should never actually happen.
         }
 
         if (!isIntraPanFrame()) {
@@ -105,6 +97,8 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
             case 0x11:
                 offset += 8; // 64 bit address
                 break;
+            default:
+                return null; // this should never actually happen.
         }
         switch (sourceMode) {
             case 0x00:
@@ -117,6 +111,8 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
             case 0x11:
                 length += 8; // 64 bit address
                 break;
+            default:
+                return null; // this should never actually happen.
         }
 
         if (!isIntraPanFrame()) {
@@ -158,6 +154,8 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
             case 0x11:
                 offset += 8; // 64 bit address
                 break;
+            default:
+                return null; // this should never actually happen.
         }
         switch (sourceMode) {
             case 0x00:
@@ -170,6 +168,8 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
             case 0x11:
                 offset += 8; // 64 bit address
                 break;
+            default:
+                return null; // this should never actually happen.
         }
 
         if (!isIntraPanFrame()) {
@@ -251,6 +251,7 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
         return (byte) getElement(3);
     }
 
+    @Override
     protected int skipPrefix(int index) {
         // doesn't have to do anything
         return index;
@@ -259,6 +260,7 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
     /**
      * check whether the message has a valid parity IEEE 802.15.4 messages have
      * a two byte parity.
+     * @return true if parity valid
      */
     public boolean checkParity() {
         int len = getNumDataElements();
@@ -277,8 +279,4 @@ public class IEEE802154Reply extends jmri.jmrix.AbstractMRReply {
         return toString();
     }
 
-    static Logger log = LoggerFactory.getLogger(IEEE802154Reply.class);
-
 }
-
-/* @(#)IEEE802154Reply.java */

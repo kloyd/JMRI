@@ -1,7 +1,7 @@
-// JmriServerTokenizerTest.java
 package jmri.jmris.simpleserver.parser;
 
 import java.io.StringReader;
+import jmri.util.JUnitUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -10,7 +10,6 @@ import junit.framework.TestSuite;
  * Tests for the {@link jmri.jmris.simpleserver.parser.JmriServerTokenizer} class.
  *
  * @author Paul Bender
- * @version $Revision$
  */
 public class JmriServerTokenizerTest extends TestCase {
 
@@ -240,7 +239,7 @@ public class JmriServerTokenizerTest extends TestCase {
     // Main entry point
     static public void main(String[] args) {
         String[] testCaseName = {"-noloading", JmriServerTokenizerTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
+        junit.textui.TestRunner.main(testCaseName);
     }
 
     // test suite from all defined tests
@@ -250,12 +249,14 @@ public class JmriServerTokenizerTest extends TestCase {
     }
 
     // The minimal setup for log4J
+    @Override
     protected void setUp() {
-        apps.tests.Log4JFixture.setUp();
+        JUnitUtil.setUp();
     }
 
+    @Override
     protected void tearDown() {
-        apps.tests.Log4JFixture.tearDown();
+        JUnitUtil.tearDown();
     }
 
 }

@@ -9,22 +9,17 @@ import jmri.JmriException;
 import jmri.SignalHead;
 import jmri.jmris.AbstractSignalHeadServer;
 import jmri.jmris.JmriConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Simple Server interface between the JMRI Sensor manager and a network
  * connection
  *
  * @author Paul Bender Copyright (C) 2010
- * @version $Revision$
  */
 public class SimpleSignalHeadServer extends AbstractSignalHeadServer {
 
     private DataOutputStream output;
     private JmriConnection connection;
-    static Logger log = LoggerFactory.getLogger(SimpleSignalHeadServer.class.getName());
-
     public SimpleSignalHeadServer(JmriConnection connection) {
         super();
         this.connection = connection;
@@ -55,8 +50,12 @@ public class SimpleSignalHeadServer extends AbstractSignalHeadServer {
         if (status.length == 3) {
             this.setSignalHeadAppearance(status[1], status[2]);
         } else {
-            SignalHead signalHead = InstanceManager.signalHeadManagerInstance().getSignalHead(status[1]);
-            this.sendStatus(signalHead.getSystemName(), signalHead.getAppearance());
+            SignalHead signalHead = InstanceManager.getDefault(jmri.SignalHeadManager.class).getSignalHead(status[1]);
+            if(signalHead != null) {
+               this.sendStatus(signalHead.getSystemName(), signalHead.getAppearance());
+            } else {
+               sendErrorStatus(status[1]);
+            }
         }
     }
 

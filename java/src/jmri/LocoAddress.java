@@ -1,4 +1,3 @@
-// LocoAddress.java
 package jmri;
 
 /**
@@ -18,8 +17,7 @@ package jmri;
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2005
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2005
  */
 public interface LocoAddress {
 
@@ -30,7 +28,7 @@ public interface LocoAddress {
     public enum Protocol {
 
         DCC_SHORT("dcc_short", "ProtocolDCC_Short"), // NOI18N
-        DCC_LONG("dcc_long", "ProtocolDCC_Long"), // NOI18N 
+        DCC_LONG("dcc_long", "ProtocolDCC_Long"), // NOI18N
         DCC("dcc", "ProtocolDCC"), // NOI18N
         SELECTRIX("selectrix", "ProtocolSelectrix"), // NOI18N
         MOTOROLA("motorola", "ProtocolMotorola"), // NOI18N
@@ -76,6 +74,3 @@ public interface LocoAddress {
     }
 
 }
-
-
-/* @(#)LocoAddress.java */

@@ -1,4 +1,3 @@
-// CvTableModel.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.event.ActionEvent;
@@ -22,14 +21,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2002, 2006
  * @author Howard G. Penny Copyright (C) 2005
- * @version $Revision$
  */
 public class CvTableModel extends javax.swing.table.AbstractTableModel implements ActionListener, PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2063387827430135656L;
     private int _numRows = 0;                // must be zero until Vectors are initialized
     static final int MAXCVNUM = 1024;
     private Vector<CvValue> _cvDisplayVector = new Vector<CvValue>();  // vector of CvValue objects, in display-row order, for doing row mapping
@@ -101,10 +95,12 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
     }
 
     // basic methods for AbstractTableModel implementation
+    @Override
     public int getRowCount() {
         return _numRows;
     }
 
+    @Override
     public int getColumnCount() {
         if (getProgrammer() != null) {
             return HIGHESTCOLUMN;
@@ -113,6 +109,7 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         }
     }
 
+    @Override
     public String getColumnName(int col) {
         switch (col) {
             case NUMCOLUMN:
@@ -132,6 +129,7 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         }
     }
 
+    @Override
     public Class<?> getColumnClass(int col) {
         switch (col) {
             case NUMCOLUMN:
@@ -151,6 +149,7 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         }
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
         switch (col) {
             case NUMCOLUMN:
@@ -191,6 +190,7 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         return _cvAllMap.get(number);
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         switch (col) {
             case NUMCOLUMN:
@@ -229,6 +229,7 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         }
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         switch (col) {
             case VALCOLUMN: // Object is actually an Integer
@@ -241,6 +242,7 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         }
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (log.isDebugEnabled()) {
             log.debug("action command: " + e.getActionCommand());
@@ -262,6 +264,7 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
         // don't need to forward Busy, do need to forward Value
         // not sure about any others
@@ -328,7 +331,8 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
             cv.setReadOnly(readOnly);
         }
         if (infoOnly) {
-            cv.setReadOnly(infoOnly);
+            cv.setReadOnly(!infoOnly);
+            cv.setWriteOnly(!infoOnly);
             cv.setInfoOnly(infoOnly);
         }
         if (writeOnly) {
@@ -386,5 +390,5 @@ public class CvTableModel extends javax.swing.table.AbstractTableModel implement
         _status = null;
     }
 
-    static Logger log = LoggerFactory.getLogger(CvTableModel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(CvTableModel.class);
 }

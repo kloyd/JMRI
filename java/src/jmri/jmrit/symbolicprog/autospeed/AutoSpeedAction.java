@@ -1,4 +1,3 @@
-// AutoSpeedAction.java
 package jmri.jmrit.symbolicprog.autospeed;
 
 import java.awt.event.ActionEvent;
@@ -27,15 +26,10 @@ import org.slf4j.LoggerFactory;
  *
  * @see jmri.jmrit.symbolicprog.tabbedframe.PaneOpsProgAction
  *
- * @author	Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001
  */
 public class AutoSpeedAction extends AbstractAction {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 9045736525279746469L;
     Object o1, o2, o3, o4;
     JLabel statusLabel;
 
@@ -45,13 +39,14 @@ public class AutoSpeedAction extends AbstractAction {
         statusLabel = new JLabel("idle");
 
         // disable ourself if ops programming is not possible
-        if (jmri.InstanceManager.programmerManagerInstance() == null
-                || !jmri.InstanceManager.programmerManagerInstance().isAddressedModePossible()) {
+        if (jmri.InstanceManager.getNullableDefault(jmri.AddressedProgrammerManager.class) == null
+                || !jmri.InstanceManager.getDefault(jmri.AddressedProgrammerManager.class).isAddressedModePossible()) {
             setEnabled(false);
         }
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         if (log.isInfoEnabled()) {
@@ -71,11 +66,7 @@ public class AutoSpeedAction extends AbstractAction {
         // known loco on main track
         JPanel pane1 = new KnownLocoSelPane(false) {  // no ident in ops mode yet
 
-            /**
-             *
-             */
-            private static final long serialVersionUID = -4507849769156281853L;
-
+            @Override
             protected void startProgrammer(DecoderFile decoderFile, RosterEntry re,
                     String filename) {
                 String title = "Set speed info for " + re.getId() + " on main track";
@@ -85,7 +76,7 @@ public class AutoSpeedAction extends AbstractAction {
                 if (address < 100) {
                     longAddr = false;
                 }
-                Programmer programmer = InstanceManager.programmerManagerInstance()
+                Programmer programmer = InstanceManager.getDefault(jmri.AddressedProgrammerManager.class)
                         .getAddressedProgrammer(longAddr, address);
                 // and created the frame
                 JFrame p = new PaneOpsProgFrame(decoderFile, re,
@@ -109,8 +100,6 @@ public class AutoSpeedAction extends AbstractAction {
         f.setVisible(true);
     }
 
-    static Logger log = LoggerFactory.getLogger(AutoSpeedAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(AutoSpeedAction.class);
 
 }
-
-/* @(#)AutoSpeedAction.java */

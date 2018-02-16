@@ -1,4 +1,3 @@
-// PrintRosterAction.java
 package jmri.jmrit.roster;
 
 import java.awt.Frame;
@@ -8,27 +7,22 @@ import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import jmri.beans.Beans;
+import jmri.jmrit.roster.rostergroup.RosterGroupSelector;
 import jmri.util.FileUtil;
 import jmri.util.davidflanagan.HardcopyWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Action to print a summary of the Roster contents
+ * Action to print a summary of the Roster contents.
  * <P>
  * This uses the older style printing, for compatibility with Java 1.1.8 in
  * Macintosh MRJ
  *
- * @author	Bob Jacobsen Copyright (C) 2003
+ * @author Bob Jacobsen Copyright (C) 2003
  * @author Dennis Miller Copyright (C) 2005
- * @version $Revision$
  */
 public class PrintRosterAction extends jmri.util.swing.JmriAbstractAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8641271368187099365L;
 
     public PrintRosterAction(String s, jmri.util.swing.WindowInterface wi) {
         super(s, wi);
@@ -54,26 +48,28 @@ public class PrintRosterAction extends jmri.util.swing.JmriAbstractAction {
      * Frame hosting the printing
      */
     Frame mFrame = new Frame();
+
     /**
      * Variable to set whether this is to be printed or previewed
      */
     boolean isPreview;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         // obtain a HardcopyWriter to do this
-        Roster r = Roster.instance();
-        String title = "DecoderPro Roster";
+        Roster r = Roster.getDefault();
+        String title = Bundle.getMessage("TitleDecoderProRoster");
         String rosterGroup = r.getDefaultRosterGroup();
         // rosterGroup may legitimately be null
         // but getProperty returns null if the property cannot be found, so
         // we test that the property exists before attempting to get its value
-        if (Beans.hasProperty(wi, "selectedRosterGroup")) {
-            rosterGroup = (String) Beans.getProperty(wi, "selectedRosterGroup");
+        if (Beans.hasProperty(wi, RosterGroupSelector.SELECTED_ROSTER_GROUP)) {
+            rosterGroup = (String) Beans.getProperty(wi, RosterGroupSelector.SELECTED_ROSTER_GROUP);
         }
         if (rosterGroup == null) {
-            title = title + " All Entries";
+            title = title + " " + Bundle.getMessage("ALLENTRIES");
         } else {
-            title = title + " Group " + rosterGroup + " Entires";
+            title = title + " " + Bundle.getMessage("TitleGroup") + " " + Bundle.getMessage("TitleEntries", rosterGroup);
         }
         HardcopyWriter writer = null;
         try {
@@ -119,10 +115,12 @@ public class PrintRosterAction extends jmri.util.swing.JmriAbstractAction {
     }
 
     // never invoked, because we overrode actionPerformed above
+    @Override
     public jmri.util.swing.JmriPanel makePanel() {
         throw new IllegalArgumentException("Should not be invoked");
     }
 
+    @Override
     public void setParameter(String parameter, String value) {
         parameter = parameter.toLowerCase();
         value = value.toLowerCase();
@@ -135,5 +133,5 @@ public class PrintRosterAction extends jmri.util.swing.JmriAbstractAction {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(PrintRosterAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(PrintRosterAction.class);
 }

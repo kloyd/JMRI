@@ -1,60 +1,58 @@
-// SprogMessageTest.java
 package jmri.jmrix.sprog;
 
-import jmri.managers.DefaultProgrammerManager;
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import jmri.ProgrammingMode;
+import jmri.util.JUnitUtil;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * JUnit tests for the SprogMessage class
+ * JUnit tests for the SprogMessage class.
  *
  * @author	Bob Jacobsen Copyright 2012
- * @version	$Revision$
  */
-public class SprogMessageTest extends TestCase {
+public class SprogMessageTest{
 
+    @Test
     public void testCreate() {
         SprogMessage m = new SprogMessage(1);
         Assert.assertNotNull("exists", m);
     }
 
+    @Test
     public void testReadCv() {
-        SprogMessage m = SprogMessage.getReadCV(12, DefaultProgrammerManager.PAGEMODE);
+        SprogMessage m = SprogMessage.getReadCV(12, ProgrammingMode.PAGEMODE);
         Assert.assertEquals("string compare ", "V 0012", m.toString());
     }
 
+    @Test
     public void testWriteCV() {
-        SprogMessage m = SprogMessage.getWriteCV(12, 251, DefaultProgrammerManager.PAGEMODE);
+        SprogMessage m = SprogMessage.getWriteCV(12, 251, ProgrammingMode.PAGEMODE);
         Assert.assertEquals("string compare ", "V 0012 251", m.toString());
     }
 
+    @Test
     public void testReadCvLarge() {
-        SprogMessage m = SprogMessage.getReadCV(1021, DefaultProgrammerManager.PAGEMODE);
+        SprogMessage m = SprogMessage.getReadCV(1021, ProgrammingMode.PAGEMODE);
         Assert.assertEquals("string compare ", "V 1021", m.toString());
     }
 
+    @Test
     public void testWriteCVLarge() {
-        SprogMessage m = SprogMessage.getWriteCV(1021, 251, DefaultProgrammerManager.PAGEMODE);
+        SprogMessage m = SprogMessage.getWriteCV(1021, 251, ProgrammingMode.PAGEMODE);
         Assert.assertEquals("string compare ", "V 1021 251", m.toString());
     }
 
-    // from here down is testing infrastructure
-    public SprogMessageTest(String s) {
-        super(s);
+    // The minimal setup for log4J
+    @Before
+    public void setUp() {
+        JUnitUtil.setUp();
     }
 
-    // Main entry point
-    static public void main(String[] args) {
-        String[] testCaseName = {SprogMessageTest.class.getName()};
-        junit.swingui.TestRunner.main(testCaseName);
-    }
-
-    // test suite from all defined tests
-    public static Test suite() {
-        TestSuite suite = new TestSuite(SprogMessageTest.class);
-        return suite;
+    @After
+    public void tearDown() {
+        JUnitUtil.tearDown();
     }
 
 }

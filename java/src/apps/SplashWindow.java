@@ -1,4 +1,3 @@
-// SplashWindow.java
 package apps;
 
 import java.awt.Dimension;
@@ -16,16 +15,11 @@ import jmri.util.FileUtil;
 /**
  * A splash screen for showing during JMRI startup
  *
- * @author	Bob Jacobsen Copyright 2003
+ * @author Bob Jacobsen Copyright 2003
  * @author Dennis Miller Copyright 2007
- * @version $Revision$
  */
 public class SplashWindow extends JFrame {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 300950834122464494L;
     Image splashIm;
 
     public SplashWindow() {
@@ -84,7 +78,4 @@ public class SplashWindow extends JFrame {
         // and show
         setVisible(true);
     }
-
-    /*  paint method required for Java 1.1.8 removed as it caused a
-     *  transparent frame under Java 1.6 */
 }

@@ -1,9 +1,7 @@
-// RunJythonScript.java
 package jmri.jmrit.jython;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import javax.script.ScriptException;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
@@ -24,12 +22,9 @@ import org.slf4j.LoggerFactory;
  * FileDialog to prompt for the file to use. The other, with a File object, will
  * directly invoke that file.
  *
- * @author	Bob Jacobsen Copyright (C) 2004, 2007
- * @version $Revision$
+ * @author Bob Jacobsen Copyright (C) 2004, 2007
  */
 public class RunJythonScript extends JmriAbstractAction {
-
-    private static final long serialVersionUID = -2957647278966956841L;
 
     public RunJythonScript(String s, WindowInterface wi) {
         super(s, wi);
@@ -52,10 +47,10 @@ public class RunJythonScript extends JmriAbstractAction {
 
     /**
      * Constructor that, when action is invoked, directly invokes the provided
-     * File
+     * File.
      *
      * @param name Action name
-     * @param file
+     * @param file the script file to invoke
      */
     public RunJythonScript(String name, File file) {
         super(name);
@@ -74,7 +69,6 @@ public class RunJythonScript extends JmriAbstractAction {
      * Invoking this action via an event triggers display of a file dialog. If a
      * file is selected, it's then invoked as a script.
      *
-     * @param e
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -115,7 +109,7 @@ public class RunJythonScript extends JmriAbstractAction {
     void invoke(File file) {
         try {
             JmriScriptEngineManager.getDefault().eval(file);
-        } catch (ScriptException | FileNotFoundException ex) {
+        } catch (ScriptException | java.io.IOException ex) {
             log.error("Unable to execute script.", ex);
         }
     }
@@ -127,8 +121,6 @@ public class RunJythonScript extends JmriAbstractAction {
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(RunJythonScript.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(RunJythonScript.class);
 
 }
-
-/* @(#)RunJythonScript.java */

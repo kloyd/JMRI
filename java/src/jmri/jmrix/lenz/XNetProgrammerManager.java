@@ -1,4 +1,3 @@
-/* XNetProgrammerManager.java */
 package jmri.jmrix.lenz;
 
 import jmri.AddressedProgrammer;
@@ -7,10 +6,10 @@ import jmri.managers.DefaultProgrammerManager;
 
 /**
  * Extend DefaultProgrammerManager to provide ops mode programmers on XPressNet
- *
- * @see jmri.ProgrammerManager
- * @author	Paul Bender Copyright (C) 2003
- * @version	$Revision$
+ * @see jmri.managers.DefaultProgrammerManager
+ * @author Paul Bender Copyright (C) 2003
+ * @navassoc 1 - 1 jmri.jmrix.lenz.XNetProgrammer
+ * @navassoc 1 - * jmri.jmrix.lenz.XNetOpsModeProgrammer
  */
 public class XNetProgrammerManager extends DefaultProgrammerManager {
 
@@ -22,21 +21,23 @@ public class XNetProgrammerManager extends DefaultProgrammerManager {
     }
 
     /**
-     * XPressNet command station does provide Ops Mode We should make this
-     * return false based on what command station we're using but for now, we'll
-     * return true
+     * XpressNet command station does provide Ops Mode.
+     * @return we should make this return false based on what command station
+     * we're using but for now, we'll return true
      */
+    @Override
     public boolean isAddressedModePossible() {
         return tc.getCommandStation().isOpsModePossible();
     }
 
+    @Override
     public AddressedProgrammer getAddressedProgrammer(boolean pLongAddress, int pAddress) {
         return new XNetOpsModeProgrammer(pAddress, tc);
     }
 
+    @Override
     public AddressedProgrammer reserveAddressedProgrammer(boolean pLongAddress, int pAddress) {
         return null;
     }
-}
 
-/* @(#)DefaultProgrammerManager.java */
+}

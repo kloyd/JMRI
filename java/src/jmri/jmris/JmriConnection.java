@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Abstraction of DataOutputStream and WebSocket.Connection classes.
- *
+ * <p>
  * Used so that that server objects need only to use a single object/method to
  * send data to any supported object type.
  *
@@ -18,27 +18,29 @@ import org.slf4j.LoggerFactory;
  */
 public class JmriConnection {
 
-    private Session session = null;
-    private DataOutputStream dataOutputStream = null;
-    protected Locale locale = Locale.getDefault();
+    private final Session session;
+    private final DataOutputStream dataOutputStream;
+    private Locale locale = Locale.getDefault();
     private final static Logger log = LoggerFactory.getLogger(JmriConnection.class);
 
     /**
      * Create a JmriConnection that sends output to a WebSocket.
      *
-     * @param connection
+     * @param connection WebSocket Session to use.
      */
     public JmriConnection(Session connection) {
         this.session = connection;
+        this.dataOutputStream = null;
     }
 
     /**
      * Create a JmriConnection that sends output to a DataOutputStream.
      *
-     * @param output
+     * @param output DataOutputStream to use
      */
     public JmriConnection(DataOutputStream output) {
         this.dataOutputStream = output;
+        this.session = null;
     }
 
     /**
@@ -59,68 +61,60 @@ public class JmriConnection {
         return this.getSession();
     }
 
-    /**
-     * Set the WebSocket session.
-     *
-     * @param session the WebSocket session
-     */
-    public void setSession(Session session) {
-        this.session = session;
-    }
-
-    /**
-     * @deprecated see {@link #setSession(org.eclipse.jetty.websocket.api.Session)
-     * }
-     *
-     * @param webSocketConnection the WebSocket session
-     */
-    @Deprecated
-    public void setWebSocketConnection(Session webSocketConnection) {
-        this.setSession(session);
-    }
-
     public DataOutputStream getDataOutputStream() {
         return dataOutputStream;
     }
 
-    public void setDataOutputStream(DataOutputStream dataOutputStream) {
-        this.dataOutputStream = dataOutputStream;
-    }
-
     /**
      * Send a String to the instantiated connection.
-     *
+     * <p>
      * This method throws an IOException so the server or servlet holding the
-     * connection open can respond to the exception.
+     * connection open can respond to the exception if there is an immediate
+     * failure. If there is an asynchronous failure, the connection is closed.
      *
-     * @param message
-     * @throws IOException
+     * @param message message to send
+     * @throws IOException if problem sending message
      */
     public void sendMessage(String message) throws IOException {
-        log.debug("Sending {}", message);
         if (this.dataOutputStream != null) {
             this.dataOutputStream.writeBytes(message);
-        } else if (this.session != null && this.session.isOpen()) {
-            try {
-                this.session.getRemote().sendStringByFuture(message);
-            } catch (WebSocketException ex) {
-                log.debug("Exception sending message", ex);
-                // A WebSocketException is most likely a broken socket,
-                // so rethrow it as an IOException
-                throw new IOException(ex);
+        } else if (this.session != null) {
+            if (this.session.isOpen()) {
+                try {
+                    this.session.getRemote().sendString(message);
+                } catch (WebSocketException ex) {
+                    log.debug("Exception sending message", ex);
+                    // A WebSocketException is most likely a broken socket,
+                    // so rethrow it as an IOException
+                    if (ex.getMessage() == null) {
+                        // provide a generic message if ex has no message
+                        throw new IOException("Exception sending message", ex);
+                    }
+                    throw new IOException(ex);
+                } catch (IOException ex) {
+                    if (ex.getMessage() == null) {
+                        // provide a generic message if ex has no message
+                        throw new IOException("Exception sending message", ex);
+                    }
+                    throw ex; // rethrow if complete
+                }
+            } else {
+                // immediately thrown an IOException to trigger closing
+                // actions up the call chain
+                throw new IOException("Will not send message on non-open session");
             }
         }
     }
 
     /**
      * Close the connection.
-     *
+     * <p>
      * Note: Objects using JmriConnection with a
      * {@link org.eclipse.jetty.websocket.api.Session} may prefer to use
      * <code>getSession().close()</code> since Session.close() does not throw an
      * IOException.
      *
-     * @throws IOException
+     * @throws IOException if problem closing connection
      */
     public void close() throws IOException {
         if (this.dataOutputStream != null) {

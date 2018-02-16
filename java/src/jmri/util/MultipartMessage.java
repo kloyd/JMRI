@@ -1,4 +1,3 @@
-// MultipartMessage.java
 package jmri.util;
 
 import java.io.BufferedReader;
@@ -19,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Sends multi-part HTTP POST requests to a web server
- *
+ * <p>
  * Based on
  * http://www.codejava.net/java-se/networking/upload-files-by-sending-multipart-request-programmatically
  * <hr>
@@ -35,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Matthew Harris Copyright (C) 2014
- * @version $Revision:$
  */
 public class MultipartMessage {
 
@@ -49,12 +47,12 @@ public class MultipartMessage {
     /**
      * Constructor initialises a new HTTP POST request with content type set to
      * 'multipart/form-data'.
-     *
+     * <p>
      * This allows for additional binary data to be uploaded.
      *
      * @param requestURL URL to which this request should be sent
      * @param charSet    character set encoding of this message
-     * @throws IOException
+     * @throws IOException if {@link OutputStream} cannot be created
      */
     public MultipartMessage(String requestURL, String charSet) throws IOException {
         this.charSet = charSet;
@@ -79,7 +77,7 @@ public class MultipartMessage {
      * @param value field value
      */
     public void addFormField(String name, String value) {
-        log.debug("add form field: " + name + "; value: " + value);
+        log.debug("add form field: {}; value: {}", name, value);
         writer.append("--" + boundary).append(LINE_FEED);
         writer.append(
                 "Content-Disposition: form-data; name=\"" + name
@@ -98,7 +96,7 @@ public class MultipartMessage {
      * @param fieldName  name attribute in form &lt;input name="{fieldName}"
      *                   type="file" /&gt;
      * @param uploadFile file to be uploaded
-     * @throws IOException
+     * @throws IOException if problem adding file to request
      */
     public void addFilePart(String fieldName, File uploadFile) throws IOException {
         addFilePart(fieldName, uploadFile, URLConnection.guessContentTypeFromName(uploadFile.getName()));
@@ -112,10 +110,10 @@ public class MultipartMessage {
      *                   type="file" /&gt;
      * @param uploadFile file to be uploaded
      * @param fileType   MIME type of file
-     * @throws IOException
+     * @throws IOException if problem adding file to request
      */
     public void addFilePart(String fieldName, File uploadFile, String fileType) throws IOException {
-        log.debug("add file field: " + fieldName + "; file: " + uploadFile + "; type: " + fileType);
+        log.debug("add file field: {}; file: {}; type: {}", fieldName, uploadFile, fileType);
         String fileName = uploadFile.getName();
         writer.append("--" + boundary).append(LINE_FEED);
         writer.append(
@@ -128,15 +126,15 @@ public class MultipartMessage {
         writer.append(LINE_FEED);
         writer.flush();
 
-        FileInputStream inStream = new FileInputStream(uploadFile);
-        byte[] buffer = new byte[4096];
-        @SuppressWarnings("UnusedAssignment")
-        int bytesRead = -1;
-        while ((bytesRead = inStream.read(buffer)) != -1) {
-            outStream.write(buffer, 0, bytesRead);
+        try (FileInputStream inStream = new FileInputStream(uploadFile)) {
+            byte[] buffer = new byte[4096];
+            @SuppressWarnings("UnusedAssignment")
+            int bytesRead = -1;
+            while ((bytesRead = inStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, bytesRead);
+            }
+            outStream.flush();
         }
-        outStream.flush();
-        inStream.close();
 
         writer.append(LINE_FEED);
         writer.flush();
@@ -149,13 +147,19 @@ public class MultipartMessage {
      * @param value value of header field
      */
     public void addHeaderField(String name, String value) {
-        log.debug("add header field: " + name + "; value: " + value);
+        log.debug("add header field: {}; value: {}", name, value);
         writer.append(name + ": " + value).append(LINE_FEED);
         writer.flush();
     }
 
+    /**
+     * Finalise and send MultipartMessage to end-point.
+     *
+     * @return Responses from end-point as a List of Strings
+     * @throws IOException if problem sending MultipartMessage to end-point
+     */
     public List<String> finish() throws IOException {
-        List<String> response = new ArrayList<String>();
+        List<String> response = new ArrayList<>();
 
         writer.append(LINE_FEED).flush();
         writer.append("--" + boundary + "--").append(LINE_FEED);
@@ -164,13 +168,12 @@ public class MultipartMessage {
         // check server status code first
         int status = httpConn.getResponseCode();
         if (status == HttpURLConnection.HTTP_OK) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()));
-            @SuppressWarnings("UnusedAssignment")
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                response.add(line);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.add(line);
+                }
             }
-            reader.close();
             httpConn.disconnect();
         } else {
             throw new IOException("Server returned non-OK status: " + status);
@@ -179,8 +182,6 @@ public class MultipartMessage {
         return response;
     }
 
-    private static final Logger log = LoggerFactory.getLogger(MultipartMessage.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(MultipartMessage.class);
 
 }
-
-/* @(#)MultipartMessage.java */

@@ -11,9 +11,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
+import jmri.InstanceManager;
 import jmri.jmrit.catalog.NamedIcon;
 import jmri.jmrit.logix.TrackerTableAction;
 import jmri.jmrit.roster.RosterEntry;
+import jmri.jmrit.throttle.ThrottleFrameManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,15 +25,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright (c) 2002
  * @author Daniel Boudreau Copyright (C) 2008, 2010
- * @version $Revision$
  */
 public class LocoIcon extends PositionableLabel {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 9079140879519495618L;
-    public static final String WHITE = Bundle.getMessage("White");		//loco background colors
+    public static final String WHITE = Bundle.getMessage("White");  //loco background colors
     public static final String GREEN = Bundle.getMessage("Green");
     public static final String GRAY = Bundle.getMessage("Gray");
     public static final String RED = Bundle.getMessage("Red");
@@ -50,31 +47,35 @@ public class LocoIcon extends PositionableLabel {
                 "resources/icons/markers/loco-white.gif"), editor);
         _locoColor = Color.WHITE;
         setDisplayLevel(Editor.MARKERS);
-        setShowTooltip(false);
+        setShowToolTip(false);
         //setEditable(false);
-        _text = true;	//Markers are an icon with text
+        _text = true; //Markers are an icon with text
         setPopupUtility(new PositionablePopupUtil(this, this) {       // need this class for Font Edit
+            @Override
             public void setFixedTextMenu(JPopupMenu popup) {
             }
 
+            @Override
             public void setTextMarginMenu(JPopupMenu popup) {
             }
 
+            @Override
             public void setTextBorderMenu(JPopupMenu popup) {
             }
 
+            @Override
             public void setTextJustificationMenu(JPopupMenu popup) {
             }
         });
     }
 
+    @Override
     public Positionable deepClone() {
         LocoIcon pos = new LocoIcon(_editor);
         return finishClone(pos);
     }
 
-    public Positionable finishClone(Positionable p) {
-        LocoIcon pos = (LocoIcon) p;
+    protected Positionable finishClone(LocoIcon pos) {
         if (_entry != null) {
             pos.setRosterEntry(getRosterEntry());
         }
@@ -83,16 +84,19 @@ public class LocoIcon extends PositionableLabel {
     }
 
     // Marker tool tips are always disabled
-    public void setShowTooltip(boolean set) {
-        super.setShowTooltip(false);
+    @Override
+    public void setShowToolTip(boolean set) {
+        super.setShowToolTip(false);
     }
 
-    // Markers are always positionable 
+    // Markers are always positionable
+    @Override
     public void setPositionable(boolean enabled) {
         super.setPositionable(true);
     }
 
     // Markers always have a popup menu
+    @Override
     public boolean doViemMenu() {
         return false;
     }
@@ -102,16 +106,13 @@ public class LocoIcon extends PositionableLabel {
     /**
      * Pop-up only if right click and not dragged
      */
+    @Override
     public boolean showPopUp(JPopupMenu popup) {
         if (_entry != null) {
             popup.add(new AbstractAction("Throttle") {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = -1098488345509610672L;
-
+                @Override
                 public void actionPerformed(ActionEvent e) {
-                    tf = jmri.jmrit.throttle.ThrottleFrameManager.instance().createThrottleFrame();
+                    tf = InstanceManager.getDefault(ThrottleFrameManager.class).createThrottleFrame();
                     tf.getAddressPanel().setRosterEntry(_entry);
                     tf.toFront();
                 }
@@ -167,6 +168,7 @@ public class LocoIcon extends PositionableLabel {
         r.addActionListener(new ActionListener() {
             final String desiredColor = color;
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setLocoColor(desiredColor);
             }
@@ -236,6 +238,7 @@ public class LocoIcon extends PositionableLabel {
                 return this;
             }
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 ed.setSelectionsDockingLocation(loco);
             }
@@ -272,6 +275,7 @@ public class LocoIcon extends PositionableLabel {
                 return this;
             }
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 ed.dockSelections(loco);
             }
@@ -303,6 +307,7 @@ public class LocoIcon extends PositionableLabel {
     /**
      * Set display attributes for Tracker
      */
+    @Override
     public void doMouseReleased(MouseEvent event) {
         List<Positionable> selections = _editor.getSelectedItems(event);
         if (selections == null) {
@@ -317,11 +322,11 @@ public class LocoIcon extends PositionableLabel {
                     block.setMarkerBackground(_locoColor);
                     PositionablePopupUtil util = getPopupUtility();
                     block.setMarkerFont(util.getFont());
-                    String name = getText();	// rotated icons have null text
+                    String name = getText(); // rotated icons have null text
                     if (name == null || name.length() == 0) {
                         name = getUnRotatedText();
                     }
-                    if (TrackerTableAction.markNewTracker(block, name) != null) {
+                    if (InstanceManager.getDefault(TrackerTableAction.class).markNewTracker(block, name) != null) {
                         dock();
                     }
                 }
@@ -330,5 +335,5 @@ public class LocoIcon extends PositionableLabel {
         }
     }
 
-    static Logger log = LoggerFactory.getLogger(LocoIcon.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LocoIcon.class);
 }

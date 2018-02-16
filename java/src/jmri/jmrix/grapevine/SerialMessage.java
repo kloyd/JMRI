@@ -1,4 +1,3 @@
-// SerialMessage.java
 package jmri.jmrix.grapevine;
 
 import jmri.util.StringUtil;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
  * Contains the data payload of a serial packet.
  *
  * @author Bob Jacobsen Copyright (C) 2001,2003, 2006, 2007, 2008
- * @version $Revision$
  */
 public class SerialMessage extends jmri.jmrix.AbstractMRMessage {
     // is this logically an abstract class?
@@ -34,7 +32,6 @@ public class SerialMessage extends jmri.jmrix.AbstractMRMessage {
      * This ctor interprets the String as the exact sequence to send,
      * byte-for-byte.
      *
-     * @param m
      */
     public SerialMessage(String m) {
         super(m);
@@ -52,6 +49,7 @@ public class SerialMessage extends jmri.jmrix.AbstractMRMessage {
     }
 
     // no replies expected, don't wait for them
+    @Override
     public boolean replyExpected() {
         return false;
     }
@@ -262,7 +260,7 @@ public class SerialMessage extends jmri.jmrix.AbstractMRMessage {
         return colors[color];
     }
 
-    static Logger log = LoggerFactory.getLogger(SerialMessage.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SerialMessage.class);
 }
 
-/* @(#)SerialMessage.java */
+

@@ -1,19 +1,14 @@
-/**
- * XNetProgrammer.java
- */
- // Convert the jmri.Programmer interface into commands for the Lenz XpressNet
 package jmri.jmrix.lenz;
 
 import java.util.ArrayList;
 import java.util.List;
 import jmri.ProgrammingMode;
 import jmri.jmrix.AbstractProgrammer;
-import jmri.managers.DefaultProgrammerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Programmer support for Lenz XpressNet.
+ * Convert the jmri.Programmer interface into commands for the Lenz XpressNet
  * <P>
  * The read operation state sequence is:
  * <UL>
@@ -24,11 +19,60 @@ import org.slf4j.LoggerFactory;
  * <LI>Send Resume Operations request
  * <LI>Wait for Normal Operations Resumed broadcast
  * </UL>
+ * <img src="doc-files/XPressNetProgrammer-StateDiagram.png" alt="UML State diagram">
+ * <img src="doc-files/XPressNetProgrammer-SequenceDiagram.png" alt="UML Sequence diagram">
  *
  * @author Bob Jacobsen Copyright (c) 2002, 2007
  * @author Paul Bender Copyright (c) 2003-2010
  * @author Giorgio Terdina Copyright (c) 2007
- * @version $Revision$
+ */
+
+/*
+ * @startuml jmri/jmrix/lenz/doc-files/XPressNetProgrammer-StateDiagram.png
+ * state NormalMode{
+ * [*] --> initialREQUESTSENT: readCV()
+ * [*] --> initialREQUESTSENT: writeCV()
+ * }
+ * [*] --> NormalMode
+ * state ServiceMode{
+ * [*] --> INQUIRESENT 
+ * REQUESTSENT --> INQUIRESENT : Command Successfully Received
+ * REQUESTSENT --> NOTPROGRAMMING : timeout()
+ * INQUIRESENT --> NOTPROGRAMMING : Result Received
+ * INQUIRESENT --> NOTPROGRAMMING : timeout()
+ * NOTPROGRAMMING --> REQUESTSENT : readCV()
+ * NOTPROGRAMMING --> REQUESTSENT : writeCV()
+ * NOTPROGRAMMING --> RequestNormalOps : timeout()
+ * RequestNormalOps --> [*]
+ * }
+ * NormalMode --> ServiceMode : Service Mode Entry Received
+ * ServiceMode --> [*] : Normal Operations Resumed
+ * @enduml
+ *
+ * @startuml jmri/jmrix/lenz/doc-files/XPressNetProgrammer-SequenceDiagram.png
+ * actor user
+ * control programmer
+ * user -> programmer:read/write CV
+ * programmer -> XNetProgrammer:readCV()/writeCV()
+ * XNetProgrammer -> CommandStation: Read/Write CV in appropriate mode.
+ * CommandStation -> XNetProgrammer: Service Mode Entry.
+ * XNetProgrammer -> CommandStation: Request Service Mode Results.
+ * CommandStation -> XNetProgrammer: Service Mode Result or Error Message
+ * XNetProgrammer -> programmer: CV Value or Error Message
+ * programmer -> user: CV value or Error Message
+ * loop 0 or more times
+ * user -> programmer:read/write CV
+ * programmer -> XNetProgrammer:readCV()/writeCV()
+ * XNetProgrammer -> CommandStation: Read/Write CV in appropriate mode.
+ * CommandStation -> XNetProgrammer: Command Successfully Received.
+ * XNetProgrammer -> CommandStation: Request Service Mode Results.
+ * CommandStation -> XNetProgrammer: Service Mode Result or Error Message
+ * XNetProgrammer -> programmer: CV Value or Error Message
+ * programmer -> user: CV value or Error Message
+ * end
+ * XNetProgrammer -> CommandStation: Resume Normal Operations
+ * CommandStation -> XNetProgrammer: Normal Operations Resumed
+ * @enduml
  */
 public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
 
@@ -50,7 +94,7 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
                 | XNetInterface.INTERFACE,
                 this);
 
-        setMode(DefaultProgrammerManager.DIRECTBYTEMODE);
+        setMode(ProgrammingMode.DIRECTBYTEMODE);
     }
 
     /**
@@ -59,10 +103,10 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
     @Override
     public List<ProgrammingMode> getSupportedModes() {
         List<ProgrammingMode> ret = new ArrayList<ProgrammingMode>();
-        ret.add(DefaultProgrammerManager.PAGEMODE);
-        ret.add(DefaultProgrammerManager.DIRECTBITMODE);
-        ret.add(DefaultProgrammerManager.DIRECTBYTEMODE);
-        ret.add(DefaultProgrammerManager.REGISTERMODE);
+        ret.add(ProgrammingMode.PAGEMODE);
+        ret.add(ProgrammingMode.DIRECTBITMODE);
+        ret.add(ProgrammingMode.DIRECTBYTEMODE);
+        ret.add(ProgrammingMode.REGISTERMODE);
         return ret;
     }
 
@@ -85,7 +129,7 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
             return false;
         }
 
-        if (getMode().equals(DefaultProgrammerManager.DIRECTBITMODE) || getMode().equals(DefaultProgrammerManager.DIRECTBYTEMODE)) {
+        if (getMode().equals(ProgrammingMode.DIRECTBITMODE) || getMode().equals(ProgrammingMode.DIRECTBYTEMODE)) {
             switch (controller().getCommandStation().getCommandStationType()) {
                 case XNetConstants.CS_TYPE_LZ100:
                     if (controller().getCommandStation()
@@ -111,12 +155,12 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
     public boolean getCanWrite(String addr) {
         if (log.isDebugEnabled()) {
             log.debug("check CV " + addr);
+            log.debug(controller().getCommandStation().getVersionString());
         }
-        log.error("cs Type: " + controller().getCommandStation().getCommandStationType() + " CS Version: " + controller().getCommandStation().getCommandStationSoftwareVersion());
         if (!getCanWrite()) {
             return false; // check basic implementation first
         }
-        if (getMode().equals(DefaultProgrammerManager.DIRECTBITMODE) || getMode().equals(DefaultProgrammerManager.DIRECTBYTEMODE)) {
+        if (getMode().equals(ProgrammingMode.DIRECTBITMODE) || getMode().equals(ProgrammingMode.DIRECTBYTEMODE)) {
             switch (controller().getCommandStation().getCommandStationType()) {
                 case XNetConstants.CS_TYPE_LZ100:
                     if (controller().getCommandStation()
@@ -139,10 +183,11 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
     static protected final int REQUESTSENT = 1; // waiting reply to command to go into programming mode
     static protected final int INQUIRESENT = 2; // read/write command sent, waiting reply
     protected boolean _progRead = false;
-    protected int _val;	// remember the value being read/written for confirmative reply
-    protected int _cv;	// remember the cv being read/written
+    protected int _val; // remember the value being read/written for confirmative reply
+    protected int _cv; // remember the cv being read/written
 
     // programming interface
+    @Override
     synchronized public void writeCV(int CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
         if (log.isDebugEnabled()) {
             log.debug("writeCV " + CV + " listens " + p);
@@ -159,10 +204,10 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
             restartTimer(XNetProgrammerTimeout);
 
             // format and send message to go to program mode
-            if (getMode().equals(DefaultProgrammerManager.PAGEMODE)) {
+            if (getMode().equals(ProgrammingMode.PAGEMODE)) {
                 XNetMessage msg = XNetMessage.getWritePagedCVMsg(CV, val);
                 controller().sendXNetMessage(msg, this);
-            } else if (getMode().equals(DefaultProgrammerManager.DIRECTBITMODE) || getMode().equals(DefaultProgrammerManager.DIRECTBYTEMODE)) {
+            } else if (getMode().equals(ProgrammingMode.DIRECTBITMODE) || getMode().equals(ProgrammingMode.DIRECTBYTEMODE)) {
                 XNetMessage msg = XNetMessage.getWriteDirectCVMsg(CV, val);
                 controller().sendXNetMessage(msg, this);
             } else { // register mode by elimination 
@@ -175,10 +220,12 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
         }
     }
 
-    synchronized public void confirmCV(int CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
+    @Override
+    synchronized public void confirmCV(String CV, int val, jmri.ProgListener p) throws jmri.ProgrammerException {
         readCV(CV, p);
     }
 
+    @Override
     synchronized public void readCV(int CV, jmri.ProgListener p) throws jmri.ProgrammerException {
         if (log.isDebugEnabled()) {
             log.debug("readCV " + CV + " listens " + p);
@@ -199,10 +246,10 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
             restartTimer(XNetProgrammerTimeout);
 
             // format and send message to go to program mode
-            if (getMode().equals(DefaultProgrammerManager.PAGEMODE)) {
+            if (getMode().equals(ProgrammingMode.PAGEMODE)) {
                 XNetMessage msg = XNetMessage.getReadPagedCVMsg(CV);
                 controller().sendXNetMessage(msg, this);
-            } else if (getMode().equals(DefaultProgrammerManager.DIRECTBITMODE) || getMode().equals(DefaultProgrammerManager.DIRECTBYTEMODE)) {
+            } else if (getMode().equals(ProgrammingMode.DIRECTBITMODE) || getMode().equals(ProgrammingMode.DIRECTBYTEMODE)) {
                 XNetMessage msg = XNetMessage.getReadDirectCVMsg(CV);
                 controller().sendXNetMessage(msg, this);
             } else { // register mode by elimination    
@@ -232,6 +279,7 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
         }
     }
 
+    @Override
     synchronized public void message(XNetReply m) {
         if (m.getElement(0) == XNetConstants.CS_INFO
                 && m.getElement(1) == XNetConstants.BC_SERVICE_MODE_ENTRY) {
@@ -240,7 +288,7 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
                 // message can trigger a request for service mode 
                 // results if progrstate is REQUESTSENT.
                 _service_mode = true;
-            } else if (_service_mode == true) {
+            } else {  // _ service_mode == true
                 // Since we get this message as both a broadcast and
                 // a directed message, ignore the message if we're
                 //already in the indicated mode
@@ -254,7 +302,7 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
                 // "OK" message can not trigger a request for service 
                 // mode results if progrstate is REQUESTSENT.
                 _service_mode = false;
-            } else if (_service_mode == false) {
+            } else { // _service_mode == false 
                 // Since we get this message as both a broadcast and
                 // a directed message, ignore the message if we're
                 //already in the indicated mode
@@ -270,7 +318,7 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
                 log.debug("reply in REQUESTSENT state");
             }
             // see if reply is the acknowledge of program mode; if not, wait for next
-            if ((_service_mode && m.isOkMessage())
+            if ((_service_mode && ( m.isOkMessage() || m.isTimeSlotRestored() ))
                     || (m.getElement(0) == XNetConstants.CS_INFO
                     && (m.getElement(1) == XNetConstants.BC_SERVICE_MODE_ENTRY
                     || m.getElement(1) == XNetConstants.PROG_CS_READY))) {
@@ -312,17 +360,18 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
                 progState = NOTPROGRAMMING;
                 stopTimer();
                 notifyProgListenerEnd(_val, jmri.ProgListener.ProgrammingShort);
+            } else if (m.isTimeSlotErrorMessage()){
+                // we just ignore timeslot errors in the programmer.
+                return;  
             } else if (m.isCommErrorMessage()) {
-                // We experienced a communicatiosn error
-                // If this is a Timeslot error, ignore it, 
-                // otherwise report it as an error
-                if (m.getElement(1) == XNetConstants.LI_MESSAGE_RESPONSE_TIMESLOT_ERROR) {
-                    return;
+                // We experienced a communications error
+                if(_controller.hasTimeSlot()) {
+                   // We have a timeslot, so report it as an error
+                   log.error("Communications error in REQUESTSENT state while programming.  Error: " + m.toString());
+                   progState = NOTPROGRAMMING;
+                   stopTimer();
+                   notifyProgListenerEnd(_val, jmri.ProgListener.CommError);
                 }
-                log.error("Communications error in REQUESTSENT state while programming.  Error: " + m.toString());
-                progState = NOTPROGRAMMING;
-                stopTimer();
-                notifyProgListenerEnd(_val, jmri.ProgListener.CommError);
             }
         } else if (progState == INQUIRESENT) {
             if (log.isDebugEnabled()) {
@@ -425,17 +474,18 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
                 controller().sendXNetMessage(XNetMessage.getServiceModeResultsMsg(),
                         this);
                 return;
+            } else if (m.isTimeSlotErrorMessage()){
+                // we just ignore timeslot errors in the programmer.
+                return;  
             } else if (m.isCommErrorMessage()) {
-                // We experienced a communicatiosn error
-                // If this is a Timeslot error, ignore it, 
-                // otherwise report it as an error
-                if (m.getElement(1) == XNetConstants.LI_MESSAGE_RESPONSE_TIMESLOT_ERROR) {
-                    return;
-                }
-                log.error("Communications error in INQUIRESENT state while programming.  Error: " + m.toString());
-                progState = NOTPROGRAMMING;
-                stopTimer();
-                notifyProgListenerEnd(_val, jmri.ProgListener.CommError);
+                // We experienced a communications error
+                if(_controller.hasTimeSlot()) {
+                   // We have a timeslot, so report it as an error
+                   log.error("Communications error in INQUIRESENT state while programming.  Error: " + m.toString());
+                   progState = NOTPROGRAMMING;
+                   stopTimer();
+                   notifyProgListenerEnd(_val, jmri.ProgListener.CommError);
+               }
             } else {
                 // nothing important, ignore
                 log.debug("Ignoring message " + m.toString());
@@ -449,29 +499,30 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
     }
 
     // listen for the messages to the LI100/LI101
+    @Override
     synchronized public void message(XNetMessage l) {
     }
 
     // Handle a timeout notification
+    @Override
     public void notifyTimeout(XNetMessage msg) {
         if (log.isDebugEnabled()) {
             log.debug("Notified of timeout on message" + msg.toString());
         }
     }
 
-
-    /*
+    /**
      * Since the Lenz programming sequence requires several 
-     * operations, We want to be able to check and see if we are 
+     * operations, we want to be able to check and see if we are
      * currently programming before allowing the Traffic Controller 
-     * to send a request to exit service mode
+     * to send a request to exit service mode.
      */
-    public boolean programmerBusy() {
+    synchronized public boolean programmerBusy() {
         return (progState != NOTPROGRAMMING);
     }
 
     /**
-     * Internal routine to handle a timeout
+     * Internal routine to handle a timeout.
      */
     @Override
     synchronized protected void timeout() {
@@ -490,7 +541,9 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
         }
     }
 
-    // internal method to notify of the final result
+    /**
+     * Internal method to notify of the final result
+     */
     protected void notifyProgListenerEnd(int value, int status) {
         if (log.isDebugEnabled()) {
             log.debug("notifyProgListenerEnd value " + value + " status " + status);
@@ -508,9 +561,6 @@ public class XNetProgrammer extends AbstractProgrammer implements XNetListener {
         return _controller;
     }
 
-    static Logger log = LoggerFactory.getLogger(XNetProgrammer.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(XNetProgrammer.class);
 
 }
-
-
-/* @(#)XNetProgrammer.java */

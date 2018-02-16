@@ -1,4 +1,3 @@
-// AudioCommandThread.java
 package jmri.jmrit.audio;
 
 import org.slf4j.Logger;
@@ -21,7 +20,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  *
  * @author Matthew Harris copyright (c) 2009
- * @version $Revision$
  */
 public class AudioCommandThread extends AbstractAudioThread {
 
@@ -88,8 +86,6 @@ public class AudioCommandThread extends AbstractAudioThread {
         super.cleanup();
     }
 
-    private static final Logger log = LoggerFactory.getLogger(AudioCommandThread.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AudioCommandThread.class);
 
 }
-
-/* @(#)AudioCommandThread.java */

@@ -1,4 +1,3 @@
-// VariableValue.java
 package jmri.jmrit.symbolicprog;
 
 import java.awt.Component;
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Jacobsen Copyright (C) 2001, 2002, 2003, 2004, 2005, 2013
  * @author Howard G. Penny Copyright (C) 2005
- * @version $Revision$
  */
 public abstract class VariableValue extends AbstractValue implements java.beans.PropertyChangeListener {
 
@@ -36,7 +34,7 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
     // Instead, you usually get a (Object) representation for display in
     // a table, etc. Modification of the state of that object then
     // gets reflected back, causing the underlying CV objects to change.
-    abstract public Component getCommonRep();	// and thus should be called a limited number of times
+    abstract public Component getCommonRep(); // and thus should be called a limited number of times
 
     abstract public Component getNewRep(String format); // this one is returning a new object
 
@@ -74,6 +72,23 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
      */
     abstract public void setIntValue(int i);
 
+    /** 
+     * Set value from a String value.
+     * <p>
+     * The current implementation is a stand-in.  Note that 
+     * e.g. Speed Tables don't use a single Int, so will 
+     * just be skipped. The solution to that is to overload this in 
+     * complicated variable types.
+     */
+    public void setValue(String value) {
+        try {
+            int val = Integer.parseInt(value);
+            setIntValue(val);
+        } catch ( NumberFormatException e) {
+            log.debug("skipping set of non-integer value \"{}\"", value);
+        }
+    }
+    
     /**
      * Get the value as a single number.
      *
@@ -146,6 +161,7 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
     }
 
     // handle incoming parameter notification
+    @Override
     abstract public void propertyChange(java.beans.PropertyChangeEvent e);
 
     abstract public void dispose();
@@ -198,7 +214,6 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
      * info.
      *
      * @see #updateRepresentation
-     * @param t
      */
     public void setToolTipText(String t) {
         _tooltipText = t;
@@ -208,7 +223,6 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
      * Add the proper tooltip text to a graphical rep before returning it, sets
      * the visibility
      *
-     * @param c
      */
     protected JComponent updateRepresentation(JComponent c) {
         c.setToolTipText(_tooltipText);
@@ -296,6 +310,7 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
      * Simple implementation for the case of a single CV. Intended to be
      * sufficient for many subclasses.
      */
+    @Override
     public void setToRead(boolean state) {
         boolean newState = state;
 
@@ -321,6 +336,7 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
      * Simple implementation for the case of a single CV. Intended to be
      * sufficient for many subclasses.
      */
+    @Override
     public boolean isToRead() {
         return _cvMap.get(getCvNum()).isToRead();
     }
@@ -329,6 +345,7 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
      * Simple implementation for the case of a single CV. Intended to be
      * sufficient for many subclasses.
      */
+    @Override
     public void setToWrite(boolean state) {
         boolean newState = state;
 
@@ -354,6 +371,7 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
      * Simple implementation for the case of a single CV. Intended to be
      * sufficient for many subclasses.
      */
+    @Override
     public boolean isToWrite() {
         return _cvMap.get(getCvNum()).isToWrite();
     }
@@ -432,6 +450,6 @@ public abstract class VariableValue extends AbstractValue implements java.beans.
     abstract public CvValue[] usesCVs();
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(VariableValue.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(VariableValue.class);
 
 }

@@ -1,15 +1,8 @@
-// SignalMastRepeater.java
 package jmri.implementation;
 
-/**
- * A simple class that repeaters the state of one SignalMast to another
- *
- * @author	Kevin Dickerson Copyright (C) 2012
- *
- * @version $Revision$
- */
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.annotation.Nonnull;
 import jmri.NamedBeanHandle;
 import jmri.SignalMast;
 import org.slf4j.Logger;
@@ -28,30 +21,36 @@ public class SignalMastRepeater {
     boolean _enabled = true;
     int _direction = BOTHWAY;
 
-    public SignalMastRepeater(SignalMast master, SignalMast slave) {
+    public SignalMastRepeater(@Nonnull SignalMast master, @Nonnull SignalMast slave) {
         _master = nbhm.getNamedBeanHandle(master.getDisplayName(), master);
         _slave = nbhm.getNamedBeanHandle(slave.getDisplayName(), slave);
     }
 
-    public SignalMastRepeater(String master, String slave) {
-        SignalMast masterMast = jmri.InstanceManager.signalMastManagerInstance().getSignalMast(master);
+    public SignalMastRepeater(@Nonnull String master, @Nonnull String slave) {
+        SignalMast masterMast = jmri.InstanceManager.getDefault(jmri.SignalMastManager.class).getSignalMast(master);
+        if (masterMast == null) throw new IllegalArgumentException("master mast must exist, \""+master+"\" doesn't");
         _master = nbhm.getNamedBeanHandle(master, masterMast);
-        SignalMast slaveMast = jmri.InstanceManager.signalMastManagerInstance().getSignalMast(slave);
+        SignalMast slaveMast = jmri.InstanceManager.getDefault(jmri.SignalMastManager.class).getSignalMast(slave);
+        if (slaveMast == null) throw new IllegalArgumentException("slave mast must exist, \""+slave+"\" doesn't");
         _slave = nbhm.getNamedBeanHandle(slave, slaveMast);
     }
 
+    @Nonnull 
     public SignalMast getMasterMast() {
         return _master.getBean();
     }
 
+    @Nonnull 
     public SignalMast getSlaveMast() {
         return _slave.getBean();
     }
 
+    @Nonnull 
     public String getMasterMastName() {
         return _master.getName();
     }
 
+    @Nonnull 
     public String getSlaveMastName() {
         return _slave.getName();
     }
@@ -110,6 +109,7 @@ public class SignalMastRepeater {
     }
 
     PropertyChangeListener mastListener = new PropertyChangeListener() {
+        @Override
         public void propertyChange(PropertyChangeEvent e) {
             if (disposed) {
                 return;
@@ -122,7 +122,7 @@ public class SignalMastRepeater {
         }
     };
 
-    void updateStatus(SignalMast mastFrom, SignalMast mastTo) {
+    void updateStatus(@Nonnull SignalMast mastFrom, @Nonnull SignalMast mastTo) {
         if (log.isDebugEnabled()) {
             log.debug("Updating from mast " + mastFrom.getDisplayName() + ":" + mastFrom.getAspect() + " to mast " + mastTo.getDisplayName());
         }
@@ -141,6 +141,6 @@ public class SignalMastRepeater {
         _slave = null;
     }
 
-    static Logger log = LoggerFactory.getLogger(SignalMastRepeater.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(SignalMastRepeater.class);
 
 }

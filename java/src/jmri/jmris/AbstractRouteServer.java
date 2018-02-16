@@ -9,6 +9,7 @@ import java.util.Map;
 import jmri.InstanceManager;
 import jmri.JmriException;
 import jmri.Sensor;
+import jmri.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,12 +18,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Paul Bender Copyright (C) 2010
  * @author Randall Wood Copyright (C) 2013
- * @version $Revision$
  */
 abstract public class AbstractRouteServer {
 
     private final HashMap<String, RouteListener> routes;
-    static Logger log = LoggerFactory.getLogger(AbstractRouteServer.class);
+    private final static Logger log = LoggerFactory.getLogger(AbstractRouteServer.class);
 
     public AbstractRouteServer() {
         routes = new HashMap<String, RouteListener>();
@@ -39,27 +39,34 @@ abstract public class AbstractRouteServer {
 
     synchronized protected void addRouteToList(String routeName) {
         if (!routes.containsKey(routeName)) {
-            routes.put(routeName, new RouteListener(routeName));
-            Sensor tas = InstanceManager.routeManagerInstance().getRoute(routeName).getTurnoutsAlgdSensor();
-            if (tas != null) {  //only add listener if there is a turnout-aligned sensor defined
-                tas.addPropertyChangeListener(routes.get(routeName));
+            Route r = InstanceManager.getDefault(jmri.RouteManager.class).getRoute(routeName);
+            if(r!=null) {
+               Sensor tas = r.getTurnoutsAlgdSensor();
+               if (tas != null) {  //only add listener if there is a turnout-aligned sensor defined
+                   RouteListener rl = new RouteListener(routeName);
+                   tas.addPropertyChangeListener(rl);
+                   routes.put(routeName, rl);
+               }
             }
         }
     }
 
     synchronized protected void removeRouteFromList(String routeName) {
         if (routes.containsKey(routeName)) {
-            Sensor tas = InstanceManager.routeManagerInstance().getRoute(routeName).getTurnoutsAlgdSensor();
-            if (tas != null) {  //only remove listener if there is a turnout-aligned sensor defined
-                tas.removePropertyChangeListener(routes.get(routeName));
+            Route r = InstanceManager.getDefault(jmri.RouteManager.class).getRoute(routeName);
+            if(r!=null) {
+               Sensor tas = r.getTurnoutsAlgdSensor();
+               if (tas != null) {  //only remove listener if there is a turnout-aligned sensor defined
+                   tas.removePropertyChangeListener(routes.get(routeName));
+               }
+               routes.remove(routeName);
             }
-            routes.remove(routeName);
         }
     }
 
     public void setRoute(String routeName) throws IOException {
         try {
-            InstanceManager.routeManagerInstance().getRoute(routeName).setRoute();
+            InstanceManager.getDefault(jmri.RouteManager.class).getRoute(routeName).setRoute();
             addRouteToList(routeName);
         } catch (NullPointerException ex) {
             sendErrorStatus(routeName);
@@ -68,9 +75,12 @@ abstract public class AbstractRouteServer {
 
     public void dispose() {
         for (Map.Entry<String, RouteListener> route : this.routes.entrySet()) {
-            Sensor tas = InstanceManager.routeManagerInstance().getRoute(route.getKey()).getTurnoutsAlgdSensor();
-            if (tas != null) {  //only remove listener if there is a turnout-aligned sensor defined
-                tas.removePropertyChangeListener(route.getValue());
+            Route r = InstanceManager.getDefault(jmri.RouteManager.class).getRoute(route.getKey());
+            if (r!=null) {
+               Sensor tas = r.getTurnoutsAlgdSensor();
+               if (tas != null) {  //only remove listener if there is a turnout-aligned sensor defined
+                   tas.removePropertyChangeListener(route.getValue());
+               }
             }
         }
         this.routes.clear();
@@ -83,7 +93,10 @@ abstract public class AbstractRouteServer {
 
         RouteListener(String routeName) {
             name = routeName;
-            sensor = InstanceManager.routeManagerInstance().getRoute(name).getTurnoutsAlgdSensor();
+            Route r = InstanceManager.getDefault(jmri.RouteManager.class).getRoute(name);
+            if(r!=null) {
+               sensor = r.getTurnoutsAlgdSensor();
+            }
         }
 
         // update state as state of route changes

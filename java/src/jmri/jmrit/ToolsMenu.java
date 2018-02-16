@@ -1,41 +1,24 @@
-/**
- * ToolsMenu.java
- */
 package jmri.jmrit;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JSeparator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jmri.InstanceManager;
 
 /**
  * Create a "Tools" menu containing the Jmri system-independent tools
- * <P>
+ * <p>
  * As a best practice, we are migrating the action names (constructor arguments)
  * out of this class and into the contructors themselves.
  *
- * @author	Bob Jacobsen Copyright 2003, 2008
+ * @author Bob Jacobsen Copyright 2003, 2008
  * @author Matthew Harris copyright (c) 2009
- * @version $Revision$
  */
 public class ToolsMenu extends JMenu {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2981121278089960823L;
 
     public ToolsMenu(String name) {
         this();
         setText(name);
-    }
-
-    Action prefsAction;
-
-    protected void doPreferences() {
-        prefsAction.actionPerformed(null);
     }
 
     public ToolsMenu() {
@@ -52,13 +35,14 @@ public class ToolsMenu extends JMenu {
         add(programmerMenu);
 
         // disable programmer menu if there's no programmer manager
-        if (jmri.InstanceManager.programmerManagerInstance() == null) {
+        if (InstanceManager.getNullableDefault(jmri.AddressedProgrammerManager.class) == null
+                && InstanceManager.getNullableDefault(jmri.GlobalProgrammerManager.class) == null) {
             programmerMenu.setEnabled(false);
         }
 
         JMenu tableMenu = new JMenu(Bundle.getMessage("MenuTables"));
 
-        tableMenu.add(tableMenu);
+        ///tableMenu.add(tableMenu);    /// <=== WHY?
         tableMenu.add(new jmri.jmrit.beantable.ListedTableAction(Bundle.getMessage("MenuItemTurnoutTable"), "jmri.jmrit.beantable.TurnoutTableTabAction"));
         tableMenu.add(new jmri.jmrit.beantable.ListedTableAction(Bundle.getMessage("MenuItemSensorTable"), "jmri.jmrit.beantable.SensorTableTabAction"));
         tableMenu.add(new jmri.jmrit.beantable.ListedTableAction(Bundle.getMessage("MenuItemLightTable"), "jmri.jmrit.beantable.LightTableTabAction"));
@@ -81,6 +65,7 @@ public class ToolsMenu extends JMenu {
         tableMenu.add(new jmri.jmrit.beantable.ListedTableAction(Bundle.getMessage("MenuItemTransitTable"), "jmri.jmrit.beantable.TransitTableAction"));
         tableMenu.add(new jmri.jmrit.beantable.ListedTableAction(Bundle.getMessage("MenuItemAudioTable"), "jmri.jmrit.beantable.AudioTableAction"));
         tableMenu.add(new jmri.jmrit.beantable.ListedTableAction(Bundle.getMessage("MenuItemIdTagTable"), "jmri.jmrit.beantable.IdTagTableAction"));
+        tableMenu.add(new jmri.jmrit.beantable.ListedTableAction(Bundle.getMessage("MenuItemRailComTable"), "jmri.jmrit.beantable.RailComTableAction"));
         add(tableMenu);
 
         JMenu throttleMenu = new JMenu(Bundle.getMessage("MenuThrottles"));
@@ -99,7 +84,7 @@ public class ToolsMenu extends JMenu {
         add(throttleMenu);
 
         // disable the throttle menu if there is no throttle Manager
-        if (jmri.InstanceManager.throttleManagerInstance() == null) {
+        if (jmri.InstanceManager.getNullableDefault(jmri.ThrottleManager.class) == null) {
             throttleMenu.setEnabled(false);
         }
 
@@ -108,7 +93,7 @@ public class ToolsMenu extends JMenu {
         add(consistAction);
 
         // disable the consist tool if there is no consist Manager
-        if (jmri.InstanceManager.getDefault(jmri.ConsistManager.class) == null) {
+        if (jmri.InstanceManager.getNullableDefault(jmri.ConsistManager.class) == null) {
             consistAction.setEnabled(false);
         }
 
@@ -144,8 +129,6 @@ public class ToolsMenu extends JMenu {
         add(new JSeparator());
         // add start web server
         add(new jmri.web.server.WebServerAction());
-
     }
 
-    static Logger log = LoggerFactory.getLogger(ToolsMenu.class.getName());
 }

@@ -1,10 +1,8 @@
-// CanReply.java
 package jmri.jmrix.can;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import javax.annotation.Nonnull;
 import jmri.jmrix.AbstractMRReply;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Base class for replies in a CANbus based message/reply protocol.
@@ -21,7 +19,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author Andrew Crosland Copyright (C) 2008
  * @author Bob Jacobsen Copyright (C) 2008, 2009, 2010
- * @version $Revision$
  */
 public class CanReply extends AbstractMRReply implements CanMutableFrame {
 
@@ -51,7 +48,7 @@ public class CanReply extends AbstractMRReply implements CanMutableFrame {
 
     // copy one
     @SuppressWarnings("null")
-    public CanReply(@NonNull CanReply m) {
+    public CanReply(@Nonnull CanReply m) {
         _header = m._header;
         _isExtended = m._isExtended;
         _isRtr = m._isRtr;
@@ -65,7 +62,7 @@ public class CanReply extends AbstractMRReply implements CanMutableFrame {
 
     // copy type
     @SuppressWarnings("null")
-    public CanReply(@NonNull CanMessage m) {
+    public CanReply(@Nonnull CanMessage m) {
         _header = m._header;
         _isExtended = m._isExtended;
         _isRtr = m._isRtr;
@@ -80,6 +77,7 @@ public class CanReply extends AbstractMRReply implements CanMutableFrame {
     /**
      * Hash on the header
      */
+    @Override
     public int hashCode() {
         return _header;
     }
@@ -87,6 +85,7 @@ public class CanReply extends AbstractMRReply implements CanMutableFrame {
     /**
      * Note that a CanMessage and a CanReply can be tested for equality
      */
+    @Override
     public boolean equals(Object a) {
         if (a == null) {
             return false;
@@ -111,23 +110,28 @@ public class CanReply extends AbstractMRReply implements CanMutableFrame {
         }
     }
 
+    @Override
     protected int skipPrefix(int index) {
         return index;
     }
 
     // accessors to the bulk data
+    @Override
     public int getNumDataElements() {
         return _nDataChars;
     }
 
+    @Override
     public void setNumDataElements(int n) {
         _nDataChars = (n <= 8) ? n : 8;
     }
 
+    @Override
     public int getElement(int n) {
         return _dataChars[n];
     }
 
+    @Override
     public void setElement(int n, int v) {
         _dataChars[n] = v;
     }
@@ -139,32 +143,38 @@ public class CanReply extends AbstractMRReply implements CanMutableFrame {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "EI_EXPOSE_REP") // OK to expose array, can be directly manipulated
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP") // OK to expose array, can be directly manipulated
     public int[] getData() {
         return _dataChars;
     }
 
     // CAN header
+    @Override
     public int getHeader() {
         return _header;
     }
 
+    @Override
     public void setHeader(int h) {
         _header = h;
     }
 
+    @Override
     public boolean isExtended() {
         return _isExtended;
     }
 
+    @Override
     public void setExtended(boolean b) {
         _isExtended = b;
     }
 
+    @Override
     public boolean isRtr() {
         return _isRtr;
     }
 
+    @Override
     public void setRtr(boolean b) {
         _isRtr = b;
     }
@@ -173,8 +183,4 @@ public class CanReply extends AbstractMRReply implements CanMutableFrame {
     int _header;
     boolean _isExtended;
     boolean _isRtr;
-
-    static Logger log = LoggerFactory.getLogger(CanReply.class.getName());
 }
-
-/* @(#)CanReply.java */

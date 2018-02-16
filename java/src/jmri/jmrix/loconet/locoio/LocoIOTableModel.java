@@ -1,4 +1,3 @@
-// LocoIOTableModel.java
 package jmri.jmrix.loconet.locoio;
 
 import java.beans.PropertyChangeEvent;
@@ -30,17 +29,12 @@ import org.slf4j.LoggerFactory;
  * The timeout code is modelled after that in jmri,jmrix.AbstractProgrammer,
  * though there are significant modifications.
  * <P>
- * @author	Bob Jacobsen Copyright (C) 2001
- * @version	$Revision$
+ * @author Bob Jacobsen Copyright (C) 2001
  */
 public class LocoIOTableModel
         extends javax.swing.table.AbstractTableModel
         implements java.beans.PropertyChangeListener {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 145067099477782903L;
     private LocoIOData liodata;
     private boolean inHex;
     //private String maxSizeMode = "";
@@ -89,9 +83,10 @@ public class LocoIOTableModel
         ldata.addPropertyChangeListener(this);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         // String s = "LocoIOTableModel: " + evt.getPropertyName() + " := " + evt.getNewValue() + " from " + evt.getSource();
-        if (evt.getPropertyName().equals("PortChange")) {
+        if (evt.getPropertyName().equals("PortChange")) { // NOI18N
             Integer i = (Integer) evt.getNewValue();
             int v = i.intValue();
             // System.out.println(s + " ROW = " + v);
@@ -102,14 +97,17 @@ public class LocoIOTableModel
     }
 
     // basic methods for AbstractTableModel implementation
+    @Override
     public int getRowCount() {
         return _numRows;
     }
 
+    @Override
     public int getColumnCount() {
         return HIGHESTCOLUMN;
     }
 
+    @Override
     public String getColumnName(int col) {
         switch (col) {
             case PINCOLUMN:
@@ -135,6 +133,7 @@ public class LocoIOTableModel
         }
     }
 
+    @Override
     public Class<?> getColumnClass(int col) {
         switch (col) {
             case PINCOLUMN:
@@ -160,6 +159,7 @@ public class LocoIOTableModel
         }
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
         switch (col) {
             case PINCOLUMN:
@@ -185,6 +185,7 @@ public class LocoIOTableModel
         }
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         switch (col) {
             case PINCOLUMN:
@@ -233,6 +234,7 @@ public class LocoIOTableModel
         }
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == MODECOLUMN) {
             if (liodata.getLocoIOModeList().isValidModeValue(value)) {
@@ -244,9 +246,9 @@ public class LocoIOTableModel
                     liodata.setV1(row, l, liodata.getAddr(row));
                     liodata.setV2(row, l, liodata.getAddr(row));
 
-                    msg[row] = "Packet: " + LnConstants.OPC_NAME(l.getOpcode()) + " "
+                    msg[row] = "Packet: " + LnConstants.OPC_NAME(l.getOpCode()) + " " // NOI18N
                             + Integer.toHexString(liodata.getV1(row)) + " "
-                            + Integer.toHexString(liodata.getV2(row)) + " <CHK>";
+                            + Integer.toHexString(liodata.getV2(row)) + " <CHK>"; // NOI18N
                     if (status != null) {
                         status.setText(msg[row]);
                     }
@@ -272,11 +274,11 @@ public class LocoIOTableModel
                 liodata.setV1(row, l, a);
                 liodata.setV2(row, l, a);
 
-                int opcode = (l == null) ? 0 : l.getOpcode();
-                msg[row] = "Packet: " + LnConstants.OPC_NAME(opcode)
+                int opcode = (l == null) ? 0 : l.getOpCode();
+                msg[row] = "Packet: " + LnConstants.OPC_NAME(opcode) // NOI18N
                         + " " + Integer.toHexString(liodata.getV1(row))
                         + " " + Integer.toHexString(liodata.getV2(row))
-                        + " <CHK>";
+                        + " <CHK>"; // NOI18N
 
                 if (status != null) {
                     status.setText(msg[row]);
@@ -299,9 +301,9 @@ public class LocoIOTableModel
     // public static String[] getValidOnModes() { return validmodes.getValidModes(); }
     public void dispose() {
         if (log.isDebugEnabled()) {
-            log.debug("dispose");
+            log.debug("dispose"); // NOI18N
         }
     }
 
-    static final Logger log = LoggerFactory.getLogger(LocoIOTableModel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(LocoIOTableModel.class);
 }

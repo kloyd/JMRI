@@ -1,4 +1,3 @@
-// TamsNamedPaneAction.java
 package jmri.jmrix.tams.swing;
 
 import javax.swing.Icon;
@@ -14,14 +13,8 @@ import org.slf4j.LoggerFactory;
  * Based on work by Bob Jacobsen
  *
  * @author	Kevin Dickerson Copyright (C) 2012
- * @version	$Revision: 17977 $
  */
 public class TamsNamedPaneAction extends jmri.util.swing.JmriNamedPaneAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 203137175025143771L;
 
     /**
      * Enhanced constructor for placing the pane in various GUIs
@@ -45,18 +38,9 @@ public class TamsNamedPaneAction extends jmri.util.swing.JmriNamedPaneAction {
             return null;
         }
 
-        try {
-            ((TamsPanelInterface) p).initComponents(memo);
-            return p;
-        } catch (Exception ex) {
-            log.warn("could not init pane class: " + paneClass + " due to:" + ex);
-            ex.printStackTrace();
-        }
-
+        ((TamsPanelInterface) p).initComponents(memo);
         return p;
     }
 
-    static Logger log = LoggerFactory.getLogger(TamsNamedPaneAction.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(TamsNamedPaneAction.class);
 }
-
-/* @(#)TamsNamedPaneAction.java */

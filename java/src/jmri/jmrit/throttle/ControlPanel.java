@@ -34,6 +34,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputAdapter;
 import jmri.DccThrottle;
+import jmri.InstanceManager;
 import jmri.LocoAddress;
 import jmri.jmrit.roster.Roster;
 import jmri.jmrit.roster.RosterEntry;
@@ -53,26 +54,18 @@ import org.slf4j.LoggerFactory;
  * @author glen Copyright (C) 2002
  * @author Bob Jacobsen Copyright (C) 2007
  * @author Ken Cameron Copyright (C) 2008
- *
- * @version $Revision$
  */
 public class ControlPanel extends JInternalFrame implements java.beans.PropertyChangeListener, ActionListener, AddressListener {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2556116647848797537L;
-
     private DccThrottle throttle;
 
     private JSlider speedSlider;
     private JSlider speedSliderContinuous;
     private JSpinner speedSpinner;
     private SpinnerNumberModel speedSpinnerModel;
-    private JRadioButton SpeedStep128Button;
-    private JRadioButton SpeedStep28Button;
-    private JRadioButton SpeedStep27Button;
-    private JRadioButton SpeedStep14Button;
+    private JRadioButton speedStep128Button;
+    private JRadioButton speedStep28Button;
+    private JRadioButton speedStep27Button;
+    private JRadioButton speedStep14Button;
     private JRadioButton forwardButton, reverseButton;
     private JButton stopButton;
     private JButton idleButton;
@@ -164,14 +157,15 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
      * @param isEnabled True if the buttons/slider should be enabled, false
      *                  otherwise.
      */
+    @Override
     public void setEnabled(boolean isEnabled) {
         //super.setEnabled(isEnabled);
         forwardButton.setEnabled(isEnabled);
         reverseButton.setEnabled(isEnabled);
-        SpeedStep128Button.setEnabled(isEnabled);
-        SpeedStep28Button.setEnabled(isEnabled);
-        SpeedStep27Button.setEnabled(isEnabled);
-        SpeedStep14Button.setEnabled(isEnabled);
+        speedStep128Button.setEnabled(isEnabled);
+        speedStep28Button.setEnabled(isEnabled);
+        speedStep27Button.setEnabled(isEnabled);
+        speedStep14Button.setEnabled(isEnabled);
         if (isEnabled) {
             configureAvailableSpeedStepModes();
         }
@@ -211,6 +205,15 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         }
     }
 
+    /**
+     * is this enabled?
+     * @return true if enabled
+     */
+    @Override
+    public boolean isEnabled() {
+        return speedControllerEnable;
+    }
+    
     /**
      * Set the GUI to match that the loco is set to forward.
      *
@@ -252,41 +255,41 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         float oldSpeed = (speedSlider.getValue() / (maxSpeed * 1.0f));
 
         if (speedStepMode == DccThrottle.SpeedStepMode14) {
-            SpeedStep14Button.setSelected(true);
-            SpeedStep27Button.setSelected(false);
-            SpeedStep28Button.setSelected(false);
-            SpeedStep128Button.setSelected(false);
+            speedStep14Button.setSelected(true);
+            speedStep27Button.setSelected(false);
+            speedStep28Button.setSelected(false);
+            speedStep128Button.setSelected(false);
             intSpeedSteps = 14;
         } else if (speedStepMode == DccThrottle.SpeedStepMode27) {
-            SpeedStep14Button.setSelected(false);
-            SpeedStep27Button.setSelected(true);
-            SpeedStep28Button.setSelected(false);
-            SpeedStep128Button.setSelected(false);
+            speedStep14Button.setSelected(false);
+            speedStep27Button.setSelected(true);
+            speedStep28Button.setSelected(false);
+            speedStep128Button.setSelected(false);
             intSpeedSteps = 27;
         } else if (speedStepMode == DccThrottle.SpeedStepMode28) {
-            SpeedStep14Button.setSelected(false);
-            SpeedStep27Button.setSelected(false);
-            SpeedStep28Button.setSelected(true);
-            SpeedStep128Button.setSelected(false);
+            speedStep14Button.setSelected(false);
+            speedStep27Button.setSelected(false);
+            speedStep28Button.setSelected(true);
+            speedStep128Button.setSelected(false);
             intSpeedSteps = 28;
         } else {
-            SpeedStep14Button.setSelected(false);
-            SpeedStep27Button.setSelected(false);
-            SpeedStep28Button.setSelected(false);
-            SpeedStep128Button.setSelected(true);
+            speedStep14Button.setSelected(false);
+            speedStep27Button.setSelected(false);
+            speedStep28Button.setSelected(false);
+            speedStep128Button.setSelected(true);
             intSpeedSteps = 126;
         }
         /* Set maximum speed based on the max speed stored in the roster as a percentage of the maximum */
         maxSpeed = (int) ((float) intSpeedSteps * ((float) maxSpeedPCT) / 100);
 
-        // rescale the speed slider to match the new speed step mode                
+        // rescale the speed slider to match the new speed step mode
         speedSlider.setMaximum(maxSpeed);
         speedSlider.setValue((int) (oldSpeed * maxSpeed));
         speedSlider.setMajorTickSpacing(maxSpeed / 2);
         java.util.Hashtable<Integer, JLabel> labelTable = new java.util.Hashtable<Integer, JLabel>();
         labelTable.put(Integer.valueOf(maxSpeed / 2), new JLabel("50%"));
         labelTable.put(Integer.valueOf(maxSpeed), new JLabel("100%"));
-        labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("LabelStop")));
+        labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("ButtonStop")));
         speedSlider.setLabelTable(labelTable);
         speedSlider.setPaintTicks(true);
         speedSlider.setPaintLabels(true);
@@ -304,7 +307,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
             labelTable = new java.util.Hashtable<Integer, JLabel>();
             labelTable.put(Integer.valueOf(maxSpeed / 2), new JLabel("50%"));
             labelTable.put(Integer.valueOf(maxSpeed), new JLabel("100%"));
-            labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("LabelStop")));
+            labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("ButtonStop")));
             labelTable.put(Integer.valueOf(-maxSpeed / 2), new JLabel("-50%"));
             labelTable.put(Integer.valueOf(-maxSpeed), new JLabel("-100%"));
             speedSliderContinuous.setLabelTable(labelTable);
@@ -355,7 +358,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
     public void setSpeedController(int displaySlider) {
         _displaySlider = displaySlider;
         switch (displaySlider) {
-            case STEPDISPLAY: {
+            case STEPDISPLAY:
                 if (speedSpinner != null) {
                     sliderPanel.setVisible(false);
                     speedSlider.setEnabled(false);
@@ -368,8 +371,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
                     return;
                 }
                 break;
-            }
-            case SLIDERDISPLAYCONTINUOUS: {
+            case SLIDERDISPLAYCONTINUOUS:
                 if (speedSliderContinuous != null) {
                     sliderPanel.setVisible(false);
                     speedSlider.setEnabled(false);
@@ -382,7 +384,6 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
                     return;
                 }
                 break;
-            }
         }
         sliderPanel.setVisible(true);
         speedSlider.setEnabled(speedControllerEnable);
@@ -515,14 +516,14 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         speedSpinner.setModel(speedSpinnerModel);
         speedSpinner.setFocusable(false);
 
-        SpeedStep128Button = new JRadioButton(Bundle.getMessage("Button128SS"));
-        SpeedStep28Button = new JRadioButton(Bundle.getMessage("Button28SS"));
-        SpeedStep27Button = new JRadioButton(Bundle.getMessage("Button27SS"));
-        SpeedStep14Button = new JRadioButton(Bundle.getMessage("Button14SS"));
+        speedStep128Button = new JRadioButton(Bundle.getMessage("Button128SS"));
+        speedStep28Button = new JRadioButton(Bundle.getMessage("Button28SS"));
+        speedStep27Button = new JRadioButton(Bundle.getMessage("Button27SS"));
+        speedStep14Button = new JRadioButton(Bundle.getMessage("Button14SS"));
 
         forwardButton = new JRadioButton();
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             forwardButton.setBorderPainted(false);
             forwardButton.setContentAreaFilled(false);
             forwardButton.setText(null);
@@ -535,8 +536,8 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         }
 
         reverseButton = new JRadioButton();
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             reverseButton.setBorderPainted(false);
             reverseButton.setContentAreaFilled(false);
             reverseButton.setText(null);
@@ -572,13 +573,14 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         java.util.Hashtable<Integer, JLabel> labelTable = new java.util.Hashtable<Integer, JLabel>();
         labelTable.put(Integer.valueOf(maxSpeed / 2), new JLabel("50%"));
         labelTable.put(Integer.valueOf(maxSpeed), new JLabel("100%"));
-        labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("LabelStop")));
+        labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("ButtonStop")));
         speedSlider.setLabelTable(labelTable);
         speedSlider.setPaintTicks(true);
         speedSlider.setPaintLabels(true);
         // remove old actions
         speedSlider.addChangeListener(
                 new ChangeListener() {
+                    @Override
                     public void stateChanged(ChangeEvent e) {
                         if (!internalAdjust) {
                             boolean doIt = false;
@@ -638,7 +640,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         labelTable = new java.util.Hashtable<Integer, JLabel>();
         labelTable.put(Integer.valueOf(maxSpeed / 2), new JLabel("50%"));
         labelTable.put(Integer.valueOf(maxSpeed), new JLabel("100%"));
-        labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("LabelStop")));
+        labelTable.put(Integer.valueOf(0), new JLabel(Bundle.getMessage("ButtonStop")));
         labelTable.put(Integer.valueOf(-maxSpeed / 2), new JLabel("-50%"));
         labelTable.put(Integer.valueOf(-maxSpeed), new JLabel("-100%"));
         speedSliderContinuous.setLabelTable(labelTable);
@@ -647,6 +649,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         // remove old actions
         speedSliderContinuous.addChangeListener(
                 new ChangeListener() {
+                    @Override
                     public void stateChanged(ChangeEvent e) {
                         if (!internalAdjust) {
                             boolean doIt = false;
@@ -684,85 +687,87 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         spinnerPanel = new JPanel();
         spinnerPanel.setLayout(new GridBagLayout());
 
-        if (speedSpinner != null) {
-            spinnerPanel.add(speedSpinner, constraints);
-        }
-        //this.getContentPane().add(spinnerPanel,BorderLayout.CENTER);
+        spinnerPanel.add(speedSpinner, constraints);
+
         speedControlPanel.add(spinnerPanel);
+
         // remove old actions
-        if (speedSpinner != null) {
-            speedSpinner.addChangeListener(
-                    new ChangeListener() {
-                        public void stateChanged(ChangeEvent e) {
-                            if (!internalAdjust) {
-                                //if (!speedSpinner.getValueIsAdjusting())
-                                //{
-                                float newSpeed = ((Integer) speedSpinner.getValue()).floatValue() / (intSpeedSteps * 1.0f);
-                                if (log.isDebugEnabled()) {
-                                    log.debug("stateChanged: spinner pos: " + speedSpinner.getValue() + " speed: " + newSpeed);
-                                }
-                                if (throttle != null) {
-                                    if (spinnerPanel.isVisible()) {
-                                        throttle.setSpeedSetting(newSpeed);
-                                    }
-                                    speedSlider.setValue(((Integer) speedSpinner.getValue()).intValue());
-                                    if (speedSliderContinuous != null) {
-                                        if (forwardButton.isSelected()) {
-                                            speedSliderContinuous.setValue(((Integer) speedSpinner.getValue()).intValue());
-                                        } else {
-                                            speedSliderContinuous.setValue(-((Integer) speedSpinner.getValue()).intValue());
-                                        }
-                                    }
-                                } else {
-                                    log.warn("no throttle object in stateChanged, ignoring change of speed to " + newSpeed);
-                                }
-                                //}
+        speedSpinner.addChangeListener(
+                new ChangeListener() {
+                    @Override
+                    public void stateChanged(ChangeEvent e) {
+                        if (!internalAdjust) {
+                            //if (!speedSpinner.getValueIsAdjusting())
+                            //{
+                            float newSpeed = ((Integer) speedSpinner.getValue()).floatValue() / (intSpeedSteps * 1.0f);
+                            if (log.isDebugEnabled()) {
+                                log.debug("stateChanged: spinner pos: " + speedSpinner.getValue() + " speed: " + newSpeed);
                             }
+                            if (throttle != null) {
+                                if (spinnerPanel.isVisible()) {
+                                    throttle.setSpeedSetting(newSpeed);
+                                }
+                                speedSlider.setValue(((Integer) speedSpinner.getValue()).intValue());
+                                if (speedSliderContinuous != null) {
+                                    if (forwardButton.isSelected()) {
+                                        speedSliderContinuous.setValue(((Integer) speedSpinner.getValue()).intValue());
+                                    } else {
+                                        speedSliderContinuous.setValue(-((Integer) speedSpinner.getValue()).intValue());
+                                    }
+                                }
+                            } else {
+                                log.warn("no throttle object in stateChanged, ignoring change of speed to " + newSpeed);
+                            }
+                            //}
                         }
-                    });
-        }
+                    }
+                });
 
         ButtonGroup speedStepButtons = new ButtonGroup();
-        speedStepButtons.add(SpeedStep128Button);
-        speedStepButtons.add(SpeedStep28Button);
-        speedStepButtons.add(SpeedStep27Button);
-        speedStepButtons.add(SpeedStep14Button);
+        speedStepButtons.add(speedStep128Button);
+        speedStepButtons.add(speedStep28Button);
+        speedStepButtons.add(speedStep27Button);
+        speedStepButtons.add(speedStep14Button);
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridy = 1;
-        spinnerPanel.add(SpeedStep128Button, constraints);
+        spinnerPanel.add(speedStep128Button, constraints);
         constraints.gridy = 2;
-        spinnerPanel.add(SpeedStep28Button, constraints);
+        spinnerPanel.add(speedStep28Button, constraints);
         constraints.gridy = 3;
-        spinnerPanel.add(SpeedStep27Button, constraints);
+        spinnerPanel.add(speedStep27Button, constraints);
         constraints.gridy = 4;
-        spinnerPanel.add(SpeedStep14Button, constraints);
+        spinnerPanel.add(speedStep14Button, constraints);
 
-        SpeedStep14Button.addActionListener(
+        speedStep14Button.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         setSpeedStepsMode(DccThrottle.SpeedStepMode14);
                         throttle.setSpeedStepMode(DccThrottle.SpeedStepMode14);
                     }
                 });
 
-        SpeedStep27Button.addActionListener(
+        speedStep27Button.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         setSpeedStepsMode(DccThrottle.SpeedStepMode27);
                         throttle.setSpeedStepMode(DccThrottle.SpeedStepMode27);
                     }
                 });
 
-        SpeedStep28Button.addActionListener(
+        speedStep28Button.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         setSpeedStepsMode(DccThrottle.SpeedStepMode28);
                         throttle.setSpeedStepMode(DccThrottle.SpeedStepMode28);
                     }
                 });
 
-        SpeedStep128Button.addActionListener(
+        speedStep128Button.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         setSpeedStepsMode(DccThrottle.SpeedStepMode128);
                         throttle.setSpeedStepMode(DccThrottle.SpeedStepMode128);
@@ -776,29 +781,32 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         ButtonGroup directionButtons = new ButtonGroup();
         directionButtons.add(forwardButton);
         directionButtons.add(reverseButton);
+        forwardButton.setFocusable(false);
+        reverseButton.setFocusable(false);
         constraints.fill = GridBagConstraints.NONE;
 
         constraints.gridy = 1;
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             constraints.gridx = 3;
         }
         buttonPanel.add(forwardButton, constraints);
 
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             constraints.gridx = 1;
         } else {
             constraints.gridy = 2;
         }
         buttonPanel.add(reverseButton, constraints);
 
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             constraints.gridx = 2;
         }
         forwardButton.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         throttle.setIsForward(true);
                         if (speedSliderContinuous != null) {
@@ -809,6 +817,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
 
         reverseButton.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         throttle.setIsForward(false);
                         if (speedSliderContinuous != null) {
@@ -818,8 +827,8 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
                 });
 
         stopButton = new JButton();
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             stopButton.setBorderPainted(false);
             stopButton.setContentAreaFilled(false);
             stopButton.setText(null);
@@ -835,6 +844,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         buttonPanel.add(stopButton, constraints);
         stopButton.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         stop();
                     }
@@ -842,25 +852,30 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
 
         stopButton.addMouseListener(
                 new MouseListener() {
+                    @Override
                     public void mousePressed(MouseEvent e) {
                         stop();
                     }
 
+                    @Override
                     public void mouseExited(MouseEvent e) {
                     }
 
+                    @Override
                     public void mouseEntered(MouseEvent e) {
                     }
 
+                    @Override
                     public void mouseReleased(MouseEvent e) {
                     }
 
+                    @Override
                     public void mouseClicked(MouseEvent e) {
                     }
                 });
         idleButton = new JButton();
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             idleButton.setBorderPainted(false);
             idleButton.setContentAreaFilled(false);
             idleButton.setText(null);
@@ -872,8 +887,8 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
             idleButton.setText(Bundle.getMessage("ButtonIdle"));
         }
 
-        if (jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingExThrottle()
-                && jmri.jmrit.throttle.ThrottleFrameManager.instance().getThrottlesPreferences().isUsingFunctionIcon()) {
+        if (InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingExThrottle()
+                && InstanceManager.getDefault(ThrottleFrameManager.class).getThrottlesPreferences().isUsingFunctionIcon()) {
             constraints.gridy = 1;
         } else {
             constraints.gridy = 3;
@@ -881,6 +896,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         buttonPanel.add(idleButton, constraints);
         idleButton.addActionListener(
                 new ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         speedSlider.setValue(0);
                         if (speedSpinner != null) {
@@ -895,6 +911,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
 
         addComponentListener(
                 new ComponentAdapter() {
+                    @Override
                     public void componentResized(ComponentEvent e) {
                         changeOrientation();
                     }
@@ -919,7 +936,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
      * Perform an emergency stop.
      *
      */
-    private void stop() {
+    public void stop() {
         if (this.throttle == null) {
             return;
         }
@@ -958,7 +975,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
     }
 
     /* Accelerate of 1
-     * 
+     *
      */
     private void accelerate1() {
         if (speedSlider.isEnabled()) {
@@ -978,7 +995,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
     }
 
     /* Accelerate of 10
-     * 
+     *
      */
     private void accelerate10() {
         if (speedSlider.isEnabled()) {
@@ -1003,7 +1020,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
     }
 
     /* Decelerate of 1
-     * 
+     *
      */
     private void decelerate1() {
         if (speedSlider.isEnabled()) {
@@ -1023,7 +1040,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
     }
 
     /* Decelerate of 10
-     * 
+     *
      */
     private void decelerate10() {
         if (speedSlider.isEnabled()) {
@@ -1051,7 +1068,6 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
      * A KeyAdapter that listens for the keys that work the control pad buttons
      *
      * @author glen
-     * @version $Revision$
      */
     class ControlPadKeyListener extends KeyAdapter {
 
@@ -1060,6 +1076,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
          *
          * @param e Description of the Parameter
          */
+        @Override
         public void keyPressed(KeyEvent e) {
             if (e.isAltDown() || e.isControlDown() || e.isMetaDown() || e.isShiftDown()) {
                 return; // we don't want speed change while changing Frame/Panel/Window
@@ -1093,8 +1110,8 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
             }
         }
     }
-    
-    /** 
+
+    /**
      * Intended for throttle scripting
      */
     public void setForwardDirection(boolean fwd) {
@@ -1112,15 +1129,16 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
             }
         }
     }
-    
-    /** 
+
+    /**
      * Intended for throttle scripting
      */
     public JSlider getSpeedSlider() {
         return speedSlider;
     }
-    
+
     // update the state of this panel if any of the properties change
+    @Override
     public void propertyChange(java.beans.PropertyChangeEvent e) {
         if (e.getPropertyName().equals("SpeedSetting")) {
             internalAdjust = true;
@@ -1170,6 +1188,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
      *
      * @param e The ActionEvent causing the action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         ControlPanelPropertyEditor editor
                 = new ControlPanelPropertyEditor(this);
@@ -1184,24 +1203,24 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         int modes = jmri.InstanceManager.throttleManagerInstance()
                 .supportedSpeedModes();
         if ((modes & DccThrottle.SpeedStepMode128) != 0) {
-            SpeedStep128Button.setEnabled(true);
+            speedStep128Button.setEnabled(true);
         } else {
-            SpeedStep128Button.setEnabled(false);
+            speedStep128Button.setEnabled(false);
         }
         if ((modes & DccThrottle.SpeedStepMode28) != 0) {
-            SpeedStep28Button.setEnabled(true);
+            speedStep28Button.setEnabled(true);
         } else {
-            SpeedStep28Button.setEnabled(false);
+            speedStep28Button.setEnabled(false);
         }
         if ((modes & DccThrottle.SpeedStepMode27) != 0) {
-            SpeedStep27Button.setEnabled(true);
+            speedStep27Button.setEnabled(true);
         } else {
-            SpeedStep27Button.setEnabled(false);
+            speedStep27Button.setEnabled(false);
         }
         if ((modes & DccThrottle.SpeedStepMode14) != 0) {
-            SpeedStep14Button.setEnabled(true);
+            speedStep14Button.setEnabled(true);
         } else {
-            SpeedStep14Button.setEnabled(false);
+            speedStep14Button.setEnabled(false);
         }
     }
 
@@ -1226,6 +1245,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
          *
          * @param e The MouseEvent causing the action.
          */
+        @Override
         public void mousePressed(MouseEvent e) {
             if (log.isDebugEnabled()) {
                 log.debug("pressed " + (e.getModifiers() & MouseEvent.BUTTON1_MASK) + " " + e.isPopupTrigger()
@@ -1237,7 +1257,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
                     _menu.show(e.getComponent(),
                             e.getX(), e.getY());
                 } catch (java.awt.IllegalComponentStateException cs) {
-                    // Message sent to a hidden component, so we need 
+                    // Message sent to a hidden component, so we need
                 }
                 e.consume();
             }
@@ -1250,6 +1270,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
          *
          * @param e The MouseEvent causing the action.
          */
+        @Override
         public void mouseReleased(MouseEvent e) {
             if (log.isDebugEnabled()) {
                 log.debug("released " + (e.getModifiers() & MouseEvent.BUTTON1_MASK) + " " + e.isPopupTrigger()
@@ -1260,7 +1281,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
                     _menu.show(e.getComponent(),
                             e.getX(), e.getY());
                 } catch (java.awt.IllegalComponentStateException cs) {
-                    // Message sent to a hidden component, so we need 
+                    // Message sent to a hidden component, so we need
                 }
 
                 e.consume();
@@ -1342,9 +1363,11 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         WindowPreferences.setPreferences(this, window);
     }
 
+    @Override
     public void notifyAddressChosen(LocoAddress l) {
     }
 
+    @Override
     public void notifyAddressReleased(LocoAddress la) {
         this.setEnabled(false);
         if (throttle != null) {
@@ -1357,6 +1380,7 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         }
     }
 
+    @Override
     public void notifyAddressThrottleFound(DccThrottle t) {
         if (log.isDebugEnabled()) {
             log.debug("control panel received new throttle");
@@ -1380,16 +1404,19 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
             prevShuntingFn = getSwitchSliderFunction();
             setSwitchSliderFunction(addressPanel.getRosterEntry().getShuntingFunction());
         } else {
-            setSwitchSliderFunction(switchSliderFunction); // reset slider 
+            setSwitchSliderFunction(switchSliderFunction); // reset slider
         }
     }
 
+    @Override
     public void notifyConsistAddressChosen(int newAddress, boolean isLong) {
     }
 
+    @Override
     public void notifyConsistAddressReleased(int address, boolean isLong) {
     }
 
+    @Override
     public void notifyConsistAddressThrottleFound(DccThrottle throttle) {
         if (log.isDebugEnabled()) {
             log.debug("control panel received consist throttle");
@@ -1404,16 +1431,18 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         }
         if ((throttle != null) && (_displaySlider != STEPDISPLAY)) { // Update UI depending on function state
             try {
+                // this uses reflection because the user is allowed to name a 
+                // throttle function that triggers this action. 
                 java.lang.reflect.Method getter = throttle.getClass().getMethod("get" + switchSliderFunction, (Class[]) null);
-                if (getter != null) {
-                    Boolean state = (Boolean) getter.invoke(throttle, (Object[]) null);
-                    if (state) {
-                        setSpeedController(SLIDERDISPLAYCONTINUOUS);
-                    } else {
-                        setSpeedController(SLIDERDISPLAY);
-                    }
+
+                Boolean state = (Boolean) getter.invoke(throttle, (Object[]) null);
+                if (state) {
+                    setSpeedController(SLIDERDISPLAYCONTINUOUS);
+                } else {
+                    setSpeedController(SLIDERDISPLAY);
                 }
-            } catch (java.lang.Exception ex) {
+
+            } catch (IllegalAccessException|NoSuchMethodException|java.lang.reflect.InvocationTargetException ex) {
                 log.debug("Exception in setSwitchSliderFunction: " + ex + " while looking for function " + switchSliderFunction);
             }
         }
@@ -1434,9 +1463,9 @@ public class ControlPanel extends JInternalFrame implements java.beans.PropertyC
         } else {
             return;
         }
-        Roster.writeRosterFile();
+        Roster.getDefault().writeRoster();
     }
 
     // initialize logging
-    static Logger log = LoggerFactory.getLogger(ControlPanel.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(ControlPanel.class);
 }

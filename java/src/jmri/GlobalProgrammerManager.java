@@ -1,14 +1,16 @@
-/* GlobalProgrammerManager.java */
 package jmri;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * Get access to available {@link Programmer} objects.
  * <P>
  * Programmers come in two types:
  * <UL>
- * <LI>Global, previously Service Mode, e.g. on a programming track. Request
+ * <LI>Global, previously "Service Mode" or on a programming track. Request
  * these from an instance of this interface.
- * <LI>Addressed, previously Ops Mode, e.g. "programming on the main". Request
+ * <LI>Addressed, previously "Ops Mode" also known as "programming on the main". Request
  * these from an instance of {@link AddressedProgrammerManager}.
  * </UL>
  * <P>
@@ -28,7 +30,7 @@ package jmri;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * <P>
  * @see jmri.Programmer
- * @author	Bob Jacobsen Copyright (C) 2001, 2008, 2014
+ * @author Bob Jacobsen Copyright (C) 2001, 2008, 2014
  * @since 3.9.6
  */
 public interface GlobalProgrammerManager {
@@ -39,6 +41,7 @@ public interface GlobalProgrammerManager {
      * @return null only if there isn't a Global Mode Programmer available via
      *         this Manager.
      */
+    @CheckForNull
     public Programmer getGlobalProgrammer();
 
     /**
@@ -47,13 +50,16 @@ public interface GlobalProgrammerManager {
      *
      * @return null if the existing Global Mode programmer is in use
      */
+    @CheckForNull
     public Programmer reserveGlobalProgrammer();
 
     /**
      * Return access to the Global Mode Programmer, so that it can be used
      * elsewhere.
+     *
+     * @param p the Programmer to release
      */
-    public void releaseGlobalProgrammer(Programmer p);
+    public void releaseGlobalProgrammer(@Nonnull Programmer p);
 
     /**
      * Convenience method to check whether you'll be able to get a Global Mode
@@ -65,18 +71,22 @@ public interface GlobalProgrammerManager {
 
     /**
      * Provides the human-readable representation for including
-     * ProgrammerManagers directly in e.g. JComboBoxes, so it should return a
+     * ProgrammerManagers directly in user interface components, so it should return a
      * user-provided name for this particular one.
+     *
+     * @return user name of the GlobalProgrammerManager
      */
+    @Nonnull
     public String getUserName();
 
     /**
      * toString() provides the human-readable representation for including
-     * ProgrammerManagers directly in e.g. JComboBoxes, so it should return a
+     * ProgrammerManagers directly in user interface components, so it should return a
      * user-provided name for this particular one.
+     *
+     * @return String representation of the GlobalProgrammerManager
      */
+    @Nonnull
+    @Override
     public String toString();
 }
-
-
-/* @(#)GlobalProgrammerManager.java */
